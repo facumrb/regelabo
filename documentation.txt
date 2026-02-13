@@ -1,0 +1,61 @@
+================================================================================
+DOCUMENTACIÓN TÉCNICA: LABORATORIO VIRTUAL FULLSTACK (CC3D + PYTHON)
+================================================================================
+
+1. RESUMEN DEL PROYECTO
+-----------------------
+El objetivo es crear un entorno de laboratorio virtual multiusuario accesible vía 
+web. Combina la potencia de simulación biológica de CompuCell3D (CC3D) con un 
+entorno de análisis científico avanzado en Python, permitiendo a estudiantes 
+realizar simulaciones y análisis de datos (IA/ML) sin instalar software localmente.
+
+2. ARQUITECTURA DEL SISTEMA (HÍBRIDA)
+-------------------------------------
+Se ha diseñado una arquitectura basada en contenedores Docker con dos núcleos:
+- Núcleo Gráfico: Instalador oficial de CC3D sobre Ubuntu 22.04 para asegurar 
+  estabilidad en Player y Twedit.
+- Núcleo Científico: Entorno Conda con Python 3.10 y librerías de vanguardia 
+  (PyTorch, Scikit-learn, Pandas, etc.).
+- Interfaz Web: Doble acceso mediante noVNC (escritorio remoto) y JupyterLab.
+
+3. COMPONENTES CLAVE
+--------------------
+- Dockerfile: Define la imagen con soporte para GUI (Xvfb, x11vnc, Fluxbox) y 
+  el stack científico completo.
+- Docker Compose: Orquesta el despliegue de múltiples instancias. Se utiliza 
+  Traefik como Proxy Inverso para gestionar subdominios (ej: alumno1.lab.com).
+- Persistencia: Uso de volúmenes compartidos para que los archivos del alumno 
+  no se pierdan al cerrar el contenedor.
+
+4. BIBLIOTECAS DE PYTHON INCLUIDAS
+----------------------------------
+Para el análisis FullStack se han integrado:
+- IA/Deep Learning: PyTorch, Torchvision.
+- Ciencia de Datos: NumPy, SciPy, Pandas, Scikit-learn, Statsmodels.
+- Visualización: Matplotlib, Seaborn, Plotly, Bokeh.
+- Otros: NetworkX (redes), Scikit-image (imágenes), SymPy (cálculo simbólico).
+
+5. FLUJO DEL ESTUDIANTE
+-----------------------
+1. El estudiante accede a su URL única mediante un navegador web.
+2. Pestaña 1 (Puerto 6080): Ejecuta simulaciones en la interfaz de CompuCell3D.
+3. Pestaña 2 (Puerto 8888): Analiza los resultados en tiempo real usando Jupyter.
+4. Los cambios se guardan automáticamente en su carpeta personal en el servidor.
+
+6. PASOS PARA EL DESPLIEGUE (ADMINISTRADOR)
+-------------------------------------------
+1. Instalar Docker Desktop o Docker Engine + Compose.
+2. Ejecutar 'mkdir proyectos' para la persistencia.
+3. Construir e iniciar el entorno: 'docker-compose up --build -d'.
+4. Gestionar el acceso mediante el archivo manager.py (Python Docker SDK).
+
+7. CONSIDERACIONES DE ESCALABILIDAD
+-----------------------------------
+Para entornos con gran cantidad de usuarios, se recomienda el uso de subdominios 
+dinámicos y un portal de autenticación en FastAPI que asigne recursos bajo 
+demanda, optimizando el uso de CPU/RAM del servidor central.
+
+================================================================================
+Generado el: 2026-02-12
+Estado: Dockerfile y Compose configurados para entorno multi-estudiante.
+================================================================================
