@@ -1,2 +1,2 @@
 # regelabo
-Laboratorio sobre regeneración celular
+Laboratorio sobre Fonoaudiología
