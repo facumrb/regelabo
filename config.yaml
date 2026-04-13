@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  # El "Conserje" que redirige a los estudiantes a sus cuentas
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+  # Ejemplo de un estudiante configurado automáticamente
+  estudiante_juan:
+    build: .
+    image: cc3d-laboratorio-virtual:latest
+    labels:
+      - "traefik.enable=true"
+      # URL para CompuCell3D
+      - "traefik.http.routers.juan-gui.rule=Host(`juan.laboratorio.local`) && PathPrefix(`/vnc`)"
+      - "traefik.http.services.juan-gui.loadbalancer.server.port=6080"
+      # URL para JupyterLab
+      - "traefik.http.routers.juan-lab.rule=Host(`juan.laboratorio.local`) && PathPrefix(`/jupyter`)"
+      - "traefik.http.services.juan-lab.loadbalancer.server.port=8888"
+    volumes:
+      - ./proyectos/juan:/home/cc3d/proyectos
+    shm_size: '512mb'
