@@ -1,0 +1,17 @@
+{
+  "name": "laboratorio-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "plotly.js": "^2.30.0",
+    "react-plotly.js": "^2.6.0",
+    "filepond": "^4.30.6",
+    "react-filepond": "^7.1.2",
+    "pdfjs-dist": "^4.0.379",
+    "@supabase/supabase-js": "^2.39.8",
+    "axios": "^1.6.8",
+    "tailwindcss": "^3.4.3"
+  }
+}
