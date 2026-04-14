@@ -1,0 +1,11 @@
+Flujo de trabajo para estudiantes
+    1. Construir la imagen
+       bash
+       docker build -t cc3d_lab .
+    2. Correr el contenedor
+       bash
+       docker run -it --rm -v $(pwd):/home/cc3d cc3d_lab
+    3. Simulaciones científicas
+        ◦ Usar el entorno Conda (cc3d_env) para correr scripts con NumPy, SciPy, etc.
+    4. Visualización y edición
+        ◦ Usar Player5 y Twedit5 del instalador oficial para abrir y analizar simulaciones.
