@@ -1,6 +1,6 @@
-# Laboratorio Virtual Auditivo (SOA)
+# Laboratorio Virtual Auditivo
 
-Plataforma basada totalmente en Arquitectura Orientada a Servicios (SOA) que integra modelos de simulación biológica (Verhulst et al.) con herramientas de análisis de datos e inteligencia artificial (LLM) para la investigación auditiva.
+Plataforma basada totalmente en Arquitectura Orientada a Servicios que integra modelos de simulación biológica (Verhulst et al.) con herramientas de análisis de datos e inteligencia artificial (LLM) para la investigación auditiva.
 
 ## Arquitectura Orientada a Servicios
 
