@@ -1,1165 +1,424 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Laboratorio Virtual Auditivo — Presentación de Investigación</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-<style>
-  /* ─── Design tokens ─── */
-  :root {
-    --petrol:      #0f2d36;
-    --petrol-2:    #163945;
-    --petrol-3:    #1b4954;
-    --teal:        #2c7b74;
-    --teal-light:  #4ca89f;
-    --gold:        #c69a49;
-    --gold-light:  #ddb96a;
-    --ink:         #0d1f26;
-    --muted:       #5a737d;
-    --line:        rgba(15,45,54,.12);
-    --line-md:     rgba(15,45,54,.20);
-    --surface:     #ffffff;
-    --bg:          #eef3f5;
-    --teal-soft:   rgba(44,123,116,.10);
-    --gold-soft:   rgba(198,154,73,.12);
-    --petrol-soft: rgba(15,45,54,.07);
-    --serif: 'Playfair Display', Georgia, serif;
-    --sans:  'Inter', 'Segoe UI', sans-serif;
-  }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presentación: Laboratorio Virtual Auditivo</title>
+    <!-- Modern high-end font -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        /* CSS reset and base settings */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: 'Outfit', sans-serif; 
+            background-color: #0b0f19; 
+            color: #f8fafc; 
+            overflow: hidden; 
+        }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
+        /* Abstract glowing orbs for premium aesthetics */
+        .orb-1 { position: absolute; width: 60vw; height: 60vw; background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, rgba(0,0,0,0) 60%); top: -20vh; left: -20vw; border-radius: 50%; pointer-events: none; z-index: 1;}
+        .orb-2 { position: absolute; width: 50vw; height: 50vw; background: radial-gradient(circle, rgba(236,72,153,0.15) 0%, rgba(0,0,0,0) 60%); bottom: -20vh; right: -10vw; border-radius: 50%; pointer-events: none; z-index: 1;}
 
-  body {
-    font-family: var(--sans);
-    background: var(--bg);
-    color: var(--ink);
-    /* Scroll-snap for slide-style navigation */
-    scroll-snap-type: y mandatory;
-    overflow-y: scroll;
-    height: 100vh;
-  }
+        /* Presenter Container */
+        .slider-wrapper {
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+            z-index: 2;
+            position: relative;
+        }
 
-  /* ─── Slide wrapper: strict 16:9 within viewport ─── */
-  .slide {
-    scroll-snap-align: start;
-    width: 100vw;
-    height: 100vh;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    overflow: hidden;
-  }
+        .slide {
+            min-width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 5vh 5vw;
+        }
 
-  /* ─── Nav dots ─── */
-  .nav-dots {
-    position: fixed;
-    right: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    z-index: 100;
-  }
-  .nav-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: rgba(15,45,54,.25);
-    border: 2px solid rgba(15,45,54,.20);
-    cursor: pointer;
-    transition: all .3s;
-    text-decoration: none;
-  }
-  .nav-dot.active, .nav-dot:hover {
-    background: var(--gold);
-    border-color: var(--gold);
-    transform: scale(1.4);
-  }
+        /* Glassmorphism Card System */
+        .card {
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 24px;
+            padding: clamp(2rem, 5vw, 4rem);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 1200px;
+            position: relative;
+            transform: scale(0.95);
+            opacity: 0;
+            transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+        }
 
-  /* ─── Slide numbering ─── */
-  .slide-num {
-    position: absolute;
-    bottom: 22px;
-    right: 36px;
-    font-size: 11px;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: rgba(255,255,255,.35);
-    font-weight: 500;
-  }
-  .slide-num.dark {
-    color: var(--muted);
-  }
+        .slide.active .card {
+            transform: scale(1);
+            opacity: 1;
+        }
 
-  /* ─── SLIDE 1: Portada  ─── */
-  #s1 {
-    background:
-      radial-gradient(ellipse at 80% 20%, rgba(198,154,73,.18), transparent 45%),
-      radial-gradient(ellipse at 10% 80%, rgba(44,123,116,.15), transparent 45%),
-      linear-gradient(150deg, #0f2d36 0%, #1b4954 55%, #0f2d36 100%);
-    color: #edf5f7;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 0 8vw;
-  }
-  #s1 .s1-inner {
-    display: grid;
-    grid-template-columns: 1.15fr 0.85fr;
-    gap: 6vw;
-    align-items: center;
-    width: 100%;
-    max-width: 1400px;
-    margin: 0 auto;
-  }
-  #s1 .eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 16px;
-    border-radius: 999px;
-    font-size: 11px;
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    border: 1px solid rgba(255,255,255,.15);
-    background: rgba(255,255,255,.07);
-    color: rgba(237,245,247,.72);
-    margin-bottom: 28px;
-  }
-  #s1 h1 {
-    font-family: var(--serif);
-    font-size: clamp(36px, 4.8vw, 72px);
-    line-height: 1.04;
-    letter-spacing: -.02em;
-    color: #f5fbfc;
-    margin-bottom: 24px;
-  }
-  #s1 h1 em {
-    font-style: normal;
-    color: var(--gold-light);
-  }
-  #s1 .lead {
-    font-size: clamp(14px, 1.5vw, 19px);
-    line-height: 1.78;
-    color: rgba(237,245,247,.80);
-    max-width: 52ch;
-    margin-bottom: 36px;
-  }
-  .pill-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-  .pill {
-    padding: 8px 16px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: .06em;
-    border: 1px solid rgba(255,255,255,.14);
-    background: rgba(255,255,255,.08);
-    color: rgba(237,245,247,.85);
-  }
-  .pill.gold {
-    background: rgba(198,154,73,.18);
-    border-color: rgba(198,154,73,.30);
-    color: var(--gold-light);
-  }
-  #s1 .s1-card {
-    background: rgba(255,255,255,.06);
-    border: 1px solid rgba(255,255,255,.12);
-    border-radius: 28px;
-    padding: 32px;
-    backdrop-filter: blur(12px);
-  }
-  #s1 .s1-card .card-label {
-    font-size: 10px;
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    color: var(--gold-light);
-    margin-bottom: 14px;
-    font-weight: 600;
-  }
-  #s1 .s1-stat {
-    display: grid;
-    gap: 20px;
-  }
-  #s1 .stat-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
-    padding: 16px 0;
-    border-bottom: 1px solid rgba(255,255,255,.08);
-  }
-  #s1 .stat-row:last-child { border-bottom: 0; }
-  #s1 .stat-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 14px;
-    background: rgba(198,154,73,.16);
-    display: grid;
-    place-items: center;
-    font-size: 18px;
-    flex: 0 0 auto;
-  }
-  #s1 .stat-text strong {
-    display: block;
-    font-size: 14px;
-    color: #f5fbfc;
-    margin-bottom: 3px;
-  }
-  #s1 .stat-text span {
-    font-size: 12px;
-    color: rgba(237,245,247,.58);
-    line-height: 1.55;
-  }
-  #s1 .s1-tag {
-    margin-top: 20px;
-    padding: 14px 18px;
-    border-radius: 16px;
-    background: rgba(44,123,116,.14);
-    border: 1px solid rgba(44,123,116,.22);
-    font-size: 13px;
-    color: rgba(237,245,247,.78);
-    line-height: 1.6;
-  }
+        /* Typography */
+        h1 { 
+            font-size: clamp(2.5rem, 6vw, 4.5rem); 
+            font-weight: 800; 
+            line-height: 1.1; 
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #a5b4fc, #f472b6, #e879f9); 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+        }
+        h2 { 
+            font-size: clamp(1.8rem, 4vw, 3rem); 
+            font-weight: 800; 
+            margin-bottom: 2rem; 
+            color: #f1f5f9; 
+            letter-spacing: -0.5px;
+        }
+        .subtitle {
+            font-size: clamp(1.1rem, 2vw, 1.6rem);
+            color: #94a3b8;
+            font-weight: 300;
+            line-height: 1.5;
+        }
 
-  /* ─── SLIDE 2: El simulador ─── */
-  #s2 {
-    background: var(--surface);
-    padding: 0 7vw;
-    justify-content: center;
-  }
-  #s2 .s2-inner {
-    display: grid;
-    grid-template-columns: 1fr 1.1fr;
-    gap: 5vw;
-    align-items: center;
-    width: 100%;
-    max-width: 1400px;
-    margin: 0 auto;
-  }
+        /* Center content layout */
+        .layout-center { text-align: center; align-items: center; justify-content: center; }
+        .layout-center p { margin-top: 1.5rem; max-width: 800px; }
+        
+        /* Grid Layout for concise bullet points */
+        .grid-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            width: 100%;
+        }
+        @media(min-width: 768px) {
+            .grid-list.cols-2 { grid-template-columns: 1fr 1fr; }
+        }
+        .grid-item {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: clamp(1.2rem, 2vw, 1.8rem);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+        .grid-item:hover {
+            transform: translateY(-5px);
+            background: rgba(255,255,255,0.06);
+            border-color: rgba(255,255,255,0.1);
+        }
+        .grid-item h3 { font-size: clamp(1.1rem, 1.5vw, 1.4rem); color: #a5b4fc; }
+        .grid-item p { font-size: clamp(0.9rem, 1.2vw, 1.1rem); color: #cbd5e1; line-height: 1.5; margin: 0; }
 
-  /* ─── SLIDE 3: El problema y el laboratorio ─── */
-  #s3 {
-    background:
-      radial-gradient(ellipse at 90% 10%, rgba(198,154,73,.10), transparent 40%),
-      linear-gradient(160deg, #f0f6f7 0%, #e5eef1 100%);
-    padding: 0 7vw;
-    justify-content: center;
-  }
-  #s3 .s3-inner {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4vw;
-    align-items: center;
-    width: 100%;
-    max-width: 1400px;
-    margin: 0 auto;
-  }
+        /* The Verhulst Figure Slide - Designed to maximize image space */
+        .layout-figure {
+            height: 90vh; /* Takes up massive vertical space */
+            max-width: 95vw; /* Wide format for image */
+            padding: clamp(1rem, 2vw, 2rem);
+            display: flex;
+            flex-direction: column;
+        }
+        .layout-figure h2 { 
+            margin-bottom: 1rem; 
+            text-align: center;
+        }
+        .figure-container {
+            flex-grow: 1; /* This pushes the image to take ALL remaining space */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 0; /* Important trick to let flex-basis grow correctly */
+            padding: 1rem;
+        }
+        .figure-container img {
+            width: auto;
+            height: auto;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain; /* ensures image fits while maintaining proportion perfectly */
+            filter: drop-shadow(0 20px 30px rgba(0,0,0,0.5));
+            border-radius: 12px;
+        }
+        .figure-caption {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: clamp(0.9rem, 1.2vw, 1.1rem);
+            color: #94a3b8;
+            font-weight: 300;
+        }
 
-  /* ─── SLIDE 4: Flujo de trabajo ─── */
-  #s4 {
-    background: linear-gradient(160deg, var(--petrol) 0%, var(--petrol-3) 100%);
-    color: #edf5f7;
-    padding: 0 7vw;
-    justify-content: center;
-  }
-  #s4 .s4-inner {
-    width: 100%;
-    max-width: 1400px;
-    margin: 0 auto;
-  }
+        /* Progress Bar */
+        .progress { position: fixed; top: 0; left: 0; height: 4px; background: rgba(255,255,255,0.05); width: 100%; z-index: 100; }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, #818cf8, #e879f9); width: 0%; transition: width 0.4s ease; }
 
-  /* ─── SLIDE 5: Outputs clínicos ─── */
-  #s5 {
-    background: var(--surface);
-    padding: 0 7vw;
-    justify-content: center;
-  }
-  #s5 .s5-inner {
-    width: 100%;
-    max-width: 1400px;
-    margin: 0 auto;
-  }
+        /* Controls */
+        .controls {
+            position: fixed;
+            bottom: clamp(1rem, 3vw, 2rem);
+            right: clamp(1rem, 3vw, 2rem);
+            display: flex;
+            gap: 1rem;
+            z-index: 100;
+        }
+        .btn {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            width: clamp(45px, 5vw, 60px);
+            height: clamp(45px, 5vw, 60px);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.2s ease;
+            font-size: 1.5rem;
+        }
+        .btn:hover { background: rgba(255, 255, 255, 0.15); transform: scale(1.05); }
+        .btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
 
-  /* ─── SLIDE 6: Visión futura ─── */
-  #s6 {
-    background:
-      radial-gradient(ellipse at 15% 90%, rgba(44,123,116,.18), transparent 45%),
-      radial-gradient(ellipse at 85% 10%, rgba(198,154,73,.14), transparent 40%),
-      linear-gradient(145deg, #0c2730 0%, #173e4a 60%, #0f2d36 100%);
-    color: #edf5f7;
-    padding: 0 7vw;
-    justify-content: center;
-  }
-  #s6 .s6-inner {
-    width: 100%;
-    max-width: 1400px;
-    margin: 0 auto;
-  }
-
-  /* ─── Shared slide-heading ─── */
-  .slide-caption {
-    font-size: 11px;
-    letter-spacing: .16em;
-    text-transform: uppercase;
-    font-weight: 600;
-    margin-bottom: 12px;
-  }
-  .slide-caption.light { color: var(--gold-light); }
-  .slide-caption.dark  { color: var(--teal); }
-
-  .slide-title {
-    font-family: var(--serif);
-    font-size: clamp(28px, 3.2vw, 52px);
-    line-height: 1.06;
-    letter-spacing: -.02em;
-    margin-bottom: 18px;
-  }
-  .slide-title.light { color: #f5fbfc; }
-  .slide-title.dark  { color: var(--petrol); }
-
-  .slide-body {
-    font-size: clamp(13px, 1.2vw, 16px);
-    line-height: 1.75;
-    max-width: 56ch;
-  }
-  .slide-body.light { color: rgba(237,245,247,.80); }
-  .slide-body.dark  { color: var(--muted); }
-
-  /* ─── Cards ─── */
-  .card {
-    border-radius: 22px;
-    border: 1px solid var(--line);
-    background: #fff;
-    padding: 26px;
-  }
-  .card.soft {
-    background: linear-gradient(180deg,#fcfefe,#f4f9fa);
-  }
-  .card.petrol {
-    background: rgba(255,255,255,.06);
-    border-color: rgba(255,255,255,.11);
-    backdrop-filter: blur(10px);
-  }
-  .card.teal-accent {
-    background: var(--teal-soft);
-    border-color: rgba(44,123,116,.18);
-  }
-  .card.gold-accent {
-    background: var(--gold-soft);
-    border-color: rgba(198,154,73,.20);
-  }
-
-  .card-title {
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: .04em;
-    margin-bottom: 10px;
-  }
-  .card-title.light { color: #f5fbfc; }
-  .card-title.dark  { color: var(--petrol); }
-  .card-title.teal  { color: var(--teal); }
-  .card-title.gold  { color: #8a6820; }
-
-  .card-body {
-    font-size: 13px;
-    line-height: 1.68;
-  }
-  .card-body.light { color: rgba(237,245,247,.75); }
-  .card-body.dark  { color: var(--muted); }
-
-  /* ─── Badge ─── */
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 6px 13px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-  }
-  .badge.petrol  { background: var(--petrol-soft); color: var(--petrol-2); border: 1px solid rgba(22,57,69,.10); }
-  .badge.teal    { background: var(--teal-soft);   color: var(--teal);     border: 1px solid rgba(44,123,116,.16); }
-  .badge.gold    { background: var(--gold-soft);   color: #7a5e18;         border: 1px solid rgba(198,154,73,.22); }
-  .badge.lux     { background: rgba(198,154,73,.15); color: var(--gold-light); border: 1px solid rgba(198,154,73,.28); }
-
-  /* ─── Grid helpers ─── */
-  .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-  .g3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
-  .g4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
-
-  /* ─── Verhulst diagram frame ─── */
-  .model-img-wrap {
-    border-radius: 24px;
-    overflow: hidden;
-    border: 1px solid var(--line-md);
-    box-shadow: 0 24px 60px rgba(14,31,38,.12);
-    background: #fff;
-    display: flex;
-    flex-direction: column;
-  }
-  .model-img-wrap img {
-    width: 100%;
-    height: auto;
-    display: block;
-  }
-  .model-img-caption {
-    padding: 14px 20px;
-    background: var(--petrol);
-    font-size: 11px;
-    letter-spacing: .10em;
-    text-transform: uppercase;
-    color: rgba(237,245,247,.70);
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  /* ─── Flow stepper (slide 4) ─── */
-  .flow-stepper {
-    display: flex;
-    align-items: flex-start;
-    gap: 0;
-    margin-top: 36px;
-    position: relative;
-  }
-  .flow-step {
-    flex: 1;
-    position: relative;
-  }
-  .flow-step-inner {
-    padding: 0 12px;
-  }
-  .step-num {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: rgba(198,154,73,.20);
-    border: 2px solid rgba(198,154,73,.40);
-    display: grid;
-    place-items: center;
-    font-size: 16px;
-    font-weight: 800;
-    color: var(--gold-light);
-    margin-bottom: 14px;
-    flex-shrink: 0;
-    position: relative;
-    z-index: 2;
-  }
-  .flow-arrow {
-    position: absolute;
-    top: 24px;
-    right: -18px;
-    font-size: 20px;
-    color: rgba(237,245,247,.30);
-    z-index: 3;
-  }
-  .flow-step:last-child .flow-arrow { display: none; }
-  .step-name {
-    font-size: 13px;
-    font-weight: 700;
-    color: #f5fbfc;
-    margin-bottom: 6px;
-  }
-  .step-desc {
-    font-size: 12px;
-    color: rgba(237,245,247,.60);
-    line-height: 1.60;
-  }
-
-  /* ─── Output cards (slide 5) ─── */
-  .output-card {
-    border-radius: 20px;
-    border: 1px solid var(--line);
-    padding: 22px;
-    background: linear-gradient(160deg,#fafefe,#f1f7f8);
-    transition: transform .2s, box-shadow .2s;
-  }
-  .output-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 36px rgba(14,31,38,.10);
-  }
-  .output-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 15px;
-    display: grid;
-    place-items: center;
-    font-size: 22px;
-    margin-bottom: 14px;
-  }
-  .output-icon.teal   { background: var(--teal-soft);  }
-  .output-icon.gold   { background: var(--gold-soft);  }
-  .output-icon.petrol { background: var(--petrol-soft); }
-  .output-card h4 {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--petrol);
-    margin-bottom: 8px;
-  }
-  .output-card p {
-    font-size: 13px;
-    color: var(--muted);
-    line-height: 1.65;
-  }
-
-  /* ─── Divider line ─── */
-  .hdivider {
-    height: 1px;
-    background: var(--line);
-    margin: 20px 0;
-  }
-  .hdivider.light { background: rgba(255,255,255,.10); }
-
-  /* ─── KPI chip ─── */
-  .kpi-row {
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-    margin-top: 20px;
-  }
-  .kpi {
-    padding: 14px 20px;
-    border-radius: 18px;
-    background: rgba(255,255,255,.07);
-    border: 1px solid rgba(255,255,255,.10);
-  }
-  .kpi strong {
-    display: block;
-    font-size: 26px;
-    font-weight: 800;
-    color: var(--gold-light);
-    line-height: 1;
-    margin-bottom: 4px;
-  }
-  .kpi span {
-    font-size: 11px;
-    letter-spacing: .10em;
-    text-transform: uppercase;
-    color: rgba(237,245,247,.55);
-    font-weight: 600;
-  }
-
-  /* ─── Fase pills (slide 6) ─── */
-  .fase-box {
-    border-radius: 22px;
-    border: 1px solid rgba(255,255,255,.11);
-    padding: 24px 28px;
-    backdrop-filter: blur(10px);
-  }
-  .fase-box.active {
-    background: rgba(44,123,116,.16);
-    border-color: rgba(44,123,116,.28);
-  }
-  .fase-box.future {
-    background: rgba(255,255,255,.04);
-    border-color: rgba(255,255,255,.08);
-  }
-  .fase-label {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 999px;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    margin-bottom: 14px;
-  }
-  .fase-label.active {
-    background: rgba(44,123,116,.28);
-    color: #7fd6cc;
-    border: 1px solid rgba(44,123,116,.35);
-  }
-  .fase-label.future {
-    background: rgba(255,255,255,.06);
-    color: rgba(237,245,247,.45);
-    border: 1px solid rgba(255,255,255,.10);
-  }
-  .fase-title {
-    font-size: 17px;
-    font-weight: 700;
-    color: #f5fbfc;
-    margin-bottom: 10px;
-  }
-  .fase-desc {
-    font-size: 13px;
-    color: rgba(237,245,247,.65);
-    line-height: 1.65;
-  }
-  .fase-items {
-    margin-top: 12px;
-    display: grid;
-    gap: 7px;
-  }
-  .fase-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 9px;
-    font-size: 12px;
-    color: rgba(237,245,247,.68);
-    line-height: 1.50;
-  }
-  .fase-item::before {
-    content: '→';
-    color: var(--gold-light);
-    font-weight: 700;
-    flex-shrink: 0;
-    margin-top: 1px;
-  }
-
-  /* ─── Vision regen card ─── */
-  .regen-vision {
-    margin-top: 28px;
-    padding: 24px 28px;
-    border-radius: 22px;
-    background: rgba(198,154,73,.10);
-    border: 1px solid rgba(198,154,73,.22);
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 18px;
-    align-items: flex-start;
-  }
-  .regen-icon {
-    font-size: 28px;
-    padding-top: 2px;
-  }
-  .regen-vision h4 {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--gold-light);
-    margin-bottom: 8px;
-  }
-  .regen-vision p {
-    font-size: 13px;
-    color: rgba(237,245,247,.68);
-    line-height: 1.68;
-  }
-
-  /* ─── Audiogram SVG helpers ─── */
-  .svg-chart {
-    width: 100%;
-    height: auto;
-    display: block;
-  }
-
-  /* Scrollbar hide for cleaner look */
-  body::-webkit-scrollbar { width: 4px; }
-  body::-webkit-scrollbar-track { background: transparent; }
-  body::-webkit-scrollbar-thumb { background: rgba(15,45,54,.25); border-radius: 2px; }
-
-  /* ─── Reduced motion ─── */
-  @media (prefers-reduced-motion: reduce) {
-    html { scroll-behavior: auto; }
-    .output-card { transition: none; }
-  }
-</style>
+        /* Slide Number Hint */
+        .slide-number {
+            position: fixed;
+            bottom: clamp(1rem, 3vw, 2.5rem);
+            left: clamp(1rem, 3vw, 2rem);
+            font-size: clamp(1rem, 1.5vw, 1.2rem);
+            font-weight: 600;
+            color: #64748b;
+            z-index: 100;
+        }
+    </style>
 </head>
 <body>
 
-<!-- Navigation dots -->
-<nav class="nav-dots" aria-label="Navegación entre diapositivas">
-  <a class="nav-dot active" href="#s1" aria-label="Portada"></a>
-  <a class="nav-dot" href="#s2" aria-label="El simulador"></a>
-  <a class="nav-dot" href="#s3" aria-label="El problema"></a>
-  <a class="nav-dot" href="#s4" aria-label="Flujo de trabajo"></a>
-  <a class="nav-dot" href="#s5" aria-label="Outputs clínicos"></a>
-  <a class="nav-dot" href="#s6" aria-label="Visión futura"></a>
-</nav>
-
-<!-- ══════════════════════════════════════════════════════
-     SLIDE 1 · Portada
-══════════════════════════════════════════════════════ -->
-<section class="slide" id="s1" aria-labelledby="s1-title">
-  <div class="s1-inner">
-    <!-- Left: copy -->
-    <div>
-      <div class="eyebrow">🔬 Grupo de Investigación en Audiología &nbsp;·&nbsp; 2026</div>
-      <h1 id="s1-title">
-        Laboratorio<br>
-        Virtual <em>Auditivo</em>
-      </h1>
-      <p class="lead">
-        Plataforma de simulación biofísica de la periferia auditiva para investigación clínica.
-        Ejecutar el modelo de Verhulst, visualizar respuestas neurales y comparar perfiles auditivos
-        —sin instalar nada, desde el navegador.
-      </p>
-      <div class="pill-row">
-        <span class="pill gold">Fase 1 en desarrollo</span>
-        <span class="pill">Modelo Verhulst et al. 2018</span>
-        <span class="pill">EFR · ABR · Audiograma</span>
-        <span class="pill">No invasivo</span>
-      </div>
+    <!-- UI Overlay Elements -->
+    <div class="progress">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <div class="orb-1"></div>
+    <div class="orb-2"></div>
+    <div class="slide-number" id="slideNumber">1 / 6</div>
+    <div class="controls">
+        <button class="btn" id="prevBtn" title="Slide Anterior (Flecha Izquierda)">←</button>
+        <button class="btn" id="nextBtn" title="Siguiente Slide (Flecha Derecha, Espacio)">→</button>
     </div>
 
-    <!-- Right: summary card -->
-    <div>
-      <div class="s1-card">
-        <div class="card-label">¿Qué ofrece el laboratorio?</div>
-        <div class="s1-stat">
-          <div class="stat-row">
-            <div class="stat-icon">🦻</div>
-            <div class="stat-text">
-              <strong>Simulación biofísica de la cóclea</strong>
-              <span>Desde el estímulo sonoro hasta la respuesta neural (EFR, ABR), pasando por OHC, IHC y nervio auditivo.</span>
+    <!-- Presentation Content -->
+    <div class="slider-wrapper" id="slider">
+        
+        <!-- Slide 1: Portada -->
+        <div class="slide">
+            <div class="card layout-center">
+                <h1>Laboratorio Virtual Auditivo</h1>
+                <p class="subtitle">Plataforma digital interactiva para la ejecución, visualización y análisis del modelo biológico periférico humano.</p>
             </div>
-          </div>
-          <div class="stat-row">
-            <div class="stat-icon">📊</div>
-            <div class="stat-text">
-              <strong>Audiograma como entrada</strong>
-              <span>El perfil auditivo del paciente alimenta directamente la simulación. El modelo predice qué respuesta neural es esperable.</span>
+        </div>
+
+        <!-- Slide 2: El Modelo (Imagen protagónica) -->
+        <div class="slide">
+            <div class="card layout-figure">
+                <h2>El Modelo de Verhulst (2018)</h2>
+                <div class="figure-container">
+                    <img src="verhulst_model.png" alt="Esquema computacional del sistema auditivo periférico">
+                </div>
+                <p class="figure-caption">Puente científico esencial que vincula el micro-daño celular con las ondas electrofisiológicas macroscópicas.</p>
             </div>
-          </div>
-          <div class="stat-row">
-            <div class="stat-icon">🔬</div>
-            <div class="stat-text">
-              <strong>Comparación y trazabilidad</strong>
-              <span>El resultado se compara con cohortes de referencia y queda registrado para reproducibilidad científica.</span>
+        </div>
+
+        <!-- Slide 3: Conceptos Fundamentales (Poco texto, alto impacto) -->
+        <div class="slide">
+            <div class="card">
+                <h2>Conceptos Fundamentales</h2>
+                <div class="grid-list cols-2">
+                    <div class="grid-item">
+                        <h3>¿Qué medimos? (El EFR)</h3>
+                        <p>El Envelope Following Response es la métrica de cómo el tronco cerebral reacciona eléctricamente al sonido.</p>
+                    </div>
+                    <div class="grid-item">
+                        <h3>Entradas y Salidas</h3>
+                        <p>Recibe audiogramas y parámetros anatómicos para simular actividad nerviosa, células ciliadas y ondas cerebrales resultantes.</p>
+                    </div>
+                    <div class="grid-item">
+                        <h3>Limitación Actual</h3>
+                        <p>No revela diagnósticos nuevos para pacientes de sala de espera. No es un predictor inverso.</p>
+                    </div>
+                    <div class="grid-item">
+                        <h3>El Paradigma Propuesto</h3>
+                        <p>Su verdadero valor es investigativo: comprender dinámicas celulares invisibles nos permitirá crear las audiometrías ultra-sensibles del mañana.</p>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-        <div class="s1-tag">
-          💡 El objetivo es reducir la distancia entre el dato clínico (audiograma) y la hipótesis fisiológica (sinaptopatía, pérdida coclear) sin experimentos invasivos.
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="slide-num">01 / 06</div>
-</section>
 
-<!-- ══════════════════════════════════════════════════════
-     SLIDE 2 · El simulador: Verhulst et al. 2018
-══════════════════════════════════════════════════════ -->
-<section class="slide" id="s2" aria-labelledby="s2-title">
-  <div class="s2-inner">
-    <!-- Left: copy -->
-    <div>
-      <div class="slide-caption dark">El motor del laboratorio</div>
-      <h2 class="slide-title dark" id="s2-title">
-        Modelo biofísico<br>de la periferia auditiva
-      </h2>
-      <p class="slide-body dark">
-        El núcleo del sistema es el modelo de <strong>Verhulst et al. (2018)</strong>, que simula
-        el recorrido completo del sonido desde el oído medio hasta las respuestas neurales medibles
-        (EFR, ABR, OAE).
-      </p>
-
-      <div class="hdivider" style="margin:20px 0;"></div>
-
-      <div class="g2" style="gap:14px;">
-        <div class="card soft" style="padding:18px;">
-          <div style="font-size:20px;margin-bottom:8px;">🌀</div>
-          <div class="card-title dark" style="font-size:13px;">Mecánica coclear</div>
-          <div class="card-body dark" style="font-size:12px;">Modelo de línea de transmisión con 500 canales de frecuencia. Simula ganancia de OHC y pérdida coclear.</div>
-        </div>
-        <div class="card soft" style="padding:18px;">
-          <div style="font-size:20px;margin-bottom:8px;">⚡</div>
-          <div class="card-title dark" style="font-size:13px;">Sinapsis auditiva</div>
-          <div class="card-body dark" style="font-size:12px;">Modelo de exocitosis de la IHC + fibras AN de distinto umbral (SR alto, medio, bajo). Detecta sinaptopatía oculta.</div>
-        </div>
-        <div class="card soft" style="padding:18px;">
-          <div style="font-size:20px;margin-bottom:8px;">🧠</div>
-          <div class="card-title dark" style="font-size:13px;">Respuestas neurales</div>
-          <div class="card-body dark" style="font-size:12px;">Genera ABR (ondas I, III, V), EFR y OAE comparables con registros de laboratorio reales.</div>
-        </div>
-        <div class="card soft" style="padding:18px;">
-          <div style="font-size:20px;margin-bottom:8px;">🎯</div>
-          <div class="card-title dark" style="font-size:13px;">Perfiles de pérdida</div>
-          <div class="card-body dark" style="font-size:12px;">El audiograma del paciente parametriza el modelo. NH, SNHL leve-moderado o severo.</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Right: diagram -->
-    <div>
-      <div class="model-img-wrap" style="max-height:78vh;">
-        <img
-          src="verhulst_model.png"
-          alt="Diagrama del modelo Verhulst et al. 2018: flujo desde el estímulo AM hasta EFR/ABR pasando por oído medio, cóclea, IHC, sinapsis auditiva y núcleos del tronco encefálico"
-          style="max-height:68vh; object-fit:contain;"
-        >
-        <div class="model-img-caption">
-          <span>Verhulst et al. 2018 — Biophysical Auditory Periphery Model</span>
-          <span class="badge lux" style="border-radius:999px;padding:4px 10px;font-size:10px;">Motor del laboratorio</span>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="slide-num dark">02 / 06</div>
-</section>
-
-<!-- ══════════════════════════════════════════════════════
-     SLIDE 3 · El problema que resuelve
-══════════════════════════════════════════════════════ -->
-<section class="slide" id="s3" aria-labelledby="s3-title">
-  <div class="s3-inner">
-    <!-- Left: problem statement -->
-    <div>
-      <div class="slide-caption dark">Contexto clínico e investigativo</div>
-      <h2 class="slide-title dark" id="s3-title">
-        ¿Por qué necesitamos<br>un laboratorio virtual?
-      </h2>
-      <p class="slide-body dark">
-        Los fonoaudiólogos cuentan con audiogramas, OAE y respuestas neurales —pero integrar
-        esas capas en una sola lectura fisiológica requiere costosas herramientas de modelado
-        que no están al alcance del laboratorio clínico.
-      </p>
-
-      <div style="margin-top:24px; display:grid; gap:14px;">
-        <div class="card" style="padding:18px 22px; display:flex; align-items:flex-start; gap:14px;">
-          <span style="font-size:22px;flex-shrink:0;">⚠️</span>
-          <div>
-            <div class="card-title dark" style="font-size:14px;margin-bottom:6px;">La brecha entre audiograma y fisiología</div>
-            <div class="card-body dark" style="font-size:13px;">Un audiograma normal no descarta sinaptopatía. El modelo revela lo que el umbral tonal no muestra.</div>
-          </div>
-        </div>
-        <div class="card" style="padding:18px 22px; display:flex; align-items:flex-start; gap:14px;">
-          <span style="font-size:22px;flex-shrink:0;">🧩</span>
-          <div>
-            <div class="card-title dark" style="font-size:14px;margin-bottom:6px;">Datos dispersos, interpretación fragmentada</div>
-            <div class="card-body dark" style="font-size:13px;">EFR, ABR y audiograma se analizan por separado. El laboratorio los integra en una sola narrativa científica.</div>
-          </div>
-        </div>
-        <div class="card" style="padding:18px 22px; display:flex; align-items:flex-start; gap:14px;">
-          <span style="font-size:22px;flex-shrink:0;">🔒</span>
-          <div>
-            <div class="card-title dark" style="font-size:14px;margin-bottom:6px;">Modelos complejos, acceso limitado</div>
-            <div class="card-body dark" style="font-size:13px;">El modelo de Verhulst requiere Python, dependencias pesadas y configuración manual. Esta plataforma lo expone con un clic.</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Right: solution -->
-    <div>
-      <div class="card" style="padding:28px; height:100%; box-shadow:0 20px 60px rgba(14,31,38,.10);">
-        <div class="slide-caption dark" style="margin-bottom:16px;">La solución</div>
-
-        <div style="display:grid; gap:16px;">
-          <div style="padding:18px 20px; border-radius:18px; background:var(--teal-soft); border:1px solid rgba(44,123,116,.18);">
-            <div class="card-title teal" style="font-size:14px;margin-bottom:6px;">📂 Subida de audiogramas</div>
-            <div class="card-body dark" style="font-size:13px;">El clínico carga el perfil auditivo del paciente (CSV/JSON) desde la interfaz. No se requiere software adicional.</div>
-          </div>
-          <div style="padding:18px 20px; border-radius:18px; background:var(--petrol-soft); border:1px solid rgba(15,45,54,.10);">
-            <div class="card-title dark" style="font-size:14px;margin-bottom:6px;">⚙️ Ejecución remota del modelo</div>
-            <div class="card-body dark" style="font-size:13px;">El modelo de Verhulst corre en segundo plano sobre el servidor. El investigador solo espera el resultado.</div>
-          </div>
-          <div style="padding:18px 20px; border-radius:18px; background:var(--gold-soft); border:1px solid rgba(198,154,73,.20);">
-            <div class="card-title gold" style="font-size:14px;margin-bottom:6px;">📈 Visualización integrada</div>
-            <div class="card-body dark" style="font-size:13px;">Audiograma, EFR simulado y métricas neurales conviven en una sola pantalla interactiva.</div>
-          </div>
-          <div style="padding:18px 20px; border-radius:18px; background:var(--teal-soft); border:1px solid rgba(44,123,116,.18);">
-            <div class="card-title teal" style="font-size:14px;margin-bottom:6px;">📁 Historial y reproducibilidad</div>
-            <div class="card-body dark" style="font-size:13px;">Cada corrida queda guardada con sus parámetros. Reproducible, comparable y exportable para publicación.</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="slide-num dark">03 / 06</div>
-</section>
-
-<!-- ══════════════════════════════════════════════════════
-     SLIDE 4 · Flujo de trabajo del investigador
-══════════════════════════════════════════════════════ -->
-<section class="slide" id="s4" aria-labelledby="s4-title">
-  <div class="s4-inner">
-    <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:16px;">
-      <div>
-        <div class="slide-caption light">Flujo de trabajo · Fase 1</div>
-        <h2 class="slide-title light" id="s4-title">Del audiograma al resultado neural<br>en cinco pasos</h2>
-      </div>
-      <span class="badge lux">Fase 1 — En curso</span>
-    </div>
-
-    <div class="flow-stepper">
-      <div class="flow-step">
-        <div class="flow-step-inner">
-          <div class="step-num">01</div>
-          <div class="step-name">Inicio de sesión</div>
-          <div class="step-desc">El investigador accede con credenciales seguras a su espacio de trabajo personal.</div>
-        </div>
-        <div class="flow-arrow">→</div>
-      </div>
-      <div class="flow-step">
-        <div class="flow-step-inner">
-          <div class="step-num">02</div>
-          <div class="step-name">Subir audiograma</div>
-          <div class="step-desc">Carga el perfil auditivo del caso (CSV/JSON). El sistema valida y almacena el archivo.</div>
-        </div>
-        <div class="flow-arrow">→</div>
-      </div>
-      <div class="flow-step">
-        <div class="flow-step-inner">
-          <div class="step-num">03</div>
-          <div class="step-name">Configurar simulación</div>
-          <div class="step-desc">Define estímulo (AM tone, chirp), intensidad y parámetros del protocolo EFR/ABR.</div>
-        </div>
-        <div class="flow-arrow">→</div>
-      </div>
-      <div class="flow-step">
-        <div class="flow-step-inner">
-          <div class="step-num">04</div>
-          <div class="step-name">Ejecutar el modelo</div>
-          <div class="step-desc">El modelo de Verhulst corre en el servidor. Genera respuestas neurales a partir del perfil auditivo cargado.</div>
-        </div>
-        <div class="flow-arrow">→</div>
-      </div>
-      <div class="flow-step">
-        <div class="flow-step-inner">
-          <div class="step-num">05</div>
-          <div class="step-name">Analizar resultados</div>
-          <div class="step-desc">EFR, ABR y métricas clave se visualizan junto al audiograma. Exportable a CSV/MAT.</div>
-        </div>
-      </div>
-    </div>
-
-    <div style="margin-top:36px;">
-      <div class="hdivider light"></div>
-      <div style="display:grid; grid-template-columns: repeat(3,1fr); gap:18px; margin-top:24px;">
-        <div class="card petrol">
-          <div class="card-title light" style="font-size:13px;margin-bottom:8px;">🦻 Estímulos soportados</div>
-          <div class="card-body light" style="font-size:12px;">Tonos AM, chirp broadband, speech envelope tracking. Paramétrico y configurable por el investigador.</div>
-        </div>
-        <div class="card petrol">
-          <div class="card-title light" style="font-size:13px;margin-bottom:8px;">📐 Perfiles de pérdida auditiva</div>
-          <div class="card-body light" style="font-size:12px;">Audición normal (NH), SNHL leve a moderada, perfil descendente. Cualquier audiograma válido.</div>
-        </div>
-        <div class="card petrol">
-          <div class="card-title light" style="font-size:13px;margin-bottom:8px;">⏱ Sin fricción técnica</div>
-          <div class="card-body light" style="font-size:12px;">No es necesario instalar Python, MATLAB ni dependencias. La interfaz web lleva al resultado directamente.</div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="slide-num">04 / 06</div>
-</section>
-
-<!-- ══════════════════════════════════════════════════════
-     SLIDE 5 · Outputs clínicos y científicos
-══════════════════════════════════════════════════════ -->
-<section class="slide" id="s5" aria-labelledby="s5-title">
-  <div class="s5-inner">
-    <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:16px; margin-bottom:28px;">
-      <div>
-        <div class="slide-caption dark">Resultados generados</div>
-        <h2 class="slide-title dark" id="s5-title">Qué produce el laboratorio para el investigador</h2>
-      </div>
-      <span class="badge teal">Outputs de Fase 1</span>
-    </div>
-
-    <div style="display:grid; grid-template-columns: 1.3fr 0.7fr; gap:28px; align-items:start;">
-      <!-- Left: output cards -->
-      <div class="g2" style="gap:16px;">
-        <div class="output-card">
-          <div class="output-icon teal">📉</div>
-          <h4>EFR simulado</h4>
-          <p>Envelope Following Response estimada a partir del audiograma. Permite comparar la sincronización temporal con cohortes de referencia (NH vs. SNHL).</p>
-        </div>
-        <div class="output-card">
-          <div class="output-icon petrol">🌊</div>
-          <h4>ABR — Ondas I, III, V</h4>
-          <p>Auditory Brainstem Response simulada. La onda I refleja la actividad del nervio auditivo y es un marcador sensible de sinaptopatía coclear.</p>
-        </div>
-        <div class="output-card">
-          <div class="output-icon gold">🔊</div>
-          <h4>OAE (Emisiones otoacústicas)</h4>
-          <p>Reflejo de la función de las OHC. Complementa el audiograma para diferenciar pérdida sensorial de pérdida neural.</p>
-        </div>
-        <div class="output-card">
-          <div class="output-icon teal">📊</div>
-          <h4>Audiograma simulado</h4>
-          <p>Contraste entre el umbral cargado y el umbral esperado derivado del modelo. Útil para identificar inconsistencias clínicas.</p>
-        </div>
-        <div class="output-card">
-          <div class="output-icon petrol">🔢</div>
-          <h4>Métricas neurales</h4>
-          <p>Amplitud EFR, phase-locking value, latencias ABR, SNR. Exportables en CSV y MAT para análisis estadístico posterior.</p>
-        </div>
-        <div class="output-card">
-          <div class="output-icon gold">📁</div>
-          <h4>Historial de corridas</h4>
-          <p>Cada simulación queda registrada con parámetros, fecha y resultados. Reproducible para publicación científica.</p>
-        </div>
-      </div>
-
-      <!-- Right: SVG audiogram mock -->
-      <div>
-        <div class="card" style="padding:22px; box-shadow:0 16px 48px rgba(14,31,38,.09);">
-          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
-            <div>
-              <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:4px;">Ejemplo</div>
-              <div style="font-size:16px;font-weight:700;color:var(--petrol);">EFR: SNHL leve vs. NH</div>
+        <!-- Slide 4: Infraestructura -->
+        <div class="slide">
+            <div class="card">
+                <h2>Estructura del Laboratorio</h2>
+                <p class="subtitle" style="margin-bottom: 2rem;">Tecnología pesada en segundo plano para una superficie fluida.</p>
+                <div class="grid-list">
+                    <div class="grid-item">
+                        <h3>Interfaz Educativa e Investigativa</h3>
+                        <p>Plataforma web amigable y responsiva. Subir audiogramas o visualizar gráficas desde computadoras o tablets de forma intuitiva.</p>
+                    </div>
+                    <div class="grid-item">
+                        <h3>Motor Remoto de Alto Rendimiento</h3>
+                        <p>Cálculo matemático complejo ejecutado remotamente en la nube para que ningún proceso congele el dispositivo del investigador local.</p>
+                    </div>
+                    <div class="grid-item">
+                        <h3>Visualización Gráfica Interactiva</h3>
+                        <p>Capacidad de hacer zoom, aislar variables y observar minuciosamente la fisiología, otorgando mayor valor que solo visualizar el EFR final.</p>
+                    </div>
+                </div>
             </div>
-            <span class="badge gold">Simulado</span>
-          </div>
-          <svg class="svg-chart" viewBox="0 0 400 240" role="img" aria-label="Gráfico comparativo de EFR entre un caso con SNHL leve y audición normal">
-            <defs>
-              <linearGradient id="goldFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#c69a49" stop-opacity=".28"/>
-                <stop offset="100%" stop-color="#c69a49" stop-opacity="0"/>
-              </linearGradient>
-            </defs>
-            <g stroke="#d5dde2" stroke-width="1">
-              <line x1="48" y1="20" x2="48" y2="200"/>
-              <line x1="48" y1="200" x2="380" y2="200"/>
-              <line x1="48" y1="155" x2="380" y2="155"/>
-              <line x1="48" y1="110" x2="380" y2="110"/>
-              <line x1="48" y1="65"  x2="380" y2="65"/>
-            </g>
-            <!-- SNHL case (gold) -->
-            <path d="M48 172 C80 188,108 90,148 106 C190 122,212 186,252 164 C294 142,328 64,366 88 L366 200 L48 200 Z" fill="url(#goldFill)"/>
-            <path d="M48 172 C80 188,108 90,148 106 C190 122,212 186,252 164 C294 142,328 64,366 88" fill="none" stroke="#c69a49" stroke-width="3.5" stroke-linecap="round"/>
-            <!-- NH reference (teal dashed) -->
-            <path d="M48 162 C82 148,116 70,154 88 C194 106,228 164,264 140 C302 116,336 56,366 72" fill="none" stroke="#2c7b74" stroke-width="2.5" stroke-dasharray="8 6" stroke-linecap="round"/>
-            <!-- Axis labels -->
-            <g fill="#8a9fa6" font-family="Inter,Segoe UI,sans-serif" font-size="10">
-              <text x="30" y="204">0</text>
-              <text x="22" y="159">0.2</text>
-              <text x="22" y="114">0.4</text>
-              <text x="22" y="69">0.6</text>
-              <text x="44" y="218">0 ms</text>
-              <text x="345" y="218">200 ms</text>
-            </g>
-          </svg>
-          <div style="display:flex; gap:18px; margin-top:12px; padding-top:12px; border-top:1px solid var(--line);">
-            <div style="display:flex; align-items:center; gap:7px; font-size:11px; color:var(--muted);">
-              <span style="display:inline-block;width:24px;height:3px;background:#c69a49;border-radius:2px;"></span>
-              SNHL leve simulado
+        </div>
+
+        <!-- Slide 5: Flujo Paso a Paso -->
+        <div class="slide">
+            <div class="card">
+                <h2>El Recorrido del Investigador</h2>
+                <div class="grid-list cols-2">
+                    <div class="grid-item">
+                        <h3>1. Ingreso y Carga</h3>
+                        <p>Autenticación segura y subida rápida de datos audiológicos de prueba.</p>
+                    </div>
+                    <div class="grid-item">
+                        <h3>2. Configuración</h3>
+                        <p>Personalización de variables patológicas o fisiológicas a estudiar en el paciente simulado.</p>
+                    </div>
+                    <div class="grid-item">
+                        <h3>3. Análisis en la Nube</h3>
+                        <p>El sistema encapsula y procesa la hipercomplejidad matemática de Verhulst de forma invisible.</p>
+                    </div>
+                    <div class="grid-item">
+                        <h3>4. Interpretación</h3>
+                        <p>Manipulación directa del despliegue gráfico para análisis educativo, investigativo y de nuevos métodos.</p>
+                    </div>
+                </div>
             </div>
-            <div style="display:flex; align-items:center; gap:7px; font-size:11px; color:var(--muted);">
-              <span style="display:inline-block;width:24px;height:3px;background:#2c7b74;border-radius:2px; border-top: 2px dashed #2c7b74;"></span>
-              Referencia NH
+        </div>
+
+        <!-- Slide 6: El Impacto -->
+        <div class="slide">
+            <div class="card layout-center">
+                <h2>Aporte y Crecimiento</h2>
+                <br>
+                <div class="grid-list" style="text-align: left;">
+                    <div class="grid-item">
+                        <h3>Democratización de la Simulación</h3>
+                        <p>Suprime la barrera de programar o poseer hardware avanzado. Las investigadoras pueden enfocarse 100% en diseñar el experimento biomecánico.</p>
+                    </div>
+                    <div class="grid-item">
+                        <h3>Traduciendo Ciencia en Futuro</h3>
+                        <p>Ayuda a relacionar fenómenos como la "sordera oculta" e identificar cómo modificarían las señales, siendo la herramienta principal para validar los biomarcadores del futuro.</p>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
 
-        <div style="margin-top:16px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-          <div style="padding:14px 16px; border-radius:16px; background:var(--petrol-soft); border:1px solid var(--line);">
-            <div style="font-size:10px;letter-spacing:.10em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:4px;">Amplitud EFR</div>
-            <div style="font-size:22px;font-weight:800;color:var(--petrol);">0.41 µV</div>
-          </div>
-          <div style="padding:14px 16px; border-radius:16px; background:var(--teal-soft); border:1px solid rgba(44,123,116,.16);">
-            <div style="font-size:10px;letter-spacing:.10em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:4px;">Phase locking</div>
-            <div style="font-size:22px;font-weight:800;color:var(--teal);">0.63</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="slide-num dark">05 / 06</div>
-</section>
-
-<!-- ══════════════════════════════════════════════════════
-     SLIDE 6 · Visión futura y regeneración celular
-══════════════════════════════════════════════════════ -->
-<section class="slide" id="s6" aria-labelledby="s6-title">
-  <div class="s6-inner">
-    <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:16px; margin-bottom:28px;">
-      <div>
-        <div class="slide-caption light">Hoja de ruta del proyecto</div>
-        <h2 class="slide-title light" id="s6-title">Lo que viene</h2>
-      </div>
-      <div class="kpi-row" style="margin-top:0;">
-        <div class="kpi">
-          <strong>2</strong>
-          <span>Fases planificadas</span>
-        </div>
-        <div class="kpi">
-          <strong>1°</strong>
-          <span>Simulación + UI</span>
-        </div>
-        <div class="kpi">
-          <strong>∞</strong>
-          <span>Extensible</span>
-        </div>
-      </div>
     </div>
 
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; align-items:start;">
-      <!-- Fase 1 -->
-      <div class="fase-box active">
-        <div class="fase-label active">✓ Fase 1 — En desarrollo</div>
-        <div class="fase-title">Motor científico y gestión de usuarios</div>
-        <div class="fase-desc">Infraestructura base: registrarse, subir audiogramas, ejecutar la simulación de Verhulst y visualizar resultados numéricos y gráficos.</div>
-        <div class="fase-items">
-          <div class="fase-item">Subida y validación de audiogramas (CSV/JSON)</div>
-          <div class="fase-item">Ejecución remota del modelo de Verhulst et al.</div>
-          <div class="fase-item">Visualización de EFR, ABR y audiograma en tiempo real</div>
-          <div class="fase-item">Historial de corridas reproducible y exportable</div>
-        </div>
-      </div>
+    <!-- Presentation Logic -->
+    <script>
+        const slider = document.getElementById('slider');
+        const slides = document.querySelectorAll('.slide');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const progressBar = document.getElementById('progressBar');
+        const slideNumber = document.getElementById('slideNumber');
+        
+        let currentSlide = 0;
+        const totalSlides = slides.length;
 
-      <!-- Fase 2 -->
-      <div class="fase-box future">
-        <div class="fase-label future">⟳ Fase 2 — Planificada</div>
-        <div class="fase-title">Asistente de investigación con IA</div>
-        <div class="fase-desc">Transformar el laboratorio en un entorno de estudio: bibliografía científica consultable con IA que cruza los resultados de simulación con papers.</div>
-        <div class="fase-items">
-          <div class="fase-item">Consulta de literatura científica (RAG sobre PDFs)</div>
-          <div class="fase-item">IA local (DeepSeek / Qwen) para extraer contexto biológico</div>
-          <div class="fase-item">Cruce automático de resultados con evidencia empírica</div>
-          <div class="fase-item">Base para integrar modelos de regeneración celular (CompuCell3D)</div>
-        </div>
-      </div>
-    </div>
+        function updateSlider() {
+            // Translate the entire wrapper
+            slider.style.transform = `translateX(-${currentSlide * 100}vw)`;
+            
+            // Toggle active classes for CSS animations (like zoom and fade on cards)
+            slides.forEach((slide, index) => {
+                if (index === currentSlide) {
+                    slide.classList.add('active');
+                } else {
+                    slide.classList.remove('active');
+                }
+            });
 
-    <!-- Regeneration vision -->
-    <div class="regen-vision">
-      <div class="regen-icon">🔬</div>
-      <div>
-        <h4>Visión a futuro: Simulación de regeneración coclear</h4>
-        <p>
-          Una vez consolidada la plataforma, el proyecto se extiende hacia un modelo multi-escala
-          de <strong style="color:var(--gold-light);">regeneración de células ciliadas</strong>:
-          simular qué tan bien volvería a escuchar un paciente después de una terapia regenerativa
-          (terapia génica, inhibidores Notch, células madre), prediciendo el beneficio clínico real
-          antes de cualquier experimento en humanos. Questo apre una frontera de investigación
-          sin precedentes en fonoaudiología computacional.
-        </p>
-      </div>
-    </div>
-  </div>
-  <div class="slide-num">06 / 06</div>
-</section>
+            // Update UI indicators
+            progressBar.style.width = `${((currentSlide + 1) / totalSlides) * 100}%`;
+            slideNumber.innerText = `${currentSlide + 1} / ${totalSlides}`;
 
-<script>
-  // Update active nav dot on scroll
-  const dots = document.querySelectorAll('.nav-dot');
-  const slides = document.querySelectorAll('.slide');
+            // Handle button states
+            prevBtn.disabled = currentSlide === 0;
+            nextBtn.disabled = currentSlide === totalSlides - 1;
+        }
 
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const idx = Array.from(slides).indexOf(entry.target);
-        dots.forEach((d, i) => d.classList.toggle('active', i === idx));
-      }
-    });
-  }, { threshold: 0.55 });
+        // Init
+        updateSlider();
 
-  slides.forEach(s => observer.observe(s));
+        // Button Controls
+        nextBtn.addEventListener('click', () => {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                updateSlider();
+            }
+        });
 
-  // Keyboard navigation
-  document.addEventListener('keydown', (e) => {
-    const cur = Array.from(slides).findIndex(s => {
-      const r = s.getBoundingClientRect();
-      return r.top >= -10 && r.top < window.innerHeight * 0.5;
-    });
-    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
-      if (cur < slides.length - 1) slides[cur + 1].scrollIntoView({ behavior: 'smooth' });
-    }
-    if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
-      if (cur > 0) slides[cur - 1].scrollIntoView({ behavior: 'smooth' });
-    }
-  });
-</script>
+        prevBtn.addEventListener('click', () => {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlider();
+            }
+        });
+
+        // Keyboard Controls (Arrows and Spacebar)
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                if (currentSlide < totalSlides - 1) {
+                    currentSlide++;
+                    updateSlider();
+                }
+            } else if (e.key === 'ArrowLeft') {
+                if (currentSlide > 0) {
+                    currentSlide--;
+                    updateSlider();
+                }
+            }
+        });
+
+        // Swipe Controls for Mobile/Tablets
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        window.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        window.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, { passive: true });
+
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            if (touchStartX - touchEndX > swipeThreshold && currentSlide < totalSlides - 1) {
+                currentSlide++; // Swiped Left - Next
+                updateSlider();
+            }
+            if (touchEndX - touchStartX > swipeThreshold && currentSlide > 0) {
+                currentSlide--; // Swiped Right - Prev
+                updateSlider();
+            }
+        }
+    </script>
 </body>
 </html>
