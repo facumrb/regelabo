@@ -8,6 +8,8 @@
 
 **Objetivo Principal:** Permitir a fonoaudiólogas y profesionales de la audición cargar audiogramas, ejecutar de forma remota simulaciones predictivas complejas del sistema auditivo y visualizar los resultados de forma clara y procesable, sin requerir conocimientos avanzados de programación.
 
+<div style="page-break-before: always;"></div>
+
 ## 2. El Modelo de Verhulst (2018)
 
 ![Modelo de Verhulst](verhulst_model.png)
