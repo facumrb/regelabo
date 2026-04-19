@@ -34,7 +34,7 @@ Generar un EFR simulado a partir de un audiograma no aporta información clínic
 
 Sirve para investigar cómo distintos tipos de daño (definidos arbitrariamente) afectan el EFR, lo cual puede guiar el desarrollo de nuevas pruebas diagnósticas o mejorar la interpretación de mediciones reales. Para eso es necesario entender los parámetros del modelo y las patologías que permite simular. En el campo más amplio de la fonoaudiología y audiología computacional, estos modelos se utilizan para varias cosas más que la práctica clínica y la industria están adoptando en la actualidad.
 
-La **utilidad reina** de este modelo en fonoaudiología es servir como plataforma para diseñar, predecir y validar los exámenes auditivos del futuro. Al entender cómo una pérdida de sinapsis nerviosas (sordera oculta) modifica una señal, el modelo Verhulst permite a los investigadores crear pruebas más sensibles que algún día la fonoaudióloga sí instalará en su consultorio para identificar daños auditivos de manera muy temprana, antes de que lleguen a arruinar una audiometría estándar.
+La **utilidad reina** de este modelo en fonoaudiología es servir como plataforma para diseñar, predecir y validar los exámenes auditivos. Al entender cómo una pérdida de sinapsis nerviosas (sordera oculta) modifica una señal, el modelo Verhulst permite a los investigadores crear pruebas más sensibles que algún día la fonoaudióloga sí instalará en su consultorio para identificar daños auditivos de manera muy temprana, antes de que lleguen a arruinar una audiometría estándar.
 
 **Beneficios de la Visualización Propuesta**
 
@@ -89,4 +89,4 @@ El desarrollo de la plataforma se enfoca en una fase única y sólida, priorizan
 La creación de esta plataforma representará un avance significativo en la manera de abordar el análisis auditivo computacional:
 * **Accesibilidad de Modelos Complejos:** Se elimina el obstáculo de requerir conocimientos de programación o computadoras muy potentes. La fonoaudióloga solo se concentra en el diseño de experimentos y la comprensión fisiológica, mientras la plataforma hace el trabajo pesado.
 * **Traducción de la Ciencia a Nuevos Diagnósticos:** Permite explorar modelos experimentales de manera sencilla, acortando la brecha entre los avances científicos de laboratorio y el desarrollo de futuras pruebas audiológicas.
-* **Crecimiento Continuo:** La base del proyecto permite que, en un futuro, se puedan incorporar nuevos modelos auditivos desarrollados por la comunidad científica sin necesidad de reconstruir la plataforma.
+* **Crecimiento Continuo:** La base del proyecto permite que, se puedan incorporar nuevos modelos auditivos desarrollados por la comunidad científica sin necesidad de reconstruir la plataforma.
