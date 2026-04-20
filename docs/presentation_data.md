@@ -16,7 +16,7 @@
 
 **¿Qué es el modelo de Verhulst?**
 
-El modelo de Verhulst es una simulación computacional avanzada del sistema auditivo periférico humano. ??En el ámbito de la Investigación Fonoaudiológica y la Docencia de la Audición, este modelo funciona como un laboratorio de fisiología virtual. Permite al investigador fonoaudiólogo o al docente de la cátedra de Audiología manipular variables patológicas (como la pérdida de sinapsis en la 'Sordera Oculta') y observar en tiempo real cómo se altera la electrofisiología coclear y neural, algo imposible de realizar in vivo en humanos con fines meramente exploratorios.??
+El modelo de Verhulst es una simulación computacional avanzada del sistema auditivo periférico humano. En el ámbito de la Investigación Fonoaudiológica y la Docencia de la Audición, este modelo funciona como un laboratorio de fisiología virtual. Permite a la investigadora fonoaudióloga o a la docente de Audiología manipular variables patológicas (como la pérdida de sinapsis en la 'Sordera Oculta') y observar en tiempo real cómo se altera la electrofisiología coclear y neural, algo imposible de realizar in vivo en humanos con fines meramente exploratorios.
 
 **¿Qué es el EFR (Envelope Following Response)?**
 
@@ -34,14 +34,14 @@ Generar un EFR simulado a partir de un audiograma no aporta información clínic
 
 **Utilidad y Relevancia**
 
-Sirve para investigar cómo distintos tipos de daño (definidos arbitrariamente) afectan el EFR, lo cual puede guiar el desarrollo de nuevas pruebas diagnósticas o mejorar la interpretación de mediciones reales. Para eso es necesario entender los parámetros del modelo y las patologías que permite simular. En el campo más amplio de la fonoaudiología y audiología computacional, estos modelos se utilizan para varias cosas más que la práctica clínica y la industria están adoptando en la actualidad.
+Sirve para investigar cómo distintos tipos de daño (definidos arbitrariamente) afectan el EFR, lo cual puede guiar el desarrollo de nuevas pruebas diagnósticas o mejorar la interpretación de mediciones reales. Para eso es necesario entender los parámetros del modelo y las patologías que permite simular. En el campo más amplio de la fonoaudiología y audiología computacional, estos modelos se utilizan para varias cosas más, cosas que la práctica clínica y la industria están adoptando en la actualidad.
 
 La **utilidad reina** de este modelo en fonoaudiología es servir como plataforma para diseñar, predecir y validar los exámenes auditivos. Al entender cómo una pérdida de sinapsis nerviosas (sordera oculta) modifica una señal, el modelo Verhulst permite a los investigadores crear pruebas más sensibles que algún día la fonoaudióloga sí instalará en su consultorio para identificar daños auditivos de manera muy temprana, antes de que lleguen a arruinar una audiometría estándar.
 
-> ??Propuesta de investigación: Proponer pruebas de EFR que sean más sensibles a la sordera oculta. Esto implica que algunas pruebas van a permitir diferenciar entre un paciente con pérdida de audición tradicional y otro con sordera oculta. 
-> El modelo de Verhulst es una herramienta fundamental para diseñar estas pruebas, ya que permite simular cómo diferentes tipos de daño afectan el EFR y, por lo tanto, guiar el desarrollo de pruebas más precisas. Entendiendo que esto luego debe complementarse con estudios clínicos para validar su efectividad en la práctica real.??
+> Propuesta de investigación: Proponer pruebas de EFR que sean más sensibles a la sordera oculta. Esto implica que algunas pruebas van a permitir diferenciar entre un paciente con pérdida de audición tradicional y otro con sordera oculta. 
+> El modelo de Verhulst es una herramienta fundamental para diseñar estas pruebas, ya que permite simular cómo diferentes tipos de daño afectan el EFR y, por lo tanto, guiar el desarrollo de pruebas más precisas. Entendiendo que esto luego debe complementarse con estudios clínicos para validar su efectividad en la práctica real.
 
-**Beneficios de la Visualización Propuesta**
+**Beneficios de Visualización**
 
 Además, como complemento, exploramos el modelo de Verhulst con la siguiente hipótesis:
 > *"La visualización gráfica interactiva de los estados internos del modelo Verhulst/CoNNear (vibración de membrana basilar, potencial receptor IHC, liberación sináptica, tasas de disparo AN y EFR final) permitirá a los usuarios comprender con mayor profundidad los mecanismos fisiológicos subyacentes a la simulación y mejorar su capacidad de análisis clínico y educativo en comparación con la visualización tradicional que solo muestra el EFR final."*
