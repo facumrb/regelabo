@@ -3,422 +3,626 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Presentación: Laboratorio Virtual Auditivo</title>
-    <!-- Modern high-end font -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <title>Laboratorio Virtual Auditivo - Proyecto de Simulación</title>
+    <!-- Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        /* CSS reset and base settings */
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { 
-            font-family: 'Outfit', sans-serif; 
-            background-color: #0b0f19; 
-            color: #f8fafc; 
-            overflow: hidden; 
+        :root {
+            --bg-color: #0b0f19;
+            --bg-gradient: radial-gradient(circle at top right, #1a2035, #0b0f19 50%);
+            --accent-primary: #6366f1; /* Indigo */
+            --accent-secondary: #06b6d4; /* Cyan */
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --slide-padding: clamp(2rem, 5vw, 4rem);
         }
 
-        /* Abstract glowing orbs for premium aesthetics */
-        .orb-1 { position: absolute; width: 60vw; height: 60vw; background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, rgba(0,0,0,0) 60%); top: -20vh; left: -20vw; border-radius: 50%; pointer-events: none; z-index: 1;}
-        .orb-2 { position: absolute; width: 50vw; height: 50vw; background: radial-gradient(circle, rgba(236,72,153,0.15) 0%, rgba(0,0,0,0) 60%); bottom: -20vh; right: -10vw; border-radius: 50%; pointer-events: none; z-index: 1;}
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-primary) var(--bg-color);
+        }
 
-        /* Presenter Container */
-        .slider-wrapper {
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-color);
+            background-image: var(--bg-gradient);
+            color: var(--text-light);
+            overflow: hidden;
+            line-height: 1.6;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+        }
+
+        /* Presentation Container */
+        .presentation-container {
             height: 100vh;
             width: 100vw;
             display: flex;
-            transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
-            z-index: 2;
-            position: relative;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+
+        /* Hide scrollbar for clean presentation */
+        .presentation-container::-webkit-scrollbar {
+            display: none;
+        }
+        .presentation-container {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
         }
 
         .slide {
-            min-width: 100vw;
             height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 5vh 5vw;
-        }
-
-        /* Glassmorphism Card System */
-        .card {
-            background: rgba(30, 41, 59, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 24px;
-            padding: clamp(2rem, 5vw, 4rem);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+            min-width: 100vw;
+            scroll-snap-align: center;
             display: flex;
             flex-direction: column;
-            width: 100%;
-            max-width: 1200px;
+            justify-content: center;
+            padding: var(--slide-padding);
             position: relative;
-            transform: scale(0.95);
-            opacity: 0;
-            transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
-        .slide.active .card {
-            transform: scale(1);
-            opacity: 1;
+        /* Slide Layouts */
+        .slide-content-center {
+            text-align: center;
+            max-width: 900px;
+            margin: 0 auto;
         }
 
-        /* Typography */
-        h1 { 
-            font-size: clamp(2.5rem, 6vw, 4.5rem); 
-            font-weight: 800; 
-            line-height: 1.1; 
-            margin-bottom: 1rem;
-            background: linear-gradient(135deg, #a5b4fc, #f472b6, #e879f9); 
-            -webkit-background-clip: text; 
-            -webkit-text-fill-color: transparent; 
-        }
-        h2 { 
-            font-size: clamp(1.8rem, 4vw, 3rem); 
-            font-weight: 800; 
-            margin-bottom: 2rem; 
-            color: #f1f5f9; 
-            letter-spacing: -0.5px;
-        }
-        .subtitle {
-            font-size: clamp(1.1rem, 2vw, 1.6rem);
-            color: #94a3b8;
-            font-weight: 300;
-            line-height: 1.5;
-        }
-
-        /* Center content layout */
-        .layout-center { text-align: center; align-items: center; justify-content: center; }
-        .layout-center p { margin-top: 1.5rem; max-width: 800px; }
-        
-        /* Grid Layout for concise bullet points */
-        .grid-list {
+        .slide-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 1.5rem;
+            gap: 2rem;
+            height: 100%;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
             width: 100%;
         }
-        @media(min-width: 768px) {
-            .grid-list.cols-2 { grid-template-columns: 1fr 1fr; }
+
+        @media (min-width: 968px) {
+            .slide-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 4rem;
+            }
         }
-        .grid-item {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.05);
-            padding: clamp(1.2rem, 2vw, 1.8rem);
+
+        /* Typography Styles */
+        .title-main {
+            font-size: clamp(3rem, 6vw, 5rem);
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.1;
+        }
+
+        .subtitle {
+            font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+            color: var(--accent-secondary);
+            font-family: 'Outfit', sans-serif;
+            margin-bottom: 2rem;
+        }
+
+        .slide-title {
+            font-size: clamp(2rem, 4vw, 3.5rem);
+            margin-bottom: 1.5rem;
+            color: #fff;
+        }
+
+        .highlight-text {
+            color: var(--accent-secondary);
+        }
+
+        .body-text {
+            font-size: clamp(1rem, 1.5vw, 1.3rem);
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Glassmorphism Cards */
+        .glass-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Specific Elements */
+        .image-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 20px;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
+            padding: 1rem;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+            border-radius: 12px;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
+            transition: transform 0.5s ease;
+        }
+
+        .image-container img:hover {
+            transform: scale(1.02);
+        }
+
+        /* For the massive image slide */
+        .fullscreen-img-slide {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-bottom: 2rem; /* Give a bit of breathing room at bottom */
+        }
+        
+        .fullscreen-img-slide .image-container {
+            flex-grow: 1;
+            width: 100%;
+            min-height: 0; /* Crucial for flex child to not overflow */
+            margin-top: 1rem;
+            padding: 0;
+            background: transparent;
+            border: none;
+            display: flex;
+            justify-content: center;
+        }
+
+        .fullscreen-img-slide img {
+            max-height: 100%; /* Scale to fit container exactly */
+            max-width: 100%;
+            height: auto;
+            width: auto;
+            object-fit: contain; /* Guarantee aspect ratio preservation */
+        }
+
+        ul.feature-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        ul.feature-list li {
+            position: relative;
+            padding-left: 2rem;
+            font-size: clamp(1rem, 1.4vw, 1.25rem);
+            color: var(--text-light);
+        }
+
+        ul.feature-list li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--accent-primary);
+            font-weight: bold;
+        }
+
+        /* Step workflow grid */
+        .workflow-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .step-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
             border-radius: 16px;
+            padding: 1.5rem;
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
-            transition: transform 0.3s ease, background 0.3s ease;
-        }
-        .grid-item:hover {
-            transform: translateY(-5px);
-            background: rgba(255,255,255,0.06);
-            border-color: rgba(255,255,255,0.1);
-        }
-        .grid-item h3 { font-size: clamp(1.1rem, 1.5vw, 1.4rem); color: #a5b4fc; }
-        .grid-item p { font-size: clamp(0.9rem, 1.2vw, 1.1rem); color: #cbd5e1; line-height: 1.5; margin: 0; }
-
-        /* The Verhulst Figure Slide - Designed to maximize image space */
-        .layout-figure {
-            height: 90vh; /* Takes up massive vertical space */
-            max-width: 95vw; /* Wide format for image */
-            padding: clamp(1rem, 2vw, 2rem);
-            display: flex;
-            flex-direction: column;
-        }
-        .layout-figure h2 { 
-            margin-bottom: 1rem; 
-            text-align: center;
-        }
-        .figure-container {
-            flex-grow: 1; /* This pushes the image to take ALL remaining space */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            height: 0; /* Important trick to let flex-basis grow correctly */
-            padding: 1rem;
-        }
-        .figure-container img {
-            width: auto;
-            height: auto;
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain; /* ensures image fits while maintaining proportion perfectly */
-            filter: drop-shadow(0 20px 30px rgba(0,0,0,0.5));
-            border-radius: 12px;
-        }
-        .figure-caption {
-            text-align: center;
-            margin-top: 1rem;
-            font-size: clamp(0.9rem, 1.2vw, 1.1rem);
-            color: #94a3b8;
-            font-weight: 300;
         }
 
-        /* Progress Bar */
-        .progress { position: fixed; top: 0; left: 0; height: 4px; background: rgba(255,255,255,0.05); width: 100%; z-index: 100; }
-        .progress-bar { height: 100%; background: linear-gradient(90deg, #818cf8, #e879f9); width: 0%; transition: width 0.4s ease; }
+        .step-number {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-secondary);
+            line-height: 1;
+        }
 
-        /* Controls */
+        .step-title {
+            font-weight: 600;
+            font-size: 1.2rem;
+            color: #fff;
+        }
+
+        /* Floating Nav Controls */
         .controls {
             position: fixed;
-            bottom: clamp(1rem, 3vw, 2rem);
-            right: clamp(1rem, 3vw, 2rem);
+            bottom: 2rem;
+            right: 2rem;
             display: flex;
             gap: 1rem;
             z-index: 100;
-        }
-        .btn {
-            background: rgba(30, 41, 59, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #fff;
-            width: clamp(45px, 5vw, 60px);
-            height: clamp(45px, 5vw, 60px);
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
+            background: rgba(11, 15, 25, 0.7);
+            padding: 0.5rem;
+            border-radius: 30px;
             backdrop-filter: blur(10px);
-            transition: all 0.2s ease;
-            font-size: 1.5rem;
+            border: 1px solid var(--glass-border);
         }
-        .btn:hover { background: rgba(255, 255, 255, 0.15); transform: scale(1.05); }
-        .btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
 
-        /* Slide Number Hint */
-        .slide-number {
+        .control-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-light);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .control-btn:hover {
+            background: var(--accent-primary);
+            transform: scale(1.1);
+        }
+
+        .control-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+        }
+        
+        .progress-bar {
             position: fixed;
-            bottom: clamp(1rem, 3vw, 2.5rem);
-            left: clamp(1rem, 3vw, 2rem);
-            font-size: clamp(1rem, 1.5vw, 1.2rem);
-            font-weight: 600;
-            color: #64748b;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: var(--accent-secondary);
+            width: 0%;
+            transition: width 0.3s ease;
             z-index: 100;
         }
+
+        /* Abstract blobs for modern look */
+        .blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            opacity: 0.4;
+        }
+
+        .blob-1 {
+            top: -10%;
+            left: -10%;
+            width: 50vw;
+            height: 50vw;
+            background: rgba(99, 102, 241, 0.5); /* Indigo blob */
+        }
+        
+        .blob-2 {
+            bottom: -20%;
+            right: -10%;
+            width: 60vw;
+            height: 60vw;
+            background: rgba(6, 182, 212, 0.3); /* Cyan blob */
+        }
+
     </style>
 </head>
 <body>
+    
+    <div class="progress-bar" id="progressBar"></div>
 
-    <!-- UI Overlay Elements -->
-    <div class="progress">
-        <div class="progress-bar" id="progressBar"></div>
-    </div>
-    <div class="orb-1"></div>
-    <div class="orb-2"></div>
-    <div class="slide-number" id="slideNumber">1 / 6</div>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
     <div class="controls">
-        <button class="btn" id="prevBtn" title="Slide Anterior (Flecha Izquierda)">←</button>
-        <button class="btn" id="nextBtn" title="Siguiente Slide (Flecha Derecha, Espacio)">→</button>
+        <button class="control-btn" id="prevBtn" title="Anterior">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 18l-6-6 6-6"/>
+            </svg>
+        </button>
+        <button class="control-btn" id="nextBtn" title="Siguiente">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 18l6-6-6-6"/>
+            </svg>
+        </button>
     </div>
 
-    <!-- Presentation Content -->
-    <div class="slider-wrapper" id="slider">
+    <div class="presentation-container" id="presentation">
         
         <!-- Slide 1: Portada -->
-        <div class="slide">
-            <div class="card layout-center">
-                <h1>Laboratorio Virtual Auditivo</h1>
-                <p class="subtitle">Plataforma digital interactiva para la ejecución, visualización y análisis del modelo biológico periférico humano.</p>
-            </div>
-        </div>
-
-        <!-- Slide 2: El Modelo (Imagen protagónica) -->
-        <div class="slide">
-            <div class="card layout-figure">
-                <h2>El Modelo de Verhulst (2018)</h2>
-                <div class="figure-container">
-                    <img src="verhulst_model.png" alt="Esquema computacional del sistema auditivo periférico">
-                </div>
-                <p class="figure-caption">Puente científico esencial que vincula el micro-daño celular con las ondas electrofisiológicas macroscópicas.</p>
-            </div>
-        </div>
-
-        <!-- Slide 3: Conceptos Fundamentales (Poco texto, alto impacto) -->
-        <div class="slide">
-            <div class="card">
-                <h2>Conceptos Fundamentales</h2>
-                <div class="grid-list cols-2">
-                    <div class="grid-item">
-                        <h3>¿Qué medimos? (El EFR)</h3>
-                        <p>El Envelope Following Response es la métrica de cómo el tronco cerebral reacciona eléctricamente al sonido.</p>
-                    </div>
-                    <div class="grid-item">
-                        <h3>Entradas y Salidas</h3>
-                        <p>Recibe audiogramas y parámetros anatómicos para simular actividad nerviosa, células ciliadas y ondas cerebrales resultantes.</p>
-                    </div>
-                    <div class="grid-item">
-                        <h3>Limitación Actual</h3>
-                        <p>No revela diagnósticos nuevos para pacientes de sala de espera. No es un predictor inverso.</p>
-                    </div>
-                    <div class="grid-item">
-                        <h3>El Paradigma Propuesto</h3>
-                        <p>Su verdadero valor es investigativo: comprender dinámicas celulares invisibles nos permitirá crear las audiometrías ultra-sensibles del mañana.</p>
-                    </div>
+        <section class="slide">
+            <div class="slide-content-center">
+                <h2 class="subtitle">Propuesta de Proyecto</h2>
+                <h1 class="title-main">Laboratorio Virtual Auditivo</h1>
+                <p class="body-text" style="font-size: 1.5rem; margin-top: 2rem;">
+                    Plataforma digital para el análisis de datos auditivos mediante simulaciones biológicas complejas.
+                </p>
+                <div class="glass-card" style="display: inline-block; margin-top: 2rem; text-align: left;">
+                    <p style="font-size: 1.2rem; color: #fff;">
+                        <strong class="highlight-text">Objetivo:</strong> Facilitar a fonoaudiólogas simulaciones predictivas remotas de forma clara y accesible.
+                    </p>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Slide 4: Infraestructura -->
-        <div class="slide">
-            <div class="card">
-                <h2>Estructura del Laboratorio</h2>
-                <p class="subtitle" style="margin-bottom: 2rem;">Tecnología pesada en segundo plano para una superficie fluida.</p>
-                <div class="grid-list">
-                    <div class="grid-item">
-                        <h3>Interfaz Educativa e Investigativa</h3>
-                        <p>Plataforma web amigable y responsiva. Subir audiogramas o visualizar gráficas desde computadoras o tablets de forma intuitiva.</p>
-                    </div>
-                    <div class="grid-item">
-                        <h3>Motor Remoto de Alto Rendimiento</h3>
-                        <p>Cálculo matemático complejo ejecutado remotamente en la nube para que ningún proceso congele el dispositivo del investigador local.</p>
-                    </div>
-                    <div class="grid-item">
-                        <h3>Visualización Gráfica Interactiva</h3>
-                        <p>Capacidad de hacer zoom, aislar variables y observar minuciosamente la fisiología, otorgando mayor valor que solo visualizar el EFR final.</p>
-                    </div>
+        <!-- Slide 2: Modelo Verhulst -->
+        <section class="slide">
+            <div class="slide-content-center">
+                <div class="glass-card" style="padding: 4rem;">
+                    <h2 class="slide-title">¿Qué es el modelo de <span class="highlight-text">Verhulst?</span></h2>
+                    <p class="body-text" style="font-size: 1.5rem; margin-bottom: 2rem;">Simulación computacional avanzada del sistema auditivo periférico humano (2018).</p>
+                    
+                    <ul class="feature-list" style="text-align: left; display: inline-block;">
+                        <li style="margin-bottom: 1.5rem;"><strong>Laboratorio de Fisiología Virtual:</strong> Permite investigación mediante alteración de parámetros sin invadir la anatomía humana.</li>
+                        <li><strong>Puente fundamental:</strong> Vincula el daño anatómico celular preciso (e.g. Sordera Oculta) con métricas que podemos medir externamente.</li>
+                    </ul>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Slide 5: Flujo Paso a Paso -->
-        <div class="slide">
-            <div class="card">
-                <h2>El Recorrido del Investigador</h2>
-                <div class="grid-list cols-2">
-                    <div class="grid-item">
-                        <h3>1. Ingreso y Carga</h3>
-                        <p>Autenticación segura y subida rápida de datos audiológicos de prueba.</p>
-                    </div>
-                    <div class="grid-item">
-                        <h3>2. Configuración</h3>
-                        <p>Personalización de variables patológicas o fisiológicas a estudiar en el paciente simulado.</p>
-                    </div>
-                    <div class="grid-item">
-                        <h3>3. Análisis en la Nube</h3>
-                        <p>El sistema encapsula y procesa la hipercomplejidad matemática de Verhulst de forma invisible.</p>
-                    </div>
-                    <div class="grid-item">
-                        <h3>4. Interpretación</h3>
-                        <p>Manipulación directa del despliegue gráfico para análisis educativo, investigativo y de nuevos métodos.</p>
-                    </div>
+        <!-- Slide 3: El Biomarcador EFR -->
+        <section class="slide">
+            <div class="slide-grid" style="grid-template-columns: 2fr 3fr;">
+                <div class="glass-card" style="height: auto; align-self: center;">
+                    <h2 class="slide-title">Biomarcador <span class="highlight-text">EFR</span></h2>
+                    <h3 style="color: var(--text-light); text-transform: uppercase; margin-bottom: 1.5rem; font-family: 'Outfit'; font-weight: 500;">Envelope Following Response</h3>
+                    
+                    <p class="body-text" style="font-size: 1.25rem;">
+                        Es una métrica que refleja cómo el oído reacciona a un sonido, produciendo impulsos nerviosos exactamente sincronizados con la <span class="highlight-text">envolvente del estímulo</span>.
+                    </p>
+                    <p class="body-text" style="font-size: 1.25rem; font-weight: 500; color: #fff; margin-top: 1rem; padding-left: 1rem; border-left: 3px solid var(--accent-secondary);">
+                        Señal eléctrica vital que se puede medir físicamente en el tronco cerebral.
+                    </p>
+                </div>
+                <div class="image-container" style="background: rgba(255,255,255,0.02);">
+                    <img src="./verhulst_model.png" alt="Esquema del Modelo de Verhulst" onerror="this.src='./fallback-img.png'; this.parentNode.innerHTML='<div style=\'text-align:center; padding: 2rem; border: 1px dashed rgba(255,255,255,0.2)\'>Aquí va la imagen<br><b>./verhulst_model.png</b><br><small>Asegúrate de que la ruta sea accesible desde este archivo HTML.</small></div>'">
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Slide 6: El Impacto -->
-        <div class="slide">
-            <div class="card layout-center">
-                <h2>Aporte y Crecimiento</h2>
-                <br>
-                <div class="grid-list" style="text-align: left;">
-                    <div class="grid-item">
-                        <h3>Democratización de la Simulación</h3>
-                        <p>Suprime la barrera de programar o poseer hardware avanzado. Las investigadoras pueden enfocarse 100% en diseñar el experimento biomecánico.</p>
-                    </div>
-                    <div class="grid-item">
-                        <h3>Traduciendo Ciencia en Futuro</h3>
-                        <p>Ayuda a relacionar fenómenos como la "sordera oculta" e identificar cómo modificarían las señales, siendo la herramienta principal para validar los biomarcadores del futuro.</p>
-                    </div>
+        <!-- Slide 4: Resultados de Simulación (Imágen Grande) -->
+        <section class="slide fullscreen-img-slide">
+            <h2 class="slide-title" style="margin-bottom: 0;">Análisis y <span class="highlight-text">Resultados</span></h2>
+            <p class="body-text" style="margin-bottom: 0;">Entradas (Audiograma) y Salidas clave simuladas</p>
+            <div class="image-container">
+                <img src="./easy_model_results.png" alt="Resultados y Señales del Modelo Verhulst" onerror="this.src='./fallback-img.png'; this.parentNode.innerHTML='<div style=\'text-align:center; padding: 2rem; border: 1px dashed rgba(255,255,255,0.2)\'>Aquí va la imagen<br><b>./easy_model_results.png</b><br><small>Asegúrate de que la ruta sea accesible desde este archivo HTML.</small></div>'">
+            </div>
+        </section>
+
+        <!-- Slide 4: Desglose de Visualización -->
+        <section class="slide">
+            <h2 class="slide-title text-center" style="text-align: center;">Explicación de las <span class="highlight-text">Señales</span></h2>
+            <div class="workflow-grid" style="grid-template-columns: repeat(2, 1fr); margin-top: 2rem;">
+                <!-- A -->
+                <div class="glass-card">
+                    <h3 style="color: var(--accent-secondary); margin-bottom: 0.5rem; font-size: 1.5rem;">A. Estímulo RAM</h3>
+                    <p class="body-text text-sm">Tono modulado en amplitud (fluctuación constante). Obliga a las neuronas auditivas a sincronizarse con el ritmo de su propia envolvente.</p>
+                </div>
+                <!-- B -->
+                <div class="glass-card">
+                    <h3 style="color: var(--accent-secondary); margin-bottom: 0.5rem; font-size: 1.5rem;">B. Onda EFR</h3>
+                    <p class="body-text text-sm">Señal cruda en el tiempo. Muestra cómo las neuronas auditivas "siguen" el ritmo del estímulo RAM. Refleja la cantidad de neuronas sanas activas.</p>
+                </div>
+                <!-- C -->
+                <div class="glass-card">
+                    <h3 style="color: var(--accent-secondary); margin-bottom: 0.5rem; font-size: 1.5rem;">C. Espectro FFT</h3>
+                    <p class="body-text text-sm">Vista frecuencial del EFR. Muestra los "picos" clave que diagnostican objetivamente la fuerza de la reacción de la red neuronal del oído.</p>
+                </div>
+                <!-- D -->
+                <div class="glass-card">
+                    <h3 style="color: var(--accent-secondary); margin-bottom: 0.5rem; font-size: 1.5rem;">D. Ondas ABR</h3>
+                    <p class="body-text text-sm">Potenciales evocados tradicionales de eventos abruptos. Muestra "estaciones de peaje" del nervio para detectar la ubicación precisa de un daño.</p>
                 </div>
             </div>
-        </div>
+        </section>
+
+        <!-- Slide 5: Limitaciones y Utilidad -->
+        <section class="slide">
+            <div class="slide-grid">
+                <div class="glass-card" style="border-top: 4px solid #ef4444;">
+                    <h2 class="slide-title" style="font-size: 2.5rem;">Limitación Clínica</h2>
+                    <p class="body-text">El modelo <strong style="color:#fff;">no aporta información diagnóstica nueva</strong> sobre pacientes regulares. No puede deducir retroactivamente un audiograma observando un EFR simulado.</p>
+                </div>
+                
+                <div class="glass-card" style="border-top: 4px solid var(--accent-secondary);">
+                    <h2 class="slide-title" style="font-size: 2.5rem;"><span class="highlight-text">Utilidad Reina</span></h2>
+                    <p class="body-text">Es una plataforma exclusiva de diseño y predicción investigativa.</p>
+                    <ul class="feature-list" style="margin-top: 1rem;">
+                        <li><strong>Diseño de Nuevas Pruebas:</strong> Ayuda a crear pruebas de EFR altamente sensibles a la "Sordera Oculta".</li>
+                        <li><strong>Validación Funcional:</strong> Explica mecánicamente por qué fisiologías internas afectan las mediciones externas de electrodos.</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="glass-card" style="margin: 3rem auto 0 max-width: 1000px; text-align: center; max-width: 1000px;">
+                <p style="font-size: 1.2rem; font-style: italic; color: var(--text-light);">
+                    "La visualización interactiva de estados internos mejorará el análisis clínico y educativo en comparación con las herramientas tradicionales que sólo muestran un EFR final."
+                </p>
+            </div>
+        </section>
+
+        <!-- Slide 6: El Entorno Técnico -->
+        <section class="slide">
+            <div class="slide-content-center" style="margin-bottom: 3rem;">
+                <h2 class="slide-title">Estructura del <span class="highlight-text">Entorno Laboratorio</span></h2>
+            </div>
+            
+            <div class="workflow-grid" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="glass-card" style="text-align: center;">
+                    <svg style="width: 50px; height: 50px; margin-bottom: 1rem; stroke: var(--accent-secondary); fill: none;" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                    <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">Interfaz Visual</h3>
+                    <p class="body-text">Plataforma web responsiva y amigable. Recepción y carga intuitiva de audiogramas y manipulación gráfica interactiva (zoom, aislamiento de variables, etc).</p>
+                </div>
+                
+                <div class="glass-card" style="text-align: center; border-color: var(--accent-secondary);">
+                    <svg style="width: 50px; height: 50px; margin-bottom: 1rem; stroke: var(--accent-secondary); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;" viewBox="0 0 24 24">
+                        <path d="M18 7V4H6l6 8-6 8h12v-3"/>
+                    </svg>
+                    <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">Motor Matemático</h3>
+                    <p class="body-text">Procesamientos pesados ejecutados en infraestructura 'Nube'. Paralelismo asíncrono para mantener todo fluido, sin congelar la PC del fonoaudiólogo.</p>
+                </div>
+
+                <div class="glass-card" style="text-align: center;">
+                    <svg style="width: 50px; height: 50px; margin-bottom: 1rem; stroke: var(--accent-secondary); fill: none;" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">Gestión Segura</h3>
+                    <p class="body-text">Entorno autenticado donde cada investigador conserva historiales, simulaciones cruzadas y configuraciones de forma confidencial.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 7: Flujo de Uso -->
+        <section class="slide">
+            <h2 class="slide-title text-center" style="text-align: center; margin-bottom: 3rem;">El Recorrido en <span class="highlight-text">6 Pasos</span></h2>
+            
+            <div class="workflow-grid">
+                <div class="step-card">
+                    <span class="step-number">01</span>
+                    <h4 class="step-title">Ingreso</h4>
+                    <p class="body-text text-sm">Sesión segura autenticada.</p>
+                </div>
+                <div class="step-card">
+                    <span class="step-number">02</span>
+                    <h4 class="step-title">Carga</h4>
+                    <p class="body-text text-sm">Sube audiograma empírico/teórico.</p>
+                </div>
+                <div class="step-card">
+                    <span class="step-number">03</span>
+                    <h4 class="step-title">Configuración</h4>
+                    <p class="body-text text-sm">Ajustes patológicos del medio.</p>
+                </div>
+                <div class="step-card">
+                    <span class="step-number">04</span>
+                    <h4 class="step-title">Análisis Remoto</h4>
+                    <p class="body-text text-sm">Cálculo en clúster backend.</p>
+                </div>
+                <div class="step-card">
+                    <span class="step-number">05</span>
+                    <h4 class="step-title">Almacenamiento</h4>
+                    <p class="body-text text-sm">Resultados seguros en base de datos.</p>
+                </div>
+                <div class="step-card" style="border-color: var(--accent-primary); background: rgba(99, 102, 241, 0.1);">
+                    <span class="step-number">06</span>
+                    <h4 class="step-title">Interpretación</h4>
+                    <p class="body-text text-sm">Visualización e interacción gráfica.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 8: Impacto -->
+        <section class="slide">
+            <div class="slide-content-center">
+                <h2 class="slide-title">El <span class="highlight-text">Impacto</span> a Futuro</h2>
+                <p class="body-text" style="font-size: 1.4rem; margin-bottom: 3rem;">
+                    Creando puentes reales entre investigadores y la fisiología pura sin dolores de cabeza computacionales.
+                </p>
+                
+                <ul class="feature-list" style="text-align: left; background: var(--glass-bg); padding: 3rem; border-radius: 20px; border: 1px solid var(--glass-border);">
+                    <li style="margin-bottom: 1.5rem;">
+                        <strong style="color: var(--accent-secondary); font-size: 1.4rem;">Accesibilidad Total:</strong> 
+                        La fonoaudióloga concentra su energía en el entendimiento auditivo, la plataforma hace el pesado trabajo matemático.
+                    </li>
+                    <li style="margin-bottom: 1.5rem;">
+                        <strong style="color: var(--accent-secondary); font-size: 1.4rem;">De la Teoría al Consultorio:</strong> 
+                        Permite acortar los años investigativos para dar luz a descubrimientos que terminan transformándose en herramientas clínicas cotidianas reales.
+                    </li>
+                    <li>
+                        <strong style="color: var(--accent-secondary); font-size: 1.4rem;">Evolución Constante:</strong> 
+                        Al ser una arquitectura modular, se pueden agregar fácilmente incontables simuladores y biomodelos nuevos.
+                    </li>
+                </ul>
+            </div>
+        </section>
 
     </div>
 
-    <!-- Presentation Logic -->
+    <!-- Script Minimalista para Navegación -->
     <script>
-        const slider = document.getElementById('slider');
+        const container = document.getElementById('presentation');
         const slides = document.querySelectorAll('.slide');
         const prevBtn = document.getElementById('prevBtn');
         const nextBtn = document.getElementById('nextBtn');
         const progressBar = document.getElementById('progressBar');
-        const slideNumber = document.getElementById('slideNumber');
-        
+
         let currentSlide = 0;
-        const totalSlides = slides.length;
 
-        function updateSlider() {
-            // Translate the entire wrapper
-            slider.style.transform = `translateX(-${currentSlide * 100}vw)`;
+        function updateProgress() {
+            // Calculate which slide we are on based on scroll
+            const scrollLeft = container.scrollLeft;
+            const width = window.innerWidth;
+            currentSlide = Math.round(scrollLeft / width);
             
-            // Toggle active classes for CSS animations (like zoom and fade on cards)
-            slides.forEach((slide, index) => {
-                if (index === currentSlide) {
-                    slide.classList.add('active');
-                } else {
-                    slide.classList.remove('active');
-                }
+            // Update Progress Bar
+            const percent = ((currentSlide) / (slides.length - 1)) * 100;
+            progressBar.style.width = percent + '%';
+        }
+
+        function goToSlide(index) {
+            if(index < 0 || index >= slides.length) return;
+            const targetX = index * window.innerWidth;
+            container.scrollTo({
+                left: targetX,
+                behavior: 'smooth'
             });
-
-            // Update UI indicators
-            progressBar.style.width = `${((currentSlide + 1) / totalSlides) * 100}%`;
-            slideNumber.innerText = `${currentSlide + 1} / ${totalSlides}`;
-
-            // Handle button states
-            prevBtn.disabled = currentSlide === 0;
-            nextBtn.disabled = currentSlide === totalSlides - 1;
         }
 
-        // Init
-        updateSlider();
+        // Listen for scroll to update UI
+        container.addEventListener('scroll', () => {
+            requestAnimationFrame(updateProgress);
+        });
 
-        // Button Controls
+        // Click navs
         nextBtn.addEventListener('click', () => {
-            if (currentSlide < totalSlides - 1) {
-                currentSlide++;
-                updateSlider();
-            }
+            if(currentSlide < slides.length - 1) goToSlide(currentSlide + 1);
         });
-
-        prevBtn.addEventListener('click', () => {
-            if (currentSlide > 0) {
-                currentSlide--;
-                updateSlider();
-            }
-        });
-
-        // Keyboard Controls (Arrows and Spacebar)
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowRight' || e.key === ' ') {
-                if (currentSlide < totalSlides - 1) {
-                    currentSlide++;
-                    updateSlider();
-                }
-            } else if (e.key === 'ArrowLeft') {
-                if (currentSlide > 0) {
-                    currentSlide--;
-                    updateSlider();
-                }
-            }
-        });
-
-        // Swipe Controls for Mobile/Tablets
-        let touchStartX = 0;
-        let touchEndX = 0;
         
-        window.addEventListener('touchstart', e => {
-            touchStartX = e.changedTouches[0].screenX;
-        }, { passive: true });
+        prevBtn.addEventListener('click', () => {
+            if(currentSlide > 0) goToSlide(currentSlide - 1);
+        });
 
-        window.addEventListener('touchend', e => {
-            touchEndX = e.changedTouches[0].screenX;
-            handleSwipe();
-        }, { passive: true });
+        // Keyboard arrows navigation
+        document.addEventListener('keydown', (e) => {
+            if(e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+                if(currentSlide < slides.length - 1) goToSlide(currentSlide + 1);
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                if(currentSlide > 0) goToSlide(currentSlide - 1);
+            }
+        });
 
-        function handleSwipe() {
-            const swipeThreshold = 50;
-            if (touchStartX - touchEndX > swipeThreshold && currentSlide < totalSlides - 1) {
-                currentSlide++; // Swiped Left - Next
-                updateSlider();
-            }
-            if (touchEndX - touchStartX > swipeThreshold && currentSlide > 0) {
-                currentSlide--; // Swiped Right - Prev
-                updateSlider();
-            }
-        }
+        // Initial setup
+        updateProgress();
     </script>
 </body>
 </html>

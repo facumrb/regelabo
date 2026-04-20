@@ -6,7 +6,7 @@
 
 **Propósito:** Plataforma digital que integra el modelo de simulación biológica de *Verhulst et al.* para el análisis y procesamiento de datos auditivos en un entorno unificado y accesible.
 
-**Objetivo Principal:** Permitir a fonoaudiólogas y profesionales de la audición cargar audiogramas, ejecutar de forma remota simulaciones predictivas complejas del sistema auditivo y visualizar los resultados de forma clara y procesable, sin la necesidad de recurir a un experto en simulación.
+**Objetivo Principal:** Permitir a fonoaudiólogas y profesionales de la audición cargar audiogramas, ejecutar de forma remota simulaciones predictivas complejas del sistema auditivo y visualizar los resultados de forma clara y procesable, sin la necesidad de recurir a profesionales de la simulación.
 
 <div style="page-break-before: always;"></div>
 
@@ -27,6 +27,22 @@ El EFR es una métrica o biomarcador que refleja cómo el oído reacciona a un s
 * **Salidas:** EFR, ANF (tasa de disparo de la fibra nerviosa), potenciales de membrana de la célula ciliada, respuestas del núcleo coclear y colículo inferior, y formas de onda de la ABR (respuesta auditiva del tronco cerebral).
 
 ![easy_model_results](easy_model_results.png)
+
+### A. RAM Stimulus (Estímulo Modulado en Amplitud)
+Es el "sonido de prueba" que se utiliza como **entrada** en el modelo o en una medición clínica. RAM significa *Rectangular/Round Amplitude-Modulated* (Tono modulado en amplitud). 
+* **En palabras sencillas:** En lugar de ser un pitido constante (tono puro) o un chasquido breve (clic), es un sonido continuo cuyo "volumen" sube y baja periódicamente a una frecuencia constante (por ejemplo, a 100 Hz). Esta fluctuación constante obliga a las neuronas del sistema auditivo a sincronizarse y "disparar" impulsos al mismo ritmo de esa variación (la "envolvente").
+
+### B. EFR Waveform (Forma de Onda de la Respuesta de Seguimiento de la Envolvente)
+Es la **salida** principal. El EFR (*Envelope Following Response*) es la señal eléctrica o biológica que genera el cerebro (específicamente en el tronco encefálico) en respuesta al estímulo RAM.
+* **En palabras sencillas:** Es la gráfica (onda) cruda en el tiempo que refleja cómo las neuronas auditivas están "siguiendo" o bailando al ritmo del volumen que sube y baja del estímulo RAM. Altera su amplitud (microvoltios) según la cantidad de neuronas sanas que logran sincronizarse.
+
+### C. FFT Spectrum with Harmonics (Espectro FFT con Armónicos)
+FFT significa *Fast Fourier Transform* (Transformada Rápida de Fourier). Es una operación matemática que convierte la forma de onda del EFR (que está en función del *tiempo*) a un gráfico en función de la *frecuencia*.
+* **En palabras sencillas:** Extrae las frecuencias que "brotan" de la onda EFR. Como el estímulo RAM obligó a las neuronas a disparar a un ritmo exacto (ej. 100 Hz), el espectro FFT mostrará un pico muy alto en esa frecuencia exacta (Frecuencia Fundamental) y en sus múltiplos matemáticos llamados **armónicos** (200 Hz, 300 Hz, etc.). Esta amplitud en el espectro FFT es la métrica que realmente usan las fonoaudiólogas para diagnosticar qué tan fuerte fue la reacción neuronal.
+
+### D. Individual ABR Waves (Ondas Individuales de ABR)
+El ABR (*Auditory Brainstem Response* o Potenciales Evocados Auditivos de Tronco Cerebral) es otra respuesta neurológica producida ante sonidos más abruptos (como los clics). A diferencia del EFR, que es continuo, el ABR es una serie de picos (tradicionalmente numerados con números romanos: I, II, III, IV, V). 
+* **En palabras sencillas:** El gráfico del ABR tiene varios picos sucesivos. Cada uno de ellos (*Individual ABR Waves*) se produce cuando el estímulo eléctrico pasa por una estación de "peaje" diferente del nervio auditivo y tronco cerebral (por ejemplo, la Onda I refleja el propio nervio auditivo y la Onda V representa el mesencéfalo). El modelo Verhulst también es capaz de simular la posición y el tamaño de estas ondas individuales para ubicar dónde existe un posible daño.
 
 **Limitación Clínica Actual**
 
