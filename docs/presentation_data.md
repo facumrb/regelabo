@@ -28,6 +28,8 @@ El EFR es una métrica o biomarcador que refleja cómo el oído reacciona a un s
 
 ![easy_model_results](easy_model_results.png)
 
+<div style="page-break-before: always;"></div>
+
 ### A. RAM Stimulus (Estímulo Modulado en Amplitud)
 Es el "sonido de prueba" que se utiliza como **entrada** en el modelo o en una medición clínica. RAM significa *Rectangular/Round Amplitude-Modulated* (Tono modulado en amplitud). 
 * **En palabras sencillas:** En lugar de ser un pitido constante (tono puro) o un chasquido breve (clic), es un sonido continuo cuyo "volumen" sube y baja periódicamente a una frecuencia constante (por ejemplo, a 100 Hz). Esta fluctuación constante obliga a las neuronas del sistema auditivo a sincronizarse y "disparar" impulsos al mismo ritmo de esa variación (la "envolvente").
