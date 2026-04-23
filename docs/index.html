@@ -601,6 +601,231 @@
             </div>
         </section>
 
+        <!-- Slide 9: Título de Funcionalidades -->
+        <section class="slide">
+            <div class="slide-content-center">
+                <h2 class="subtitle">Capacidades de la Plataforma</h2>
+                <h1 class="title-main">Funcionalidades <span class="highlight-text">Verificadas</span></h1>
+                <p class="body-text" style="font-size: 1.4rem; margin-top: 2rem;">
+                    8 casos de uso directamente soportados por el motor de simulación Verhulst 2018, validados contra el código fuente real.
+                </p>
+                <div class="workflow-grid" style="grid-template-columns: repeat(4, 1fr); margin-top: 3rem; gap: 1rem;">
+                    <div class="step-card" style="text-align:center;"><span class="step-number" style="font-size:1.3rem;">✅</span><p class="body-text" style="font-size:0.9rem; margin:0;">8 Factibles</p></div>
+                    <div class="step-card" style="text-align:center;"><span class="step-number" style="font-size:1.3rem; color:#f59e0b;">⚠️</span><p class="body-text" style="font-size:0.9rem; margin:0;">3 Parciales</p></div>
+                    <div class="step-card" style="text-align:center;"><span class="step-number" style="font-size:1.3rem; color:#ef4444;">❌</span><p class="body-text" style="font-size:0.9rem; margin:0;">4 Futuras</p></div>
+                    <div class="step-card" style="text-align:center; border-color: var(--accent-primary); background: rgba(99,102,241,0.1);"><span class="step-number" style="font-size:1.3rem; color:var(--accent-primary);">15</span><p class="body-text" style="font-size:0.9rem; margin:0;">Total analizadas</p></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 10: Func 1 - Mecanismos Fisiológicos -->
+        <section class="slide">
+            <div class="slide-grid">
+                <div>
+                    <h2 class="slide-title"><span class="highlight-text">01.</span> Mecanismos Fisiológicos</h2>
+                    <p class="body-text" style="font-size: 1.3rem; margin-bottom: 2rem;">
+                        Entender cómo funciona cada pieza del oído interno de manera independiente y qué pasa cuando una sola de ellas falla.
+                    </p>
+                    <div class="glass-card" style="border-left: 4px solid var(--accent-secondary);">
+                        <p style="color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">Caso de uso</p>
+                        <p style="color: #fff; font-size: 1.1rem;">Aislar el efecto del daño exclusivo en una sinapsis sobre la señal eléctrica al cerebro — imposible de hacer en un paciente real.</p>
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    <div class="glass-card" style="text-align: center;">
+                        <p style="color: var(--accent-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Se manipula</p>
+                        <p style="color: #fff; font-size: 1.2rem; font-weight: 600; margin-top: 0.5rem;">Polos de Shera (OHC) y fibras AN (nH, nM, nL) por separado</p>
+                    </div>
+                    <div class="glass-card" style="text-align: center;">
+                        <p style="color: var(--accent-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Se observa</p>
+                        <p style="color: #fff; font-size: 1.2rem; font-weight: 600; margin-top: 0.5rem;">Cada etapa: velocidad BM → potencial IHC → tasas AN → ondas ABR</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 11: Func 2 - Datos Sintéticos -->
+        <section class="slide">
+            <div class="slide-grid">
+                <div>
+                    <h2 class="slide-title"><span class="highlight-text">02.</span> Datos Sintéticos Controlados</h2>
+                    <p class="body-text" style="font-size: 1.3rem; margin-bottom: 2rem;">
+                        Crear miles de "pacientes virtuales" en segundos, configurando un daño auditivo exacto en cada uno.
+                    </p>
+                    <div class="glass-card" style="border-left: 4px solid var(--accent-secondary);">
+                        <p style="color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">Caso de uso</p>
+                        <p style="color: #fff; font-size: 1.1rem;">Generar miles de EFR virtuales para validar un nuevo software de diagnóstico, ahorrando meses de reclutamiento de pacientes.</p>
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    <div class="glass-card" style="text-align: center;">
+                        <p style="color: var(--accent-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Se manipula</p>
+                        <p style="color: #fff; font-size: 1.2rem; font-weight: 600; margin-top: 0.5rem;">Pipeline paralelo + audiogramas individuales → polos vía OHC_ind</p>
+                    </div>
+                    <div class="glass-card" style="text-align: center;">
+                        <p style="color: var(--accent-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Se observa</p>
+                        <p style="color: #fff; font-size: 1.2rem; font-weight: 600; margin-top: 0.5rem;">CSV con EFR por sujeto + archivos .mat completos del modelo</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 12: Func 3 - Sordera Oculta -->
+        <section class="slide">
+            <div class="slide-grid">
+                <div>
+                    <h2 class="slide-title"><span class="highlight-text">03.</span> Pérdidas Auditivas "Ocultas"</h2>
+                    <p class="body-text" style="font-size: 1.3rem; margin-bottom: 2rem;">
+                        Investigar sorderas que las pruebas clásicas no logran detectar, como la sinaptopatía coclear.
+                    </p>
+                    <div class="glass-card" style="border-left: 4px solid var(--accent-secondary);">
+                        <p style="color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">Caso de uso</p>
+                        <p style="color: #fff; font-size: 1.1rem;">Músicos con audiometría "normal" que no entienden en lugares ruidosos. Reducir fibras AN sin tocar la cóclea y observar el EFR degradado.</p>
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    <div class="glass-card" style="text-align: center;">
+                        <p style="color: var(--accent-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Se manipula</p>
+                        <p style="color: #fff; font-size: 1.2rem; font-weight: 600; margin-top: 0.5rem;">Fibras AN (nH, nM, nL) con polos de Shera intactos</p>
+                    </div>
+                    <div class="glass-card" style="text-align: center;">
+                        <p style="color: var(--accent-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Se observa</p>
+                        <p style="color: #fff; font-size: 1.2rem; font-weight: 600; margin-top: 0.5rem;">EFR reducido con audiometría normal → firma de sinaptopatía</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 13: Func 4 - Optimizar Estímulo -->
+        <section class="slide">
+            <div class="slide-grid">
+                <div>
+                    <h2 class="slide-title"><span class="highlight-text">04.</span> Optimizar Parámetros de Estímulo</h2>
+                    <p class="body-text" style="font-size: 1.3rem; margin-bottom: 2rem;">
+                        Descubrir qué sonido exacto arroja la mejor y más clara respuesta en las pruebas auditivas.
+                    </p>
+                    <div class="glass-card" style="border-left: 4px solid var(--accent-secondary);">
+                        <p style="color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">Caso de uso</p>
+                        <p style="color: #fff; font-size: 1.1rem;">Barrer miles de modulaciones RAM hasta encontrar el estímulo que produce el EFR más fuerte, para luego usarlo en consultorios reales.</p>
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    <div class="glass-card" style="text-align: center;">
+                        <p style="color: var(--accent-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Se manipula</p>
+                        <p style="color: #fff; font-size: 1.2rem; font-weight: 600; margin-top: 0.5rem;">Frecuencia portadora y parámetros del estímulo RAM</p>
+                    </div>
+                    <div class="glass-card" style="text-align: center;">
+                        <p style="color: var(--accent-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Se observa</p>
+                        <p style="color: #fff; font-size: 1.2rem; font-weight: 600; margin-top: 0.5rem;">Valor de EFR (µV) por configuración de estímulo</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 14: Func 5 - Validación -->
+        <section class="slide">
+            <div class="slide-grid">
+                <div>
+                    <h2 class="slide-title"><span class="highlight-text">05.</span> Validar Modelos vs. Realidad</h2>
+                    <p class="body-text" style="font-size: 1.3rem; margin-bottom: 2rem;">
+                        Cotejar que lo que dice la computadora corresponde con la forma en que escuchan las personas reales.
+                    </p>
+                    <div class="glass-card" style="border-left: 4px solid var(--accent-secondary);">
+                        <p style="color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">Caso de uso</p>
+                        <p style="color: #fff; font-size: 1.1rem;">Comparar EFR y ABR simulados con electroencefalogramas de pacientes reales para afinar la precisión del software.</p>
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    <div class="glass-card" style="text-align: center;">
+                        <p style="color: var(--accent-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Se manipula</p>
+                        <p style="color: #fff; font-size: 1.2rem; font-weight: 600; margin-top: 0.5rem;">Perfil de polos desde audiogramas reales vía OHC_ind</p>
+                    </div>
+                    <div class="glass-card" style="text-align: center;">
+                        <p style="color: var(--accent-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Se observa</p>
+                        <p style="color: #fff; font-size: 1.2rem; font-weight: 600; margin-top: 0.5rem;">EFR, ABR (W1/W3/W5) exportados en .mat y CSV</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 15: Func 8 - Machine Learning -->
+        <section class="slide">
+            <div class="slide-grid">
+                <div>
+                    <h2 class="slide-title"><span class="highlight-text">06.</span> Entrenamiento de IA</h2>
+                    <p class="body-text" style="font-size: 1.3rem; margin-bottom: 2rem;">
+                        Alimentar programas de inteligencia artificial con datos masivos para que aprendan a diagnosticar automáticamente.
+                    </p>
+                    <div class="glass-card" style="border-left: 4px solid var(--accent-secondary);">
+                        <p style="color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">Caso de uso</p>
+                        <p style="color: #fff; font-size: 1.1rem;">Proveer 10.000 curvas cocleares simuladas a un algoritmo de IA para detectar patrones de deterioro auditivo prematuro.</p>
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    <div class="glass-card" style="text-align: center;">
+                        <p style="color: var(--accent-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Se manipula</p>
+                        <p style="color: #fff; font-size: 1.2rem; font-weight: 600; margin-top: 0.5rem;">33 perfiles precomputados + OHC_ind para audiogramas arbitrarios</p>
+                    </div>
+                    <div class="glass-card" style="text-align: center;">
+                        <p style="color: var(--accent-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Se observa</p>
+                        <p style="color: #fff; font-size: 1.2rem; font-weight: 600; margin-top: 0.5rem;">Datasets masivos de pares audiograma → EFR en CSV</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 16: Func 9 - Screening Neonatal -->
+        <section class="slide">
+            <div class="slide-grid">
+                <div>
+                    <h2 class="slide-title"><span class="highlight-text">07.</span> Screening Neonatal (BERA)</h2>
+                    <p class="body-text" style="font-size: 1.3rem; margin-bottom: 2rem;">
+                        Estudiar las ondas cerebrales que se miden a los bebés recién nacidos para detectar sorderas de nacimiento.
+                    </p>
+                    <div class="glass-card" style="border-left: 4px solid var(--accent-secondary);">
+                        <p style="color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">Caso de uso</p>
+                        <p style="color: #fff; font-size: 1.1rem;">Simular patologías congénitas y analizar cómo se deforman las ondas ABR, mejorando la lectura de estudios BERA reales.</p>
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    <div class="glass-card" style="text-align: center;">
+                        <p style="color: var(--accent-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Se manipula</p>
+                        <p style="color: #fff; font-size: 1.2rem; font-weight: 600; margin-top: 0.5rem;">Perfiles patológicos de polos (Flat, Slope, combinaciones)</p>
+                    </div>
+                    <div class="glass-card" style="text-align: center;">
+                        <p style="color: var(--accent-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Se observa</p>
+                        <p style="color: #fff; font-size: 1.2rem; font-weight: 600; margin-top: 0.5rem;">Ondas W1 (nervio), W3 (CN), W5 (IC) del ABR</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 17: Func 12 - Edad vs Trauma -->
+        <section class="slide">
+            <div class="slide-grid">
+                <div>
+                    <h2 class="slide-title"><span class="highlight-text">08.</span> Edad vs. Trauma Acústico</h2>
+                    <p class="body-text" style="font-size: 1.3rem; margin-bottom: 2rem;">
+                        Determinar si el desgaste natural del oído arruina las conexiones nerviosas igual que un ruido extremadamente fuerte.
+                    </p>
+                    <div class="glass-card" style="border-left: 4px solid var(--accent-secondary);">
+                        <p style="color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">Caso de uso</p>
+                        <p style="color: #fff; font-size: 1.1rem;">Comparar un paciente envejecido (OHC degradadas) contra uno con trauma acústico (fibras AN perdidas) y evaluar la diferencia en el EFR.</p>
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    <div class="glass-card" style="text-align: center;">
+                        <p style="color: var(--accent-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Se manipula</p>
+                        <p style="color: #fff; font-size: 1.2rem; font-weight: 600; margin-top: 0.5rem;">Edad: polos Slope (OHC) · Trauma: fibras AN (nL=0, nM=0)</p>
+                    </div>
+                    <div class="glass-card" style="text-align: center;">
+                        <p style="color: var(--accent-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Se observa</p>
+                        <p style="color: #fff; font-size: 1.2rem; font-weight: 600; margin-top: 0.5rem;">Comparación de EFR y formas de onda ABR entre perfiles</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
     </div>
 
     <!-- Script Minimalista para Navegación -->
