@@ -1,4 +1,4 @@
-Para crear un laboratorio virtual que conecte la simulación auditiva de Verhulst et al. con estudios científicos, lo ideal es combinar herramientas web, científicas y de visualización que permitan: cargar audiogramas fácilmente, ejecutar la simulación en Python, visualizar resultados y consultar literatura científica dentro del mismo entorno.
+ Para crear un laboratorio virtual que conecte la simulación auditiva de Verhulst et al. con estudios científicos, lo ideal es combinar herramientas web, científicas y de visualización que permitan: cargar audiogramas fácilmente, ejecutar la simulación en Python, visualizar resultados y consultar literatura científica dentro del mismo entorno.
 
 Tres niveles:
 Arquitectura lógica (qué hace cada módulo)
