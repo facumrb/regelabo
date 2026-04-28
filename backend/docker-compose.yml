@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  core-service:
+    build: 
+      context: ./services/core-service
+    ports:
+      - "8001:8000"
+    environment:
+      - PORT=8000
+    depends_on:
+      - postgres
+
+  simulation-service:
+    build: 
+      context: ./services/simulation-service
+    ports:
+      - "8002:8000"
+    environment:
+      - PORT=8000
+    depends_on:
+      - redis
+
+  llm-service:
+    build: 
+      context: ./services/llm-service
+    ports:
+      - "8003:8000"
+    environment:
+      - PORT=8000
+
+  api-gateway:
+    image: traefik:v2.10
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: regelabo
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
