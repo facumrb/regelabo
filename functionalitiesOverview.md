@@ -71,7 +71,7 @@ A continuación se detallan todas las utilidades identificadas para el modelo en
 *   **Parámetro manipulado:** Frecuencia portadora del estímulo RAM (`get_RAM_stims.py`), barrido de frecuencias y niveles.
 *   **Salida observada:** Valor de EFR (µV) para cada configuración de estímulo. Limitación: solo estímulos RAM actualmente.
 
-**5. Validar modelos animales o humanos**
+**5. Validar modelos con datos clínicos reales**
 *   **En simple:** Cotejar que el simulador coincida fehacientemente con la forma en que escuchan especies reales.
 *   **Caso de uso:** Comparar resultados virtuales sobre cómo se deforma un sonido con electroencefalogramas (EEGs) de pacientes reales para afinar la precisión del software.
 *   **Parámetro manipulado:** Perfil de polos de Shera cargado desde audiogramas reales vía `OHC_ind`.
