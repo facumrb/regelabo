@@ -11,27 +11,27 @@ Este documento sintetiza la visión general, el propósito y las funcionalidades
 **El Modelo Verhulst (2018):** Basado en los artículos "*A cochlear epiphenomenon or auditory nerve feature? Evaluating Envelope Following Responses (EFRs) in simulations and human listeners*" y "*Computational modeling of the human auditory periphery...*", es un simulador biológicamente informado de la vía auditiva periférica. Dado un estímulo de audio de entrada, el modelo computa el EFR que produciría un oído específico, sin necesidad de medirlo en una persona real.
 
 ### Entradas del Modelo:
-1.  **Perfil auditivo (audiograma):** Refleja cómo escucha el paciente en diferentes frecuencias. Está representado mediante archivos de polos de Shera (ej. `Flat00`, `Flat20`, `Slope20`, etc.) que indican la pérdida de ganancia coclear (daño en las células ciliadas externas).
-2.  **Parámetros biológicos/anatómicos:** Constantes biofísicas configurables (capacitancias, conductancias, tiempos de adaptación, tasas de disparo espontáneo, etc.). Están definidos extensamente en archivos específicos de la simulación:
-    *   `inner_hair_cell2018.py` (células ciliadas internas)
-    *   `auditory_nerve2018.py` (fibra del nervio auditivo)
-    *   `ic_cn2018.py` (núcleo coclear y colículo inferior)
-    Por defecto, toman los valores calibrados para un oído sano.
-3.  **Estímulo de audio de entrada:** Puede ser un tono puro, un clic, un tono modulado en amplitud (RAM), o incluso voz. Se define en frecuencia, duración y nivel de presión sonora (dB SPL).
+1. **Perfil auditivo (audiograma):** Refleja cómo escucha el paciente en diferentes frecuencias. Está representado mediante archivos de polos de Shera (ej. `Flat00`, `Flat20`, `Slope20`, etc.) que indican la pérdida de ganancia coclear (daño en las células ciliadas externas).
+2. **Parámetros biológicos/anatómicos:** Constantes biofísicas configurables (capacitancias, conductancias, tiempos de adaptación, tasas de disparo espontáneo, etc.). Están definidos extensamente en archivos específicos de la simulación:
+   * `inner_hair_cell2018.py` (células ciliadas internas)
+   * `auditory_nerve2018.py` (fibra del nervio auditivo)
+   * `ic_cn2018.py` (núcleo coclear y colículo inferior)
+   Por defecto, toman los valores calibrados para un oído sano.
+3. **Estímulo de audio de entrada:** Puede ser un tono puro, un clic, un tono modulado en amplitud (RAM), o incluso voz. Se define en frecuencia, duración y nivel de presión sonora (dB SPL), etc.
 
 ### Salidas del Modelo:
 La salida principal es el valor del EFR simulado (amplitud en microvoltios, μV), generalmente a la frecuencia de modulación fundamental y sus armónicos. También se pueden obtener:
-- Tasas de disparo de la fibra nerviosa (ANF).
-- Potenciales de membrana de la célula ciliada.
-- Respuestas del núcleo coclear y colículo inferior.
-- Formas de onda de la ABR (respuesta auditiva del tronco cerebral: ondas W1, W3, W5).
-- Velocidad de la membrana basilar (BM).
+   - Tasas de disparo de la fibra nerviosa (ANF).
+   - Potenciales de membrana de la célula ciliada.
+   - Respuestas del núcleo coclear y colículo inferior.
+   - Formas de onda de la ABR (respuesta auditiva del tronco cerebral: ondas W1, W3, W5).
+   - Velocidad de la membrana basilar (BM).
 
 ---
 
 ## 2. Limitación Fundamental y Verdadera Utilidad
 
-**El modelo NO es útil como herramienta de diagnóstico clínico complementario en la práctica diaria.** 
+**El modelo NO es útil como herramienta de diagnóstico clínico complementario en la práctica diaria.**
 Dado que requiere el audiograma como entrada, simular el EFR de una persona concreta implica que ya se debe haber realizado una medición real de su audiograma. Generar un EFR simulado no aporta información clínica nueva ni cambia el diagnóstico; el modelo no es un predictor inverso (no puede deducir el audiograma a partir del EFR). Su valor no está en reemplazar o mejorar la medición del EFR real.
 
 **Su verdadera utilidad reside en la Investigación y Desarrollo (I+D).** 
@@ -158,11 +158,13 @@ A continuación se detallan todas las utilidades identificadas para el modelo en
 La infraestructura de datos y el panel de visualización no tendrán propósito sin un objetivo científico claro. Las áreas clave a definir y ejecutar son:
 
 **A. Objetivo Científico (Prioridad #1):**
-*   No se ha definido claramente la hipótesis o patrón a visualizar con los datos generados. Sin esto, la base de datos y el frontend carecerán de propósito. Posibles objetivos a debatir:
-    *   ¿Mostrar cómo disminuye la amplitud del EFR al aumentar la pérdida auditiva (FlatXX)?
-    *   ¿Comparar el efecto de diferentes tipos de pérdida (plana vs. en pendiente) sobre la respuesta a distintas frecuencias de modulación?
-    *   ¿Explorar si el modelo es sensible a parámetros biológicos (ej. sinaptopatía) que el audiograma no refleja?
-    *   ¿Construir una herramienta interactiva que permita a un investigador "jugar" con los parámetros libremente y ver el EFR resultante?
+
+No se ha definido claramente la hipótesis o patrón a visualizar con los datos generados. Sin esto, la base de datos y el frontend carecerán de propósito. Posibles objetivos a debatir:
+
+* ¿Mostrar cómo disminuye la amplitud del EFR al aumentar la pérdida auditiva (FlatXX)?
+* ¿Comparar el efecto de diferentes tipos de pérdida (plana vs. en pendiente) sobre la respuesta a distintas frecuencias de modulación?
+* ¿Explorar si el modelo es sensible a parámetros biológicos (ej. sinaptopatía) que el audiograma no refleja?
+* ¿Construir una herramienta interactiva que permita a un investigador "jugar" con los parámetros libremente y ver el EFR resultante?
 
 **B. Parametrización del Modelo:**
 *   Entender en detalle los parámetros biológicos (actualmente se usan valores por defecto). No sabemos cuáles modificar para simular diferentes patologías (ej. sinaptopatía).
