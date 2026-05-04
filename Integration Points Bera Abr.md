@@ -4,16 +4,16 @@
 
 ### 1.1. Inyección Directa de Polos de Shera (Pérdida OHC)
 
-* **Módulo/Archivo:** [model2018.py](file:///c:/Users/valen/Documents/1%20-%20Valen/Soporte/regelabo-main/backend/backend/services/simulation-service/src/Verhulst/src/model2018.py)
-* **Función responsable:** [model2018()](file:///c:/Users/valen/Documents/1%20-%20Valen/Soporte/regelabo-main/backend/backend/services/simulation-service/src/Verhulst/src/model2018.py#L65-L145)
+* **Módulo/Archivo:** [model2018.py](./backend/services/simulation-service/src/Verhulst/src/model2018.py)
+* **Función responsable:** [model2018()](./backend/services/simulation-service/src/Verhulst/src/model2018.py#L65-L145)
 * **Parámetro a inyectar:** `sheraPo`
 * **Tipo de dato esperado:** `float` (valor único para todas las secciones) **o** `np.ndarray` de shape `(1001,)` (un valor por sección coclear + oído medio)
 * **Efecto biológico:** Controla la ganancia del amplificador coclear (OHC) en cada sección. Un polo mayor → menos amplificación → más pérdida auditiva.
-* **Cómo se propaga al modelo coclear:** En [cochlear_model2018.py](file:///c:/Users/valen/Documents/1%20-%20Valen/Soporte/regelabo-main/backend/backend/services/simulation-service/src/Verhulst/src/core/cochlear_model2018.py#L261-L271), `init_model()` asigna `self.SheraPo = np.zeros(sections+1) + sheraPo`, donde `sheraPo` puede ser escalar o vector.
+* **Cómo se propaga al modelo coclear:** En [cochlear_model2018.py](./backend/services/simulation-service/src/Verhulst/src/core/cochlear_model2018.py#L261-L271), `init_model()` asigna `self.SheraPo = np.zeros(sections+1) + sheraPo`, donde `sheraPo` puede ser escalar o vector.
 
 ### 1.2. Perfiles Pre-computados (Flat / Slope / Combinados)
 
-* **Directorio de datos:** [data/Poles/](file:///c:/Users/valen/Documents/1%20-%20Valen/Soporte/regelabo-main/backend/backend/services/simulation-service/src/Verhulst/data/Poles)
+* **Directorio de datos:** [data/Poles/](./backend/services/simulation-service/src/Verhulst/data/Poles)
 * **Formato de archivo:** `StartingPoles.dat` — texto plano con 1001 valores float (formato `%.6E`), uno por línea
 * **Perfiles Flat (pérdida plana uniforme):**
 
@@ -44,8 +44,8 @@ sheraP = np.loadtxt('.../data/Poles/Flat20/StartingPoles.dat')
 
 ### 1.3. Conversión de Audiograma Clínico a Polos (OHC_ind)
 
-* **Módulo/Archivo:** [OHC_ind.py](file:///c:/Users/valen/Documents/1%20-%20Valen/Soporte/regelabo-main/backend/backend/services/simulation-service/src/Verhulst/src/utils/OHC_ind.py)
-* **Función responsable:** [ohc_ind()](file:///c:/Users/valen/Documents/1%20-%20Valen/Soporte/regelabo-main/backend/backend/services/simulation-service/src/Verhulst/src/utils/OHC_ind.py#L111-L371)
+* **Módulo/Archivo:** [OHC_ind.py](./backend/services/simulation-service/src/Verhulst/src/utils/OHC_ind.py)
+* **Función responsable:** [ohc_ind()](./backend/services/simulation-service/src/Verhulst/src/utils/OHC_ind.py#L111-L371)
 * **Parámetros de entrada:**
 
 | Parámetro | Tipo | Descripción |
@@ -64,7 +64,7 @@ sheraP = np.loadtxt('.../data/Poles/Flat20/StartingPoles.dat')
 
 ### 1.4. Sinaptopatía Coclear (Pérdida IHC / Sordera Oculta)
 
-* **Módulo/Archivo:** [model2018.py](file:///c:/Users/valen/Documents/1%20-%20Valen/Soporte/regelabo-main/backend/backend/services/simulation-service/src/Verhulst/src/model2018.py#L75-L77)
+* **Módulo/Archivo:** [model2018.py](./backend/services/simulation-service/src/Verhulst/src/model2018.py#L75-L77)
 * **Parámetros a inyectar:** `nH`, `nM`, `nL`
 * **Tipos de dato:** `int` (escalar para todas las secciones) **o** `np.ndarray` (distribución tonotópica)
 
@@ -82,14 +82,14 @@ sheraP = np.loadtxt('.../data/Poles/Flat20/StartingPoles.dat')
 
 ### 2.1. Función que retorna el ABR
 
-* **Módulo/Archivo:** [model2018.py](file:///c:/Users/valen/Documents/1%20-%20Valen/Soporte/regelabo-main/backend/backend/services/simulation-service/src/Verhulst/src/model2018.py#L65)
+* **Módulo/Archivo:** [model2018.py](./backend/services/simulation-service/src/Verhulst/src/model2018.py#L65)
 * **Función:** `model2018()` → `List[ModelOutput]`
 * **Condición para generar ondas ABR:** `storeflag` debe contener `'w'` (ej: `'evihmlbw'`)
 * **Frecuencias de sondeo recomendadas:** `fc='abr'` (401 secciones cocleares, índices 110:2:910)
 
 ### 2.2. Estructura de salida: clase ModelOutput
 
-* **Módulo/Archivo:** [model2018.py](file:///c:/Users/valen/Documents/1%20-%20Valen/Soporte/regelabo-main/backend/backend/services/simulation-service/src/Verhulst/src/model2018.py#L36-L62)
+* **Módulo/Archivo:** [model2018.py](./backend/services/simulation-service/src/Verhulst/src/model2018.py#L36-L62)
 
 ```
 ModelOutput
@@ -114,7 +114,7 @@ ModelOutput
 
 ### 2.3. Mapeo de Ondas ABR
 
-Las ondas **W1, W3 y W5 están desglosadas en variables independientes**, no en un vector único. El cálculo se realiza en [model2018.py L308-L311](file:///c:/Users/valen/Documents/1%20-%20Valen/Soporte/regelabo-main/backend/backend/services/simulation-service/src/Verhulst/src/model2018.py#L308-L311):
+Las ondas **W1, W3 y W5 están desglosadas en variables independientes**, no en un vector único. El cálculo se realiza en [model2018.py L308-L311](./backend/services/simulation-service/src/Verhulst/src/model2018.py#L308-L311):
 
 ```python
 output.w1 = nuclei.M1 * np.sum(anSummed, axis=1)   # Onda I:   AN × M1
@@ -122,7 +122,7 @@ output.w3 = nuclei.M3 * np.sum(cn, axis=1)          # Onda III: CN × M3
 output.w5 = nuclei.M5 * np.sum(ic, axis=1)          # Onda V:   IC × M5
 ```
 
-Los factores de escala están definidos en [ic_cn2018.py L30-L32](file:///c:/Users/valen/Documents/1%20-%20Valen/Soporte/regelabo-main/backend/backend/services/simulation-service/src/Verhulst/src/core/ic_cn2018.py#L30-L32):
+Los factores de escala están definidos en [ic_cn2018.py L30-L32](./backend/services/simulation-service/src/Verhulst/src/core/ic_cn2018.py#L30-L32):
 
 | Constante | Valor | Genera | Correlato anatómico |
 |---|---|---|---|
@@ -137,10 +137,10 @@ Los factores de escala están definidos en [ic_cn2018.py L30-L32](file:///c:/Use
 
 | Etapa | Archivo | Función | Input → Output |
 |---|---|---|---|
-| IHC | [inner_hair_cell2018.py](file:///c:/Users/valen/Documents/1%20-%20Valen/Soporte/regelabo-main/backend/backend/services/simulation-service/src/Verhulst/src/core/inner_hair_cell2018.py) | `inner_hair_cell_potential()` | BM velocity → Vm (potencial receptor) |
-| AN | [auditory_nerve2018.py](file:///c:/Users/valen/Documents/1%20-%20Valen/Soporte/regelabo-main/backend/backend/services/simulation-service/src/Verhulst/src/core/auditory_nerve2018.py) | `auditory_nerve_fiber()` | Vm → spike probability |
-| CN | [ic_cn2018.py](file:///c:/Users/valen/Documents/1%20-%20Valen/Soporte/regelabo-main/backend/backend/services/simulation-service/src/Verhulst/src/core/ic_cn2018.py) | `cochlearNuclei()` | anfH+M+L → cn, anSummed |
-| IC | [ic_cn2018.py](file:///c:/Users/valen/Documents/1%20-%20Valen/Soporte/regelabo-main/backend/backend/services/simulation-service/src/Verhulst/src/core/ic_cn2018.py) | `inferiorColliculus()` | cn → ic |
+| IHC | [inner_hair_cell2018.py](./backend/services/simulation-service/src/Verhulst/src/core/inner_hair_cell2018.py) | `inner_hair_cell_potential()` | BM velocity → Vm (potencial receptor) |
+| AN | [auditory_nerve2018.py](./backend/services/simulation-service/src/Verhulst/src/core/auditory_nerve2018.py) | `auditory_nerve_fiber()` | Vm → spike probability |
+| CN | [ic_cn2018.py](./backend/services/simulation-service/src/Verhulst/src/core/ic_cn2018.py) | `cochlearNuclei()` | anfH+M+L → cn, anSummed |
+| IC | [ic_cn2018.py](./backend/services/simulation-service/src/Verhulst/src/core/ic_cn2018.py) | `inferiorColliculus()` | cn → ic |
 
 ---
 
