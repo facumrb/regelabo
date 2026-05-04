@@ -73,7 +73,7 @@ El Motor Científico constituye el subsistema de procesamiento intensivo. Ejecut
 *   **Pandas:** Librería estándar para manipulación de datos tabulares (DataFrame). Actúa como la capa de preparación, lectura (CSV, MAT, HDF5), filtrado y estructuración de los datos de entrada y salida del modelo.
 *   **NumPy y SciPy:** Infraestructura matemática. **NumPy** provee arrays multidimensionales y operaciones algebraicas vectorizadas. **SciPy** extiende esto con resolución de ecuaciones diferenciales, álgebra lineal avanzada y procesamiento de señales. Ambas sostienen el modelo de Verhulst.
 *   **Dask:** Librería de paralelismo y computación distribuida. Divide cómputo intensivo en subconjuntos y los ejecuta simultáneamente sobre múltiples núcleos/nodos. En Verhulst, Dask procesa en paralelo los múltiples canales de fibras nerviosas auditivas.
-*   **Plotly (Python) y Matplotlib/Seaborn:** **Plotly Python** genera gráficos interactivos equivalentes a los del Frontend en el *worker*. **Matplotlib/Seaborn** son librerías estáticas de referencia para representaciones gráficas de alta resolución destinadas a reportes o publicaciones sin interactividad.
+*   **Plotly (Python) y Matplotlib/Seaborn:** **Plotly Python** genera gráficos interactivos equivalentes a los del Frontend en el *worker*, produciendo como salida archivos HTML exportables o imágenes en formato PNG. **Matplotlib/Seaborn** son librerías estáticas de referencia para representaciones gráficas de alta resolución destinadas a reportes o publicaciones sin interactividad.
 *   **Docker (Motor Científico):** El modelo de Verhulst presenta dependencias compiladas muy específicas (versiones exactas, binarios de bajo nivel) que hacen compleja su instalación reproducible. Docker encapsula el motor científico completo en una imagen inmutable, garantizando la reproducibilidad total.
 
 ### 3.4. Ecosistema LLM y Bibliográfico (Fase 2)
@@ -164,10 +164,11 @@ El siguiente esquema sintetiza la secuencia de interacciones entre los component
 | NumPy / SciPy    | Motor Científico      | Cómputo numérico y algoritmos científicos           |
 | Dask             | Motor Científico      | Paralelismo y distribución del cómputo              |
 | Plotly (Python)  | Motor Científico      | Generación de gráficos en el entorno del servidor   |
-| Matplotlib       | Motor Científico      | Gráficos estáticos para reportes de alta resolución |
+| Matplotlib / Seaborn | Motor Científico  | Gráficos estáticos para reportes de alta resolución |
 | Docker           | Infraestructura       | Contenedorización y reproducibilidad del entorno    |
 | LangChain        | Fase 2 (LLM)          | Orquestación de IA y análisis                       |
 | ChromaDB         | Fase 2 (LLM)          | Base de datos vectorial para embeddings             |
 | DeepSeek / Qwen  | Fase 2 (LLM)          | Modelos de inferencia open-source                   |
 | Zotero API       | Fase 2 (LLM)          | Extracción de metadatos bibliográficos              |
+| Ray              | Fase 2 (LLM)          | Paralelismo distribuido para clústeres y LLMs       |
 | MinIO / DVC      | Almacenamiento        | Reproducibilidad y versionado de datos              |
