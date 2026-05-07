@@ -2,12 +2,15 @@
 
 Plataforma basada totalmente en Arquitectura Orientada a Servicios que integra modelos de simulación biológica (Verhulst et al.) con herramientas de análisis de datos e inteligencia artificial (LLM) para la investigación auditiva.
 
+## Links relevantes
+[**`backend/ `**](https://github.com/AleF-dot/verhulst2018-wrapper)
+
 ## Arquitectura Orientada a Servicios
 
 El proyecto está diseñado de forma modular para garantizar la escalabilidad, la mantenibilidad y dejar la puerta abierta a integraciones de futuros servicios (ej. CompuCell3D):
 
 - **`frontend/`**: Aplicación de interfaz al usuario (React). Encargada estrictamente de la presentación, la orquestación de subida de archivos (audiogramas), la interacción para consultar estudios (PDFs) y la visualización gráfica.
-- **`backend/`**: Capa central de negocio (FastAPI). Gestiona múltiples sub-servicios y enruta la información. Contiene:
+- [**`backend/ `**](https://github.com/AleF-dot/verhulst2018-wrapper):Capa central de negocio (FastAPI). Gestiona múltiples sub-servicios y enruta la información. Contiene:
   - **Servicio Core / API:** (`backend/src/api`, `backend/src/db`) Responsable de los endpoints de la API, manejo de estado y autenticación con Supabase.
   - **Servicio de Simulación:** (`backend/src/simulation`) Procesamiento científico con el modelo de Verhulst y uso de herramientas matemáticas (NumPy/SciPy). Escalará mediante colas como Celery.
   - **Servicio de Análisis/IA:** (`backend/src/llm`) Uso de modelos LLM, RAG y bases de datos vectoriales (ChromaDB) para consultar papers e investigaciones a la par de los resultados.
