@@ -2,7 +2,7 @@
 
 > **Caso de uso #9:** Investigación en Screening Neonatal (BERA/ABR)
 > **Fecha:** 2026-05-06 | **Revisión:** v2 (2026-05-06 — Verhulst como caja negra)
-> **Fuentes:** [Integration Points Bera Abr.md](file:///c:/Users/valen/Documents/1%20-%20Valen/Soporte/regelabo-main/backend/Integration%20Points%20Bera%20Abr.md), [functionalitiesOverview.md](file:///c:/Users/valen/Documents/1%20-%20Valen/Soporte/regelabo-main/backend/functionalitiesOverview.md)
+> **Fuentes:** [Integration Points Bera Abr.md](./Integration%20Points%20Bera%20Abr.md), [functionalitiesOverview.md](../../functionalitiesOverview.md)
 
 ---
 
