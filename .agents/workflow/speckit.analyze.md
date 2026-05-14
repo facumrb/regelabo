@@ -1,1 +1,0 @@
-Análisis general.
