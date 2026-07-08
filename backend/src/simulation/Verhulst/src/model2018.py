@@ -261,7 +261,7 @@ def model2018(
             output.emission = coch.oto_emission
             
         if 'd' in storeflag:
-            output.sheraPt = coch.sheraPsolution
+            output.sheraPt = coch.SheraPsolution
         # ---- Etapa 2: Transducción mecano-eléctrica en la IHC ----
         # La velocidad BM (Vsolution) deflecta los estereocilios de las IHC,
         # generando corrientes de transducción que producen el potencial receptor (Vm).
