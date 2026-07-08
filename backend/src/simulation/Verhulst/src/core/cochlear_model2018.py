@@ -55,30 +55,21 @@ class tridiag_matrix(ctypes.Structure):
 # Carga de la biblioteca C compilada que contiene los solucionadores numéricos
 # optimizados (solve_tridiagonal y delay_line).
 libName = 'tridiag.dll' if 'win32' in sys.platform else 'tridiag.so'
-libtrisolv = np.ctypeslib.load_library(libName, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'c_lib'))
+try:
+    libtrisolv = np.ctypeslib.load_library(libName, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'c_lib'))
+    HAS_CLIB = True
 
-# Interfaz del solver tridiagonal (algoritmo de Thomas en C):
-# Resuelve T·x = r donde T es la matriz de acoplamiento coclear.
-libtrisolv.solve_tridiagonal.restype = None
-libtrisolv.solve_tridiagonal.argtypes = [ctypes.POINTER(tridiag_matrix),  # aa
-                                         PDOUBLE,  # vv
-                                         PDOUBLE,  # solution
-                                         INT,  # nrows
-                                         ]
+    # Interfaz del solver tridiagonal (algoritmo de Thomas en C):
+    libtrisolv.solve_tridiagonal.restype = None
+    libtrisolv.solve_tridiagonal.argtypes = [ctypes.POINTER(tridiag_matrix), PDOUBLE, PDOUBLE, INT]
 
-# Interfaz de la línea de retardo de Zweig (en C):
-# Implementa las reflexiones cocleares internas con interpolación cúbica.
-libtrisolv.delay_line.restype = None  # TODO SPEEDUP W POINTERS!
-libtrisolv.delay_line.argtypes = [PDOUBLE,  # in_matrix
-                                  PINT,  # delay1
-                                  PINT,  # delay2
-                                  PINT,  # delay1
-                                  PINT,  # delay1
-                                  PDOUBLE,  # dev
-                                  PDOUBLE,  # YZweig
-                                  INT,  # delay_buffer_length
-                                  INT  # n
-                                  ]
+    # Interfaz de la línea de retardo de Zweig (en C):
+    libtrisolv.delay_line.restype = None
+    libtrisolv.delay_line.argtypes = [PDOUBLE, PINT, PINT, PINT, PINT, PDOUBLE, PDOUBLE, INT, INT]
+except Exception as e:
+    print("Warning: Could not load C library. Using pure Python fallback. This might be slower.", flush=True)
+    import scipy.linalg
+    HAS_CLIB = False
 
 # =============================================================================
 # FUNCIÓN PRINCIPAL DE LA ODE: TLsolver (Transmission Line Solver)
@@ -148,22 +139,54 @@ def TLsolver(t, y, model):  # y''=dv/dt y'=v
     # Este valor retardado se retroalimenta a la ecuación de la BM,
     # simulando las reflexiones internas que producen emisiones otoacústicas.
     model.Dev[0:n] = model.Dev[0:n] + frac
-    libtrisolv.delay_line(
-        model.Ybuffer_pointer, model.Zrp_pointer, model.Zrp1_pointer,
-        model.Zrp2_pointer, model.Zrp3_pointer, model.Dev_pointer,
-        model.YZweig_pointer, ctypes.c_int(model.YbufferLgt),
-        ctypes.c_int(model.n + 1))
+    if HAS_CLIB:
+        libtrisolv.delay_line(
+            model.Ybuffer_pointer, model.Zrp_pointer, model.Zrp1_pointer,
+            model.Zrp2_pointer, model.Zrp3_pointer, model.Dev_pointer,
+            model.YZweig_pointer, ctypes.c_int(model.YbufferLgt),
+            ctypes.c_int(n))
+    else:
+        Y_mat = model.Ybuffer
+        dev = model.Dev[0:n]
+        mask = dev < 1
+        mask_not = ~mask
+        y0_1 = Y_mat[mask, model.Zrp[0:n][mask]]
+        y1_1 = Y_mat[mask, model.Zrp1[0:n][mask]]
+        y2_1 = Y_mat[mask, model.Zrp2[0:n][mask]]
+        y3_1 = Y_mat[mask, model.Zrp3[0:n][mask]]
+        mu1 = dev[mask]
+        mu12 = mu1 * mu1
+        a0_1 = y3_1 - y2_1 - y0_1 + y1_1
+        a1_1 = y0_1 - y1_1 - a0_1
+        a2_1 = y2_1 - y0_1
+        model.YZweig[0:n][mask] = a0_1*mu1*mu12 + a1_1*mu12 + a2_1*mu1 + y1_1
+        
+        y0_2 = Y_mat[mask_not, (model.Zrp[0:n][mask_not] + 1) % model.YbufferLgt]
+        y1_2 = Y_mat[mask_not, (model.Zrp1[0:n][mask_not] + 1) % model.YbufferLgt]
+        y2_2 = Y_mat[mask_not, (model.Zrp2[0:n][mask_not] + 1) % model.YbufferLgt]
+        y3_2 = Y_mat[mask_not, (model.Zrp3[0:n][mask_not] + 1) % model.YbufferLgt]
+        mu2 = dev[mask_not] - 1
+        mu22 = mu2 * mu2
+        a0_2 = y3_2 - y2_2 - y0_2 + y1_2
+        a1_2 = y0_2 - y1_2 - a0_2
+        a2_2 = y2_2 - y0_2
+        model.YZweig[0:n][mask_not] = a0_2*mu2*mu22 + a1_2*mu22 + a2_2*mu2 + y1_2
     model.Dev[0:n] = model.Dev[0:n] - frac
     # Calcular fuerzas de amortiguamiento+rigidez sobre cada sección BM
     model.calculate_g()
     # Ensamblar lado derecho del sistema tridiagonal
     model.calculate_right(F0)
     # ---- Resolver sistema tridiagonal T·Q = right ----
-    # Q[i] = presión diferencial neta que actúa sobre la sección i de la BM.
-    # Este es el paso más costoso computacionalmente y se ejecuta en C.
-    libtrisolv.solve_tridiagonal(
-        ctypes.byref(model.tridata), model.r_pointer, model.Qpointer,
-        ctypes.c_int(n))
+    if HAS_CLIB:
+        libtrisolv.solve_tridiagonal(
+            ctypes.byref(model.tridata), model.r_pointer, model.Qpointer,
+            ctypes.c_int(n))
+    else:
+        ab = np.zeros((3, n))
+        ab[0, 1:] = model.ZAH[0:n-1]
+        ab[1, :] = model.ZASC[0:n]
+        ab[2, :-1] = model.ZAL[1:n]
+        model.Qsol[0:n] = scipy.linalg.solve_banded((1, 1), ab, model.right[0:n])
     # Condición de contorno en la base (estribo): la aceleración de la
     # sección 0 depende de la presión del fluido y la fuerza del estímulo.
     zero_val = (model.RK4_0*model.Qsol[0] + model.RK4G_0*(model.g[0] + model.p0x * F0))
@@ -679,7 +702,7 @@ class cochlea_model ():
     # Al finalizar, filtra la emisión otoacústica con el mismo filtro
     # del oído medio para obtener la presión en el canal auditivo externo.
     # ================================================================
-    def solve(self):
+    def solve(self, store_internals=False):
         n = self.n + 1
         tstart = time.time()
         if not(self.is_init):
@@ -693,6 +716,8 @@ class cochlea_model ():
         self.Asolution= np.zeros([length + 2, len(self.probe_points)])
         # Emisión otoacústica: presión en la sección 0 (base coclear/estribo)
         self.oto_emission = np.zeros(length + 2)
+        if store_internals:
+            self.SheraPsolution = np.zeros([length + 2, len(self.probe_points)])
         self.time_axis = np.linspace(0, time_length, length)
         # Integrador Runge-Kutta adaptativo de 5° orden (Dormand-Prince):
         # Resuelve la ODE del sistema coclear con tolerancias que balancean
@@ -735,17 +760,25 @@ class cochlea_model ():
             self.current_t = r.t
             # Almacenar resultados en los probe points seleccionados
             if(self.probe_freq=='all'):
-                self.Vsolution[j,:] = self.V1[1:n]  #
-                self.Ysolution[j,:] = self.Y1[1:n]
+                self.Vsolution[j, :] = self.V1[1:n]
+                self.Ysolution[j, :] = self.Y1[1:n]
+                if store_internals:
+                    self.SheraPsolution[j, :] = self.SheraP[1:n]
             elif(self.probe_freq=='half'):
-                self.Vsolution[j,:]=self.V1[range(1,n,2)]
-                self.Ysolution[j,:] = self.Y1[range(1,n,2)]
+                self.Vsolution[j, :] = self.V1[range(1,n,2)]
+                self.Ysolution[j, :] = self.Y1[range(1,n,2)]
+                if store_internals:
+                    self.SheraPsolution[j, :] = self.SheraP[range(1,n,2)]
             elif(self.probe_freq=='abr'):
-               self.Vsolution[j,:]=self.V1[range(110,911,2)]
-               self.Ysolution[j,:] = self.Y1[range(110,911,2)]
+                self.Vsolution[j, :] = self.V1[range(110,911,2)]
+                self.Ysolution[j, :] = self.Y1[range(110,911,2)]
+                if store_internals:
+                    self.SheraPsolution[j, :] = self.SheraP[range(110,911,2)]
             else:
-                self.Vsolution[j,:] = self.V1[self.probe_points]  # almacenar los puntos de sondeo seleccionados
-                self.Ysolution[j,:] = self.Y1[self.probe_points]
+                self.Vsolution[j, :] = self.V1[self.probe_points]
+                self.Ysolution[j, :] = self.Y1[self.probe_points]
+                if store_internals:
+                    self.SheraPsolution[j, :] = self.SheraP[self.probe_points]
             # La presión en la sección 0 (Qsol[0]) es la emisión otoacústica
             # antes de ser filtrada por el oído medio.
             self.oto_emission[j] = self.Qsol[0]
