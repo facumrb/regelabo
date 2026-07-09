@@ -4,7 +4,7 @@
 EJEMPLO DE SIMULACIÓN: Interfaz simplificada para el modelo Verhulst 2018
 =============================================================================
 Este script proporciona una interfaz fácil de usar para ejecutar el modelo
-completo de la periferia auditiva y calcular el EFR (Envelope Following Response).
+completo de la periferia auditiva y calcular el EFR (Envelope Following Response) y demás gráficas.
 
 Pipeline completo:
   1. Genera un estímulo RAM (Rectangular Amplitude Modulation) automáticamente

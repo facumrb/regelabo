@@ -18,6 +18,7 @@ import scipy as sp
 import scipy.signal
 import multiprocessing as mp
 import warnings
+from functools import partial
 from typing import Union, Optional, Dict, List, Any
 import os
 from utils.get_RAM_stims import get_RAM_stims
@@ -75,6 +76,163 @@ class ModelOutput:
         self.ic_inh = None       # Componente inhibitoria IC [tiempo_an x secciones]
 
 
+def _solve_one_cochlea(model_data, fs, sectionsNo, probes, storeflag,
+                      sheraPo_val, subject, IrrPct, non_linear_type,
+                      DECIMATION, numH, numM, numL,
+                      on_stage_complete=None):
+    """
+        Procesa un canal completo de la simulación auditiva.
+        
+        Pipeline: Cóclea → IHC → AN (HSR/MSR/LSR) → CN → IC → ABR (W1/W3/W5)
+    """
+    
+    coch = model_data['coch']
+    sig = model_data['sig']
+    irr_on = model_data['irr_on']
+    channel_idx = model_data['channel_idx']
+
+    # ---- Etapa 1: Inicializar y resolver la mecánica coclear ----
+    # Configura los polos de Shera (perfil auditivo) y resuelve la
+    # ecuación diferencial de la línea de transmisión coclear.
+    coch.init_model(
+        sig, fs, sectionsNo, probes,
+        Zweig_irregularities=irr_on,
+        sheraPo=sheraPo_val,
+        subject=subject,
+        IrrPct=IrrPct,
+        non_linearity_type=non_linear_type
+    )
+
+    # Resolver mecánica coclear (ondas viajeras en la membrana basilar)
+    coch.solve(store_internals=('d' in storeflag))
+
+    # Crear estructura de salida
+    output = ModelOutput()
+    output.cf = coch.cf
+    output.fs_bm = fs
+    output.fs_ihc = fs
+    output.fs_an = fs // DECIMATION
+    output.fs_abr = fs // DECIMATION
+
+    # Almacenar velocidad BM si fue solicitada
+    if 'v' in storeflag:
+        output.v = coch.Vsolution
+    # Almacenar desplazamiento BM si fue solicitado
+    if 'y' in storeflag:
+        output.y = coch.Ysolution
+    # Almacenar emisión otoacústica si fue solicitada
+    if 'e' in storeflag:
+        output.emission = coch.oto_emission
+    # Almacenar polo de shera si fue solicitado
+    if 'd' in storeflag:
+        output.sheraPt = coch.SheraPsolution
+
+    if on_stage_complete:
+        on_stage_complete(channel_idx, 'cochlea', output)
+
+    # ---- Etapa 2: Transducción mecano-eléctrica en la IHC ----
+    # La velocidad BM (Vsolution) deflecta los estereocilios de las IHC,
+    # generando corrientes de transducción que producen el potencial receptor (Vm).
+    if any(flag in storeflag for flag in 'ihmlbwd'):
+        magic_constant = 0.118
+        if 'd' in storeflag:
+            Vm, mt_out, Imet_out, Ikf_out, Iks_out = ihc.inner_hair_cell_potential(
+                coch.Vsolution * magic_constant, fs, store_internals=True)
+            output.mt_ihc = mt_out
+            output.Imet = Imet_out
+            output.Ikf = Ikf_out
+            output.Iks = Iks_out
+        else:
+            Vm = ihc.inner_hair_cell_potential(coch.Vsolution * magic_constant, fs)
+
+        if 'i' in storeflag:
+            output.ihc = Vm
+
+        if on_stage_complete:
+            on_stage_complete(channel_idx, 'ihc', output)
+
+        # ---- Etapa 3: Submuestreo para el nervio auditivo ----
+        # El nervio auditivo opera a frecuencias de muestreo menores
+        # que la mecánica coclear (la sinapsis actúa como filtro paso bajo).
+        dec_factor = 5
+        Vm_resampled = sp.signal.decimate(Vm, dec_factor, axis=0, n=30, ftype='fir')
+        Vm_resampled[0:5, :] = Vm[0, 0]
+        Fs_res = fs / dec_factor
+
+        # ---- Etapa 4: Fibras del nervio auditivo ----
+        # Simula la transducción sináptica IHC → AN para cada tipo de fibra:
+        # HSR, MSR, LSR
+        if any(flag in storeflag for flag in 'hmlbwd'):
+            # HSR (High Spontaneous Rate): fibras de bajo umbral, primeras en responder
+            if 'h' in storeflag or 'b' in storeflag:
+                if 'd' in storeflag:
+                    anfH_raw, qt_H, wt_H, avail_H = anf.auditory_nerve_fiber(
+                        Vm_resampled, Fs_res, 2, store_internals=True)
+                    anfH = anfH_raw * Fs_res
+                    output.qt_H = qt_H
+                    output.wt_H = wt_H
+                    output.avail_H = avail_H
+                else:
+                    anfH = anf.auditory_nerve_fiber(Vm_resampled, Fs_res, 2) * Fs_res
+                if 'h' in storeflag:
+                    output.anfH = anfH
+
+            # MSR (Medium Spontaneous Rate): umbral intermedio
+            if 'm' in storeflag or 'b' in storeflag or 'w' in storeflag or 'd' in storeflag:
+                anfM = anf.auditory_nerve_fiber(Vm_resampled, Fs_res, 1) * Fs_res
+                if 'm' in storeflag:
+                    output.anfM = anfM
+
+            # LSR (Low Spontaneous Rate): alto umbral, cruciales para codificar en ruido
+            if 'l' in storeflag or 'b' in storeflag or 'w' in storeflag or 'd' in storeflag:
+                anfL = anf.auditory_nerve_fiber(Vm_resampled, Fs_res, 0) * Fs_res
+                if 'l' in storeflag:
+                    output.anfL = anfL
+
+            if on_stage_complete:
+                on_stage_complete(channel_idx, 'an_fibers', output)
+
+            # ---- Etapa 5: Núcleos del tronco encefálico (CN e IC) ----
+            # CN: suma ponderada de las fibras AN + excitación-inhibición
+            # IC: segundo nivel de integración neural
+            if 'b' in storeflag or 'w' in storeflag or 'd' in storeflag:
+                if 'd' in storeflag:
+                    cn, anSummed, cn_exc, cn_inh = nuclei.cochlearNuclei(
+                        anfH, anfM, anfL, numH, numM, numL, Fs_res, store_internals=True)
+                    ic, ic_exc, ic_inh = nuclei.inferiorColliculus(cn, Fs_res, store_internals=True)
+                    output.cn_exc = cn_exc
+                    output.cn_inh = cn_inh
+                    output.ic_exc = ic_exc
+                    output.ic_inh = ic_inh
+                else:
+                    cn, anSummed = nuclei.cochlearNuclei(
+                        anfH, anfM, anfL, numH, numM, numL, Fs_res)
+                    ic = nuclei.inferiorColliculus(cn, Fs_res)
+
+                if 'b' in storeflag:
+                    output.cn = cn
+                    output.ic = ic
+                    output.an_summed = anSummed
+
+                if on_stage_complete:
+                    on_stage_complete(channel_idx, 'brainstem', output)
+
+                # ---- Etapa 6: Ondas del ABR ----
+                # W1 (Onda I): nervio auditivo sumado × M1
+                # W3 (Onda III): núcleo coclear sumado × M3
+                # W5 (Onda V): colículo inferior sumado × M5
+                # La suma W1+W3+W5 = EFR (Envelope Following Response)
+                if 'w' in storeflag:
+                    output.w1 = nuclei.M1 * np.sum(anSummed, axis=1)
+                    output.w3 = nuclei.M3 * np.sum(cn, axis=1)
+                    output.w5 = nuclei.M5 * np.sum(ic, axis=1)
+
+                    if on_stage_complete:
+                        on_stage_complete(channel_idx, 'abr', output)
+
+    return output
+
+
 def model2018(
     sign: np.ndarray,
     fs: float,
@@ -89,7 +247,8 @@ def model2018(
     nM: Union[int, np.ndarray] = 3,
     nL: Union[int, np.ndarray] = 3,
     clean: int = 1,
-    data_folder: str = './') -> List[ModelOutput]:
+    data_folder: str = './',
+    on_stage_complete: Optional[callable] = None) -> List[ModelOutput]:
     """
     Computational model of the auditory periphery (Verhulst, Altoe, Vasilkov, 2018).
     
@@ -134,6 +293,12 @@ def model2018(
         Not used in Python version (kept for compatibility)
     data_folder : str, optional
         Not used in Python version (kept for compatibility)
+    on_stage_complete : callable, optional
+        Callback invoked after each simulation stage completes.
+        Signature: `on_stage_complete(channel_idx, stage_name, partial_output)`
+        where stage_name is one of: 'cochlea', 'ihc', 'an_fibers', 'brainstem', 'abr'.
+        The callback receives the partial ModelOutput object at that point.
+        NOTE: only works in sequential mode (single channel). Ignored with multiprocessing.
         
     Returns:
     --------
@@ -215,145 +380,36 @@ def model2018(
     cochlear_list = []
     for i in range(channels):
         coch = cochlea_model()
-        cochlear_list.append([coch, sign[i], irregularities[i], i])
+        cochlear_list.append({
+            'coch': coch,
+            'sig': sign[i],
+            'irr_on': irregularities[i],
+            'channel_idx': i,
+        })
     
-    def solve_one_cochlea(model_data):
-        """
-        Procesa un canal completo de la simulación auditiva.
-        
-        Pipeline: Cóclea → IHC → AN (HSR/MSR/LSR) → CN → IC → ABR (W1/W3/W5)
-        """
-        coch, sig, irr_on, channel_idx = model_data
-        
-        # ---- Etapa 1: Inicializar y resolver la mecánica coclear ----
-        # Configura los polos de Shera (perfil auditivo) y resuelve la
-        # ecuación diferencial de la línea de transmisión coclear.
-        coch.init_model(
-            sig, fs, sectionsNo, probes,
-            Zweig_irregularities=irr_on,
-            sheraPo=sheraPo_val,
-            subject=subject,
-            IrrPct=IrrPct,
-            non_linearity_type=non_linear_type
-        )
-        
-        # Resolver mecánica coclear (ondas viajeras en la membrana basilar)
-        coch.solve(store_internals=('d' in storeflag))
-        
-        # Crear estructura de salida
-        output = ModelOutput()
-        output.cf = coch.cf
-        output.fs_bm = fs
-        output.fs_ihc = fs
-        output.fs_an = fs // DECIMATION
-        output.fs_abr = fs // DECIMATION
-        
-        # Almacenar velocidad BM si fue solicitada
-        if 'v' in storeflag:
-            output.v = coch.Vsolution
-            
-        # Almacenar desplazamiento BM si fue solicitado
-        if 'y' in storeflag:
-            output.y = coch.Ysolution
-            
-        # Almacenar emisiones otoacústicas si fue solicitado
-        if 'e' in storeflag:
-            output.emission = coch.oto_emission
-            
-        if 'd' in storeflag:
-            output.sheraPt = coch.SheraPsolution
-        # ---- Etapa 2: Transducción mecano-eléctrica en la IHC ----
-        # La velocidad BM (Vsolution) deflecta los estereocilios de las IHC,
-        # generando corrientes de transducción que producen el potencial receptor (Vm).
-        if any(flag in storeflag for flag in 'ihmlbwd'):
-            # magic_constant (0.118): factor de escala velocidad BM → deflexión de estereocilios
-            magic_constant = 0.118
-            if 'd' in storeflag:
-                Vm, mt_out, Imet_out, Ikf_out, Iks_out = ihc.inner_hair_cell_potential(coch.Vsolution * magic_constant, fs, store_internals=True)
-                output.mt_ihc = mt_out
-                output.Imet = Imet_out
-                output.Ikf = Ikf_out
-                output.Iks = Iks_out
-            else:
-                Vm = ihc.inner_hair_cell_potential(coch.Vsolution * magic_constant, fs)
-
-            if 'i' in storeflag:
-                output.ihc = Vm
-                
-            # ---- Etapa 3: Submuestreo para el nervio auditivo ----
-            # El nervio auditivo opera a frecuencias de muestreo menores
-            # que la mecánica coclear (la sinapsis actúa como filtro paso bajo).
-            dec_factor = 5
-            Vm_resampled = sp.signal.decimate(Vm, dec_factor, axis=0, n=30, ftype='fir')
-            Vm_resampled[0:5, :] = Vm[0, 0]  # valor de reposo para eliminar ruido del decimado
-            Fs_res = fs / dec_factor
-            
-            # ---- Etapa 4: Fibras del nervio auditivo ----
-            # Simula la transducción sináptica IHC → AN para cada tipo de fibra:
-            if any(flag in storeflag for flag in 'hmlbwd'):
-                
-                # HSR (High Spontaneous Rate): fibras de bajo umbral, primeras en responder
-                if 'h' in storeflag or 'b' in storeflag:
-                    if 'd' in storeflag:
-                        anfH_raw, qt_H, wt_H, avail_H = anf.auditory_nerve_fiber(Vm_resampled, Fs_res, 2, store_internals=True)
-                        anfH = anfH_raw * Fs_res
-                        output.qt_H = qt_H
-                        output.wt_H = wt_H
-                        output.avail_H = avail_H
-                    else:
-                        anfH = anf.auditory_nerve_fiber(Vm_resampled, Fs_res, 2) * Fs_res
-                    if 'h' in storeflag:
-                        output.anfH = anfH
-                        
-                # MSR (Medium Spontaneous Rate): umbral intermedio
-                if 'm' in storeflag or 'b' in storeflag or 'w' in storeflag or 'd' in storeflag:
-                    anfM = anf.auditory_nerve_fiber(Vm_resampled, Fs_res, 1) * Fs_res
-                    if 'm' in storeflag:
-                        output.anfM = anfM
-                        
-                # LSR (Low Spontaneous Rate): alto umbral, cruciales para codificar en ruido
-                if 'l' in storeflag or 'b' in storeflag or 'w' in storeflag or 'd' in storeflag:
-                    anfL = anf.auditory_nerve_fiber(Vm_resampled, Fs_res, 0) * Fs_res
-                    if 'l' in storeflag:
-                        output.anfL = anfL
-                
-                # ---- Etapa 5: Núcleos del tronco encefálico (CN e IC) ----
-                # CN: suma ponderada de las fibras AN + excitación-inhibición
-                # IC: segundo nivel de integración neural
-                if 'b' in storeflag or 'w' in storeflag or 'd' in storeflag:
-                    if 'd' in storeflag:
-                        cn, anSummed, cn_exc, cn_inh = nuclei.cochlearNuclei(anfH, anfM, anfL, numH, numM, numL, Fs_res, store_internals=True)
-                        ic, ic_exc, ic_inh = nuclei.inferiorColliculus(cn, Fs_res, store_internals=True)
-                        output.cn_exc = cn_exc
-                        output.cn_inh = cn_inh
-                        output.ic_exc = ic_exc
-                        output.ic_inh = ic_inh
-                    else:
-                        cn, anSummed = nuclei.cochlearNuclei(anfH, anfM, anfL, numH, numM, numL, Fs_res)
-                        ic = nuclei.inferiorColliculus(cn, Fs_res)
-                    if 'b' in storeflag:
-                        output.cn = cn
-                        output.ic = ic
-                        output.an_summed = anSummed
-                    # ---- Etapa 6: Ondas del ABR ----
-                    # W1 (Onda I): nervio auditivo sumado × M1
-                    # W3 (Onda III): núcleo coclear sumado × M3
-                    # W5 (Onda V): colículo inferior sumado × M5
-                    # La suma W1+W3+W5 = EFR (Envelope Following Response)
-                    if 'w' in storeflag:
-                        output.w1 = nuclei.M1 * np.sum(anSummed, axis=1)
-                        output.w3 = nuclei.M3 * np.sum(cn, axis=1)
-                        output.w5 = nuclei.M5 * np.sum(ic, axis=1)
-        
-        return output
+    _solve_channel = partial(
+        _solve_one_cochlea, fs=fs, sectionsNo=sectionsNo, probes=probes,
+        storeflag=storeflag, sheraPo_val=sheraPo_val, subject=subject,
+        IrrPct=IrrPct, non_linear_type=non_linear_type, DECIMATION=DECIMATION,
+        numH=numH, numM=numM, numL=numL
+    )
     
     # ---- Ejecución paralela o secuencial ----
     # Para múltiples canales se usa multiprocessing para acelerar la simulación.
+    # NOTA: on_stage_complete solo funciona en modo secuencial (un solo canal),
+    # porque el callback no puede ser serializado para los workers de multiprocessing.
     if channels == 1:
-        results = [solve_one_cochlea(cochlear_list[0])]
+        _solve_with_cb = partial(
+            _solve_one_cochlea, fs=fs, sectionsNo=sectionsNo, probes=probes,
+            storeflag=storeflag, sheraPo_val=sheraPo_val, subject=subject,
+            IrrPct=IrrPct, non_linear_type=non_linear_type, DECIMATION=DECIMATION,
+            numH=numH, numM=numM, numL=numL,
+            on_stage_complete=on_stage_complete
+        )
+        results = [_solve_with_cb(cochlear_list[0])]
     else:
         with mp.Pool(mp.cpu_count(), maxtasksperchild=1) as p:
-            results = p.map(solve_one_cochlea, cochlear_list)
+            results = p.map(_solve_channel, cochlear_list)
     
     print("cochlear simulation: done")
     
