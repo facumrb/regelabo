@@ -1,0 +1,31 @@
+backend/
+├── docker-compose.yml           # Orquestación de microservicios (API, Workers, Redis, DB)
+├── config.yaml                  # Configuraciones compartidas entre servicios
+├── .env.example                 # Plantilla de variables de entorno (API Keys, DB URLs)
+├── requirements.txt             # Dependencias globales (opcional, para desarrollo local)
+└── services/                    # Contenedores independientes por responsabilidad
+    ├── core-service/            # API Principal (FastAPI) y Gestión de Usuarios
+    │   ├── Dockerfile           # Definición de imagen para el servicio core
+    │   ├── main.py              # Punto de entrada de la API FastAPI
+    │   ├── requirements.txt     # Dependencias específicas (FastAPI, supabase, celery)
+    │   └── src/
+    │       ├── api/             # Controladores y rutas (user_controller.py)
+    │       ├── core/            # Configuración de la app y Celery (celery_app.py)
+    │       ├── db/              # Clientes de base de datos (supabase_client.py)
+    │       ├── models/          # Definiciones de esquemas y modelos (user_model.py)
+    │       └── services/        # Lógica de negocio (user_service.py)
+    │
+    ├── simulation-service/      # Motor Científico (Verhulst Model + Celery Workers)
+    │   ├── Dockerfile           # Definición de imagen (incluye dependencias científicas)
+    │   ├── main.py              # Punto de entrada para el worker de simulación
+    │   ├── requirements.txt     # Dependencias (numpy, scipy, pandas, dask)
+    │   └── src/
+    │       ├── Verhulst/        # Código core del modelo de Verhulst et al. 2018
+    │       └── verhulst_task.py # Definición de tareas asíncronas de Celery
+    │
+    └── llm-service/             # Módulo de Inteligencia Artificial (LangChain + ChromaDB)
+        ├── Dockerfile           # Definición de imagen para procesamiento de lenguaje
+        ├── main.py              # Punto de entrada para el servicio de análisis
+        ├── requirements.txt     # Dependencias (langchain, chromadb, deepseek)
+        └── src/
+            └── llm/             # Lógica de RAG y base de datos vectorial
