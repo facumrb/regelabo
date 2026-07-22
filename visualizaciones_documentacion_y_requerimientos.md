@@ -45,17 +45,17 @@ El fonoaudiólogo debe buscar tres cosas:
 
 ---
 
-## 2. Panel de Vesículas Sinápticas (Dinámica del RRP)
+## 2. Panel de Vesículas Sinápticas — Fibras HSR (Dinámica del RRP)
 
 ### ¿Qué es?
 
-Es un gráfico temporal que muestra el **estado de la sinapsis entre la célula ciliada interna (IHC) y el nervio auditivo** en tiempo real. Este panel visualiza específicamente la dinámica de las fibras HSR (alta tasa espontánea) en frecuencias seleccionadas:
+Es un gráfico temporal que muestra el **estado de la sinapsis entre la célula ciliada interna (IHC) y el nervio auditivo** en tiempo real. Este panel visualiza específicamente la dinámica de las **fibras HSR (High Spontaneous Rate — alta tasa espontánea, umbral bajo)** en frecuencias seleccionadas:
 
 - **qt (azul):** cantidad de vesículas en el RRP (Ready Releasable Pool), es decir, las vesículas "listas para disparar". Máximo: 14. Cuando un sonido llega, estas vesículas se liberan (exocitosis) y la fibra nerviosa dispara. Si se agotan, la fibra no puede responder.
 - **wt (naranja):** cantidad de vesículas en el pool de reserva. Máximo: 60. Alimenta al RRP y se repone más lentamente.
 - **available (verde):** fracción de fibras nerviosas que no están en período refractario, es decir, disponibles para disparar. Va de 0 (todas ocupadas recuperándose) a 1 (todas listas para disparar).
 
-Este panel solo muestra la dinámica de las fibras HSR. Las fibras MSR y LSR también forman parte del modelo auditivo general, pero no se grafican en este panel específico.
+Las fibras HSR son las más sensibles del nervio auditivo (tasa espontánea: 68.5 sp/s, tasa pico: 3000 sp/s). Son las primeras en activarse ante sonidos suaves y las primeras en saturar ante sonidos fuertes.
 
 ### ¿Cómo funciona internamente?
 
@@ -87,7 +87,7 @@ Este ciclo se ejecuta para cada muestra temporal y para cada sección coclear. E
 
 ### ¿En qué contexto de trabajo se usa?
 
-- **Investigación en sordera oculta:** Comparar simulaciones con diferentes distribuciones de fibras HSR/MSR/LSR y observar cómo cambia la dinámica de las fibras HSR en el panel de vesículas. Aunque el panel solo grafica HSR, las pérdidas de MSR/LSR alteran el comportamiento global del modelo y pueden influir en la respuesta total del nervio auditivo.
+- **Investigación en sordera oculta:** Comparar simulaciones con diferentes distribuciones de fibras HSR/MSR/LSR y observar cómo cambia la dinámica de las fibras HSR en el panel de vesículas.
 - **Diseño de estímulos óptimos:** Determinar si una frecuencia de modulación diferente (por ejemplo, 40 Hz vs. 110 Hz) produce un patrón de agotamiento/recuperación que sea más sensible para detectar sinaptopatía.
 - **Comprensión de la adaptación auditiva:** Explicar por qué un paciente puede oír bien un sonido breve pero tiene dificultad con la conversación sostenida (el pool de vesículas se agota).
 
@@ -101,7 +101,124 @@ El fonoaudiólogo debe buscar:
 
 ---
 
-## 3. Corrientes Iónicas de la IHC
+## 3. Panel de Vesículas Sinápticas — Fibras MSR (Dinámica del RRP)
+
+### ¿Qué es?
+
+Es el equivalente del panel HSR pero para las **fibras MSR (Medium Spontaneous Rate — tasa espontánea media)**. Estas fibras tienen un umbral intermedio (tasa espontánea: 10 sp/s, tasa pico: 1000 sp/s) y representan un eslabón funcional entre las fibras de baja y alta sensibilidad.
+
+Muestra las mismas tres variables que el panel HSR (qt, wt y available), pero los valores reflejan la cinética sináptica particular de las fibras MSR: menor actividad espontánea y menor tasa pico que las HSR.
+
+### ¿Cómo funciona internamente?
+
+Utiliza el mismo modelo biofísico de dos pools de vesículas que el panel HSR (ver sección 2), pero con parámetros específicos de las fibras MSR:
+- **Tasa espontánea (sp):** 10 sp/s (vs. 68.5 sp/s en HSR)
+- **Tasa pico (psr):** 1000 sp/s (vs. 3000 sp/s en HSR)
+
+Estas diferencias hacen que las fibras MSR tengan un estado estacionario diferente en reposo: menor actividad basal y menor agotamiento espontáneo del RRP.
+
+### ¿Qué permite analizar?
+
+| Observación | Interpretación |
+|---|---|
+| qt de MSR se mantiene más lleno que el de HSR durante estimulación | **Comportamiento esperado** — las MSR tienen menor tasa de liberación, por lo que depletan menos el RRP. |
+| qt de MSR cae significativamente durante el estímulo | **Estímulo intenso o frecuencia de modulación alta** — incluso las fibras de umbral medio están siendo reclutadas agresivamente. |
+| Patrón de available similar al de HSR | **Ambas poblaciones están bien reclutadas** — el estímulo es suficiente para activar fibras de sensibilidad media. |
+
+### ¿En qué contexto de trabajo se usa?
+
+- **Investigación en sinaptopatía selectiva:** Las fibras MSR pueden dañarse de forma independiente a las HSR. Visualizar su dinámica permite detectar patrones de daño que serían invisibles si solo se observan las HSR.
+- **Calibración de protocolos de estimulación:** Permite verificar que el nivel del estímulo es suficiente para reclutar fibras MSR además de las HSR.
+
+### ¿Cómo se interpreta?
+
+El fonoaudiólogo debe comparar este panel con el de HSR (sección 2):
+1. **¿El qt de MSR depleta menos que el de HSR?** → Sí = las MSR no están saturadas, comportamiento esperable.
+2. **¿Las MSR muestran periodicidad con el RAM?** → Sí = las MSR están sincronizadas con el estímulo. No = el estímulo puede ser insuficiente para activarlas.
+
+---
+
+## 4. Panel de Vesículas Sinápticas — Fibras LSR (Dinámica del RRP)
+
+### ¿Qué es?
+
+Es el equivalente del panel HSR pero para las **fibras LSR (Low Spontaneous Rate — tasa espontánea baja, umbral alto)**. Estas fibras tienen la menor tasa espontánea (1 sp/s) y la menor tasa pico (800 sp/s), pero son **las más importantes para entender el habla en entornos ruidosos**.
+
+Muestra las mismas tres variables que el panel HSR (qt, wt y available), reflejando la cinética sináptica particular de las fibras LSR.
+
+### ¿Cómo funciona internamente?
+
+Utiliza el mismo modelo biofísico de dos pools (ver sección 2), con parámetros específicos de las fibras LSR:
+- **Tasa espontánea (sp):** 1 sp/s (vs. 68.5 sp/s en HSR, 10 sp/s en MSR)
+- **Tasa pico (psr):** 800 sp/s (vs. 3000 sp/s en HSR, 1000 sp/s en MSR)
+
+Las fibras LSR tienen el RRP más lleno en reposo (menor actividad espontánea = menor consumo basal de vesículas), pero son las primeras en verse afectadas ante **sinaptopatía coclear (pérdida auditiva oculta)** y envejecimiento.
+
+### ¿Qué permite analizar?
+
+| Observación | Interpretación |
+|---|---|
+| qt de LSR se mantiene cercano a 14 durante todo el estímulo | **Comportamiento esperado** — las LSR tienen umbral alto, solo se activan significativamente ante sonidos intensos. |
+| qt de LSR no depleta en absoluto ante el estímulo | **Estímulo por debajo del umbral de las LSR** — el nivel del RAM puede ser demasiado bajo para activar fibras de alto umbral. |
+| qt de LSR depleta de forma similar a HSR | **Estímulo de alta intensidad o patología** — las LSR están siendo reclutadas tan agresivamente como las HSR, lo que podría indicar un estímulo excesivamente fuerte o un desbalance en la codificación. |
+| qt de LSR no se recupera entre pulsos del RAM | **Indicador de fatiga sináptica en LSR** — relevante para explicar dificultades de comprensión en ruido prolongado. |
+
+### ¿En qué contexto de trabajo se usa?
+
+- **Diagnóstico de pérdida auditiva oculta (sinaptopatía):** Las fibras LSR son las primeras en degenerarse ante exposición a ruido o envejecimiento. Un paciente con audiograma normal pero fibras LSR dañadas tendrá dificultad para entender el habla en ruido de fondo. Este panel permite visualizar directamente esa vulnerabilidad.
+- **Investigación en codificación en ruido:** Las LSR tienen un amplio rango dinámico y no saturan fácilmente, lo que las hace esenciales para codificar señales de habla embebidas en ruido competitivo.
+- **Simulación de pérdida selectiva de fibras LSR:** Configurando `numL=0` (simula la degeneración total o pérdida selectiva de las fibras LSR) en el modelo, se puede observar la desaparición de la dinámica vesicular de las LSR y medir el impacto sobre la respuesta total del nervio auditivo.
+
+### ¿Cómo se interpreta?
+
+El fonoaudiólogo debe comparar este panel con los de HSR y MSR:
+1. **¿Las LSR están activas ante el estímulo?** → Si no muestran depleción, el estímulo es demasiado suave para reclutarlas.
+2. **¿Las LSR muestran un patrón diferente al de HSR?** → Sí = las diferentes poblaciones están codificando aspectos distintos del sonido. Esto es el comportamiento sano esperado.
+3. **¿Las LSR están ausentes (qt constante en 14)?** → Si se simuló una pérdida selectiva de LSR (`numL=0`), este panel lo confirma visualmente.
+
+---
+
+## 5. Panel Integrado de Vesículas — Comparación HSR / MSR / LSR
+
+### ¿Qué es?
+
+Es un gráfico que **superpone las curvas de depleción del RRP (qt) de las tres poblaciones de fibras** (HSR, MSR y LSR) en un solo panel para cada frecuencia seleccionada. Permite una comparación directa e inmediata de cómo cada tipo de fibra responde al mismo estímulo en el mismo instante temporal.
+
+- **HSR (azul, línea continua):** Alta tasa espontánea (68.5 sp/s), umbral bajo.
+- **MSR (naranja, línea discontinua):** Tasa espontánea media (10 sp/s), umbral intermedio.
+- **LSR (rojo, línea punto-raya):** Baja tasa espontánea (1 sp/s), umbral alto.
+
+### ¿Cómo funciona internamente?
+
+El panel lee las matrices `qt_H`, `qt_M` y `qt_L` del `ModelOutput` (generadas cuando el modelo se ejecuta con `storeflag='d'`) y las grafica simultáneamente usando el mismo eje temporal y la misma escala de vesículas (0–14). Esto es posible porque las tres poblaciones comparten el mismo tamaño de RRP (`M=14`) y pool de reserva (`M2=60`), pero difieren en sus tasas de activación y liberación.
+
+### ¿Qué permite analizar?
+
+| Observación | Interpretación |
+|---|---|
+| HSR depleta mucho, MSR moderadamente, LSR poco o nada | **Comportamiento normal para estímulos moderados** — las fibras se reclutan proporcionalmente a su sensibilidad. |
+| Las tres curvas depletan de forma similar | **Estímulo muy intenso** — todas las fibras están siendo reclutadas al máximo, indicando saturación. |
+| HSR y MSR depletan pero LSR permanece en 14 | **El estímulo no alcanza el umbral de las LSR** — normal para niveles bajos/moderados. |
+| HSR depleta normalmente pero MSR y/o LSR no depletan (en un escenario con `numM` o `numL` reducidos) | **Sinaptopatía selectiva** — la ausencia de actividad en MSR/LSR es diagnóstica de pérdida sináptica oculta. |
+| Las tres curvas se separan más en frecuencias altas que en frecuencias bajas | **Daño frecuencia-específico** — la separación diferencial entre tipos de fibra varía según la región coclear. |
+
+### ¿En qué contexto de trabajo se usa?
+
+- **Diagnóstico diferencial de sinaptopatía:** Este es el gráfico más potente para **visualizar la pérdida auditiva oculta**. El fonoaudiólogo puede ver directamente qué población de fibras está afectada y en qué grado, algo imposible de determinar con un audiograma convencional.
+- **Educación fonoaudiológica:** Mostrar visualmente la diferencia entre las tres poblaciones de fibras y cómo la misma señal acústica es procesada de forma diferente por cada una.
+- **Investigación en estratificación de fibras:** Estudiar cómo diferentes configuraciones de daño sináptico (pérdida selectiva de LSR vs. pérdida uniforme) producen patrones diferenciables en este panel.
+
+### ¿Cómo se interpreta?
+
+El fonoaudiólogo debe observar:
+1. **¿Las tres curvas están presentes?** → Si falta alguna, esa población de fibras no se simuló o tiene `num=0`.
+2. **¿Existe una jerarquía clara de depleción (HSR > MSR > LSR)?** → Sí = comportamiento fisiológico normal. No = posible artefacto o estímulo atípico.
+3. **¿La separación entre curvas cambia según la frecuencia?** → Comparar el panel a 500 Hz vs. 4000 Hz para detectar patrones frecuencia-específicos.
+4. **¿La forma del agotamiento difiere entre fibras?** → HSR debería deplectar más rápido pero también recuperarse más rápido que LSR por su mayor tasa de recarga.
+
+---
+
+## 6. Corrientes Iónicas de la IHC
 
 ### ¿Qué es?
 
@@ -156,7 +273,7 @@ El fonoaudiólogo debe observar:
 
 ---
 
-## 4. Balance Excitación/Inhibición del Tronco Encefálico
+## 7. Balance Excitación/Inhibición del Tronco Encefálico
 
 ### ¿Qué es?
 
@@ -219,7 +336,7 @@ El fonoaudiólogo debe observar:
 ## Caso de Uso 1: Comparador de Perfiles Auditivos
 
 ### Descripción
-El fonoaudiólogo selecciona dos perfiles auditivos (por ejemplo, "Flat00" vs. "Slope25") y la plataforma ejecuta ambas simulaciones y muestra las 4 visualizaciones lado a lado para comparación directa.
+El fonoaudiólogo selecciona dos perfiles auditivos (por ejemplo, "Flat00" vs. "Slope25") y la plataforma ejecuta ambas simulaciones y muestra las 7 visualizaciones lado a lado para comparación directa.
 
 ### Requerimientos
 
@@ -228,14 +345,14 @@ El fonoaudiólogo selecciona dos perfiles auditivos (por ejemplo, "Flat00" vs. "
 - **REQ-1.2:** Procesamiento asíncrono con cola de tareas (Celery o similar), ya que cada simulación puede tardar varios minutos.
 - **REQ-1.3:** Endpoint `GET /api/simulation/{task_id}/status` para consultar el progreso de la simulación.
 - **REQ-1.4:** Almacenamiento temporal de los `ModelOutput` en disco (pickle o HDF5) para evitar re-simulaciones.
-- **REQ-1.5:** Endpoint `GET /api/simulation/{task_id}/data/{variable}` que retorne los datos de una variable específica (sheraPt, qt_H, etc.) en formato JSON o binario (msgpack/protobuf) para graficación en el frontend.
+- **REQ-1.5:** Endpoint `GET /api/simulation/{task_id}/data/{variable}` que retorne los datos de una variable específica (sheraPt, qt_H, qt_M, qt_L, etc.) en formato JSON o binario (msgpack/protobuf) para graficación en el frontend.
 - **REQ-1.6:** Decimación server-side de los datos de alta resolución temporal (100 kHz → puntos graficables) para enviar al frontend sin saturar el ancho de banda.
 
 #### Frontend
 - **REQ-1.7:** Selector de perfiles auditivos con los 33 perfiles precomputados disponibles, agrupados por tipo (Flat, Slope, Flat+Slope, Normal).
 - **REQ-1.8:** Layout de comparación lado a lado (split-view) con scroll sincronizado y zoom sincronizado entre ambas visualizaciones.
 - **REQ-1.9:** Indicador de progreso de la simulación con estimación de tiempo restante.
-- **REQ-1.10:** Renderizado de las 4 visualizaciones usando una librería de gráficos interactiva (Plotly.js o Chart.js) que permita zoom, pan, y tooltips con valores exactos.
+- **REQ-1.10:** Renderizado de las 7 visualizaciones usando una librería de gráficos interactiva (Plotly.js o Chart.js) que permita zoom, pan, y tooltips con valores exactos.
 - **REQ-1.11:** Toggle para mostrar/ocultar cada visualización individualmente.
 - **REQ-1.12:** Anotaciones textuales automáticas sobre las gráficas indicando diferencias clave entre los dos perfiles (por ejemplo, "Pérdida de ganancia en región 2-8 kHz"). - ¿es posible hacerlo con Python sin modelos de lenguaje? ¿futura implementación con modelos de lenguaje? Se debe priorizar la calidad funcional para fonoaudiología.. si es necesario entonces en una segunda etapa se implementa con modelos de lenguaje -
 
@@ -261,14 +378,16 @@ El fonoaudiólogo ingresa un perfil con audiograma normal (Flat00) pero modifica
   - "Sinaptopatía moderada" (7/1/1)
   - "Sinaptopatía severa" (4/0/0)
   - "Pérdida selectiva LSR" (13/3/0) — modela dificultad en ruido sin pérdida de sensibilidad.
-- **REQ-2.7:** Panel de vesículas (visualización 2) como gráfica principal, con indicadores numéricos de:
-  - Profundidad de agotamiento de qt (mínimo alcanzado)
-  - Tiempo de recuperación de qt al 80% de su valor basal
+- **REQ-2.7:** Paneles de vesículas individuales (visualizaciones 2, 3 y 4) y panel comparativo integrado (visualización 5) como gráficas principales, con indicadores numéricos de:
+  - Profundidad de agotamiento de qt por tipo de fibra (HSR, MSR, LSR: mínimo alcanzado)
+  - Tiempo de recuperación de qt al 80% de su valor basal para cada tipo de fibra
   - Valor de EFR resultante en µV
 - **REQ-2.8:** Semáforo visual (verde/amarillo/rojo) basado en la reducción de EFR respecto al caso sano:
   - Verde: reducción < 10% → "Sin indicadores de sinaptopatía"
   - Amarillo: reducción 10-30% → "Posible sinaptopatía leve"
   - Rojo: reducción > 30% → "Indicadores compatibles con sinaptopatía significativa"
+- **REQ-2.9:** Selector de tipo de fibra (HSR/MSR/LSR/Combinado) para los paneles de vesículas, permitiendo al fonoaudiólogo alternar entre vistas individuales y el panel comparativo integrado.
+- **REQ-2.10:** Indicadores numéricos en el panel combinado (visualización 5) que muestren la diferencia de depleción entre fibras: Δqt(HSR-MSR), Δqt(HSR-LSR), como porcentaje de la capacidad total del RRP.
 
 > [!WARNING]
 > El semáforo es orientativo para investigación, no tiene valor diagnóstico clínico directo. Debe incluir una nota aclaratoria visible.
@@ -317,9 +436,12 @@ Un docente de fonoaudiología utiliza la plataforma en clase para mostrar paso a
   1. Estímulo de entrada (forma de onda RAM)
   2. Mapa de calor coclear (cómo la cóclea amplifica/comprime)
   3. Corrientes de la IHC (cómo se transforma en señal eléctrica)
-  4. Panel de vesículas (cómo la sinapsis transmite al nervio)
-  5. Balance exc/inh (cómo el tronco encefálico integra)
-  6. EFR resultante (lo que mediríamos en la clínica)
+  4. Panel de vesículas HSR (cómo la sinapsis transmite al nervio — fibras más sensibles)
+  5. Panel de vesículas MSR (fibras de sensibilidad media)
+  6. Panel de vesículas LSR (fibras de umbral alto — esenciales para comprensión en ruido)
+  7. Panel integrado HSR/MSR/LSR (comparación directa de la depleción diferencial)
+  8. Balance exc/inh (cómo el tronco encefálico integra)
+  9. EFR resultante (lo que mediríamos en la clínica)
 - **REQ-4.5:** Anotaciones didácticas en cada visualización:
   - Flechas señalando los elementos clave
   - Texto explicativo contextual con lenguaje adecuado para estudiantes
@@ -332,7 +454,7 @@ Un docente de fonoaudiología utiliza la plataforma en clase para mostrar paso a
 ## Caso de Uso 5: Generador de Reportes de Simulación
 
 ### Descripción
-Tras ejecutar una simulación, el fonoaudiólogo genera un reporte en PDF o HTML que documenta los parámetros usados, las 4 visualizaciones, las métricas calculadas, y una interpretación automática de los resultados.
+Tras ejecutar una simulación, el fonoaudiólogo genera un reporte en PDF o HTML que documenta los parámetros usados, las 7 visualizaciones, las métricas calculadas, y una interpretación automática de los resultados.
 
 ### Requerimientos
 
@@ -340,9 +462,9 @@ Tras ejecutar una simulación, el fonoaudiólogo genera un reporte en PDF o HTML
 - **REQ-5.1:** Endpoint `GET /api/simulation/{task_id}/report` que genere un reporte en formato PDF (usando WeasyPrint o ReportLab) o HTML.
 - **REQ-5.2:** El reporte debe incluir:
   - Encabezado con fecha, parámetros de la simulación (perfil, estímulo, fibras)
-  - Las 4 visualizaciones como imágenes de alta resolución (300 dpi)
-  - Tabla de métricas: EFR (µV), amplitudes de W1/W3/W5, profundidad de agotamiento de qt, tiempo de recuperación
-  - Interpretación automática basada en reglas (por ejemplo: "El agotamiento de qt en fibras HSR a 4 kHz es del 78%, consistente con una sinaptopatía moderada")
+  - Las 7 visualizaciones como imágenes de alta resolución (300 dpi)
+  - Tabla de métricas: EFR (µV), amplitudes de W1/W3/W5, profundidad de agotamiento de qt por tipo de fibra (HSR, MSR, LSR), tiempo de recuperación por tipo de fibra
+  - Interpretación automática basada en reglas (por ejemplo: "El agotamiento de qt en fibras HSR a 4 kHz es del 78% mientras que las LSR mantienen el 95% de su capacidad, consistente con un reclutamiento diferencial normal" o "Las fibras LSR no muestran actividad, consistente con sinaptopatía selectiva de fibras de bajo umbral")
 - **REQ-5.3:** Generación de imágenes server-side usando matplotlib con el módulo `diagnostic_plots.py` ya implementado (sin necesidad de un navegador).
 
 #### Frontend
@@ -382,8 +504,8 @@ El investigador ejecuta múltiples simulaciones con perfiles que representan una
 | `/api/simulation/batch/{id}/summary` | GET | CU-3 | Resumen de batch de simulaciones |
 | `/api/presets/teaching` | GET | CU-4 | Listar presets docentes |
 | `/api/simulation/{id}/status` | GET | Todos | Estado de una simulación |
-| `/api/simulation/{id}/data/{variable}` | GET | Todos | Datos de una variable específica |
-| `/api/simulation/{id}/report` | GET | CU-5 | Generar reporte PDF/HTML |
+| `/api/simulation/{id}/data/{variable}` | GET | Todos | Datos de una variable específica (qt_H, qt_M, qt_L, sheraPt, etc.) |
+| `/api/simulation/{id}/report` | GET | CU-5 | Generar reporte PDF/HTML con las 7 visualizaciones |
 | `/api/simulation/progression` | POST | CU-6 | Simular progresión temporal |
 | `/api/profiles` | GET | Todos | Listar perfiles auditivos disponibles |
 
@@ -393,15 +515,17 @@ El investigador ejecuta múltiples simulaciones con perfiles que representan una
 
 ### Prioridad Alta (MVP)
 - REQ-1.1, REQ-1.2, REQ-1.3, REQ-1.5 — Ejecución y consulta de simulaciones
-- REQ-1.7, REQ-1.10, REQ-1.11 — Selector de perfiles y renderizado de gráficos
-- REQ-2.1, REQ-2.5, REQ-2.6, REQ-2.7 — Simulación de sinaptopatía
+- REQ-1.7, REQ-1.10, REQ-1.11 — Selector de perfiles y renderizado de las 7 visualizaciones
+- REQ-2.1, REQ-2.5, REQ-2.6, REQ-2.7 — Simulación de sinaptopatía con paneles HSR/MSR/LSR y combinado
+- REQ-2.9 — Selector de tipo de fibra para paneles de vesículas
 - REQ-1.6 — Decimación de datos para rendimiento
 
 ### Prioridad Media (v1.1)
 - REQ-1.8, REQ-1.12 — Comparación lado a lado con anotaciones
 - REQ-2.8 — Semáforo de sinaptopatía
+- REQ-2.10 — Indicadores de depleción diferencial entre fibras en panel combinado
 - REQ-3.1, REQ-3.5, REQ-3.6 — Exploración de parámetros
-- REQ-5.1, REQ-5.2, REQ-5.4 — Generación de reportes
+- REQ-5.1, REQ-5.2, REQ-5.4 — Generación de reportes con las 7 visualizaciones
 
 ### Prioridad Baja (v2.0)
 - REQ-3.2, REQ-3.3, REQ-3.4 — Batches de simulaciones
