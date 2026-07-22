@@ -36,9 +36,17 @@ def make_synthetic_output():
     )
 
     # vesicle panel arrays (time_an x sections)
-    out.qt_H = np.clip(7 + 2 * np.sin(np.linspace(0, 30 * np.pi, t_an))[:, None] * np.ones((1, out.cf.size)), 0, 14)
+    out.qt_H = np.clip(10 + 2 * np.sin(np.linspace(0, 30 * np.pi, t_an))[:, None] * np.ones((1, out.cf.size)), 0, 14)
     out.wt_H = 30 + 5 * np.cos(np.linspace(0, 10 * np.pi, t_an))[:, None] * np.ones((1, out.cf.size))
     out.avail_H = np.clip(0.8 + 0.1 * np.sin(np.linspace(0, 8 * np.pi, t_an))[:, None] * np.ones((1, out.cf.size)), 0, 1)
+
+    out.qt_M = np.clip(12 + 1.5 * np.sin(np.linspace(0, 20 * np.pi, t_an))[:, None] * np.ones((1, out.cf.size)), 0, 14)
+    out.wt_M = 40 + 4 * np.cos(np.linspace(0, 8 * np.pi, t_an))[:, None] * np.ones((1, out.cf.size))
+    out.avail_M = np.clip(0.85 + 0.08 * np.sin(np.linspace(0, 6 * np.pi, t_an))[:, None] * np.ones((1, out.cf.size)), 0, 1)
+
+    out.qt_L = np.clip(13.5 + 0.8 * np.sin(np.linspace(0, 10 * np.pi, t_an))[:, None] * np.ones((1, out.cf.size)), 0, 14)
+    out.wt_L = 50 + 3 * np.cos(np.linspace(0, 6 * np.pi, t_an))[:, None] * np.ones((1, out.cf.size))
+    out.avail_L = np.clip(0.9 + 0.05 * np.sin(np.linspace(0, 4 * np.pi, t_an))[:, None] * np.ones((1, out.cf.size)), 0, 1)
 
     # IHC currents (time_bm x sections) - create smaller amplitude signals
     out.Imet = 1e-9 * (0.2 * np.sin(np.linspace(0, 50 * np.pi, t_bm))[:, None] * np.ones((1, out.cf.size)))

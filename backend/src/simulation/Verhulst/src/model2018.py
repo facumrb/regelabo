@@ -71,6 +71,12 @@ class ModelOutput:
         self.qt_H = None         # Vesículas RRP - fibras HSR [tiempo_an x secciones]
         self.wt_H = None         # Pool reserva - fibras HSR [tiempo_an x secciones]
         self.avail_H = None      # Fibras no refractarias HSR [tiempo_an x secciones]
+        self.qt_M = None         # Vesículas RRP - fibras MSR [tiempo_an x secciones]
+        self.wt_M = None         # Pool reserva - fibras MSR [tiempo_an x secciones]
+        self.avail_M = None      # Fibras no refractarias MSR [tiempo_an x secciones]
+        self.qt_L = None         # Vesículas RRP - fibras LSR [tiempo_an x secciones]
+        self.wt_L = None         # Pool reserva - fibras LSR [tiempo_an x secciones]
+        self.avail_L = None      # Fibras no refractarias LSR [tiempo_an x secciones]
         self.cn_exc = None       # Componente excitatoria CN [tiempo_an x secciones]
         self.cn_inh = None       # Componente inhibitoria CN [tiempo_an x secciones]
         self.ic_exc = None       # Componente excitatoria IC [tiempo_an x secciones]
@@ -191,13 +197,29 @@ def _solve_one_cochlea(model_data, fs, sectionsNo, probes, storeflag,
 
             # MSR (Medium Spontaneous Rate): umbral intermedio
             if 'm' in storeflag or 'b' in storeflag or 'w' in storeflag or 'd' in storeflag:
-                anfM = anf.auditory_nerve_fiber(Vm_resampled, Fs_res, 1) * Fs_res
+                if 'd' in storeflag:
+                    anfM_raw, qt_M, wt_M, avail_M = anf.auditory_nerve_fiber(
+                        Vm_resampled, Fs_res, 1, store_internals=True)
+                    anfM = anfM_raw * Fs_res
+                    output.qt_M = qt_M
+                    output.wt_M = wt_M
+                    output.avail_M = avail_M
+                else:
+                    anfM = anf.auditory_nerve_fiber(Vm_resampled, Fs_res, 1) * Fs_res
                 if 'm' in storeflag:
                     output.anfM = anfM
 
             # LSR (Low Spontaneous Rate): alto umbral, cruciales para codificar en ruido
             if 'l' in storeflag or 'b' in storeflag or 'w' in storeflag or 'd' in storeflag:
-                anfL = anf.auditory_nerve_fiber(Vm_resampled, Fs_res, 0) * Fs_res
+                if 'd' in storeflag:
+                    anfL_raw, qt_L, wt_L, avail_L = anf.auditory_nerve_fiber(
+                        Vm_resampled, Fs_res, 0, store_internals=True)
+                    anfL = anfL_raw * Fs_res
+                    output.qt_L = qt_L
+                    output.wt_L = wt_L
+                    output.avail_L = avail_L
+                else:
+                    anfL = anf.auditory_nerve_fiber(Vm_resampled, Fs_res, 0) * Fs_res
                 if 'l' in storeflag:
                     output.anfL = anfL
 

@@ -21,6 +21,7 @@ from typing import Optional
 from .diagnostic_plots import (
     plot_cochlear_heatmap,
     plot_vesicle_panel,
+    plot_vesicle_panel_combined,
     plot_ihc_currents,
     plot_brainstem_balance,
 )
@@ -107,8 +108,23 @@ class PlotOrchestrator:
                             fig.savefig(fpath, dpi=200, bbox_inches='tight')
                             print(f'[PlotOrch] Saved {fpath}')
                         if hasattr(out, 'qt_H'):
-                            fig, axes = plot_vesicle_panel(out)
-                            fpath = os.path.join(self.out_dir, f'vesicle_panel_ch{ch}.png')
+                            fig, axes = plot_vesicle_panel(out, fiber_type='HSR')
+                            fpath = os.path.join(self.out_dir, f'vesicle_panel_hsr_ch{ch}.png')
+                            fig.savefig(fpath, dpi=200, bbox_inches='tight')
+                            print(f'[PlotOrch] Saved {fpath}')
+                        if hasattr(out, 'qt_M'):
+                            fig, axes = plot_vesicle_panel(out, fiber_type='MSR')
+                            fpath = os.path.join(self.out_dir, f'vesicle_panel_msr_ch{ch}.png')
+                            fig.savefig(fpath, dpi=200, bbox_inches='tight')
+                            print(f'[PlotOrch] Saved {fpath}')
+                        if hasattr(out, 'qt_L'):
+                            fig, axes = plot_vesicle_panel(out, fiber_type='LSR')
+                            fpath = os.path.join(self.out_dir, f'vesicle_panel_lsr_ch{ch}.png')
+                            fig.savefig(fpath, dpi=200, bbox_inches='tight')
+                            print(f'[PlotOrch] Saved {fpath}')
+                        if hasattr(out, 'qt_H') and hasattr(out, 'qt_M') and hasattr(out, 'qt_L'):
+                            fig, axes = plot_vesicle_panel_combined(out)
+                            fpath = os.path.join(self.out_dir, f'vesicle_panel_combined_ch{ch}.png')
                             fig.savefig(fpath, dpi=200, bbox_inches='tight')
                             print(f'[PlotOrch] Saved {fpath}')
                         if hasattr(out, 'Imet'):
@@ -140,7 +156,9 @@ def save_partial_output(channel_idx: int, stage: str, output, outdir: str):
     # include typical fields used by diagnostic plots if present
     fields = [
         'sheraPt', 'cf', 'fs_bm',
-        'qt_H', 'wt_H', 'avail_H', 'fs_an',
+        'qt_H', 'wt_H', 'avail_H',
+        'qt_M', 'wt_M', 'avail_M',
+        'qt_L', 'wt_L', 'avail_L', 'fs_an',
         'Imet', 'Ikf', 'Iks', 'ihc', 'fs_ihc',
         'cn_exc', 'cn_inh', 'ic_exc', 'ic_inh', 'fs_abr'
     ]

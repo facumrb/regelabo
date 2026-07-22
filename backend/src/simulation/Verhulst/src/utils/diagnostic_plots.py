@@ -114,10 +114,10 @@ def plot_cochlear_heatmap(output, fig=None, ax=None, vmin=None, vmax=None):
 # VISUALIZACIÓN 2: PANEL DE VESÍCULAS SINÁPTICAS
 # =============================================================================
 
-def plot_vesicle_panel(output, cf_targets=None, fig=None, axes=None):
+def plot_vesicle_panel(output, cf_targets=None, fiber_type='HSR', fig=None, axes=None):
     """
     Panel de vesículas sinápticas — Dinámica del RRP (Ready Releasable Pool)
-    para fibras HSR en frecuencias seleccionadas.
+    para un tipo de fibra (HSR, MSR o LSR) en frecuencias seleccionadas.
 
     Muestra:
       - qt (azul): vesículas en el RRP (máx 14) — se agotan con cada disparo
@@ -131,6 +131,8 @@ def plot_vesicle_panel(output, cf_targets=None, fig=None, axes=None):
     cf_targets : list of float, opcional
         Frecuencias características a graficar (Hz).
         Default: [500, 1000, 4000, 8000]
+    fiber_type : str, opcional
+        Tipo de fibra: 'HSR', 'MSR' o 'LSR'. Default: 'HSR'
     fig, axes : matplotlib Figure y Axes, opcionales
         Si no se proporcionan, se crean automáticamente.
 
@@ -138,8 +140,17 @@ def plot_vesicle_panel(output, cf_targets=None, fig=None, axes=None):
     --------
     fig, axes : matplotlib Figure y array de Axes
     """
-    if output.qt_H is None:
-        raise ValueError("qt_H no disponible. Ejecutar con storeflag que incluya 'd'.")
+    fiber_type = fiber_type.upper()
+    qt_attr = f"qt_{fiber_type[0]}"
+    wt_attr = f"wt_{fiber_type[0]}"
+    avail_attr = f"avail_{fiber_type[0]}"
+
+    qt_data = getattr(output, qt_attr, None)
+    wt_data = getattr(output, wt_attr, None)
+    avail_data = getattr(output, avail_attr, None)
+
+    if qt_data is None:
+        raise ValueError(f"{qt_attr} no disponible. Ejecutar con storeflag que incluya 'd'.")
 
     if cf_targets is None:
         cf_targets = [500, 1000, 4000, 8000]
@@ -150,7 +161,7 @@ def plot_vesicle_panel(output, cf_targets=None, fig=None, axes=None):
     if n_plots == 1:
         axes = [axes]
 
-    t = _make_time_axis(output.qt_H, output.fs_an)
+    t = _make_time_axis(qt_data, output.fs_an)
     cf = output.cf
 
     for i, target_hz in enumerate(cf_targets):
@@ -164,36 +175,110 @@ def plot_vesicle_panel(output, cf_targets=None, fig=None, axes=None):
         color_av = '#4CAF50'   # verde — disponibilidad
 
         # RRP (qt) — eje izquierdo
-        ax.plot(t * 1000, output.qt_H[:, idx], color=color_qt, linewidth=1.5,
+        ax.plot(t * 1000, qt_data[:, idx], color=color_qt, linewidth=1.5,
                 label='RRP (qt, máx=14)', alpha=0.9)
 
         # Reserva (wt) escalada al mismo rango que qt para comparación visual
-        # wt máx=60, qt máx=14 → escalar wt por 14/60
-        ax.plot(t * 1000, output.wt_H[:, idx] * (14.0 / 60.0), color=color_wt,
-                linewidth=1.5, label='Reserva (wt, ×14/60)', alpha=0.9, linestyle='--')
+        if wt_data is not None:
+            ax.plot(t * 1000, wt_data[:, idx] * (14.0 / 60.0), color=color_wt,
+                    linewidth=1.5, label='Reserva (wt, ×14/60)', alpha=0.9, linestyle='--')
 
         # Línea de capacidad máxima del RRP
         ax.axhline(y=14, color='gray', linestyle=':', alpha=0.5, label='Capacidad RRP')
 
         ax.set_ylabel('Vesículas', fontsize=10)
         ax.set_ylim([-0.5, 16])
-        ax.set_title(f'CF ≈ {actual_cf:.0f} Hz (Fibras HSR)', fontsize=11, fontweight='bold')
+        ax.set_title(f'CF ≈ {actual_cf:.0f} Hz (Fibras {fiber_type})', fontsize=11, fontweight='bold')
 
         # Fracción disponible (available) — eje derecho
-        ax2 = ax.twinx()
-        ax2.plot(t * 1000, output.avail_H[:, idx], color=color_av, linewidth=1.5,
-                 label='Fibras disponibles', alpha=0.7)
-        ax2.set_ylim([0, 1.15])
-        ax2.set_ylabel('Fracción disponible', fontsize=10, color=color_av)
-        ax2.tick_params(axis='y', labelcolor=color_av)
+        if avail_data is not None:
+            ax2 = ax.twinx()
+            ax2.plot(t * 1000, avail_data[:, idx], color=color_av, linewidth=1.5,
+                     label='Fibras disponibles', alpha=0.7)
+            ax2.set_ylim([0, 1.15])
+            ax2.set_ylabel('Fracción disponible', fontsize=10, color=color_av)
+            ax2.tick_params(axis='y', labelcolor=color_av)
 
-        # Leyenda combinada
-        lines1, labels1 = ax.get_legend_handles_labels()
-        lines2, labels2 = ax2.get_legend_handles_labels()
-        ax.legend(lines1 + lines2, labels1 + labels2, loc='upper right', fontsize=8)
+            # Leyenda combinada
+            lines1, labels1 = ax.get_legend_handles_labels()
+            lines2, labels2 = ax2.get_legend_handles_labels()
+            ax.legend(lines1 + lines2, labels1 + labels2, loc='upper right', fontsize=8)
+        else:
+            ax.legend(loc='upper right', fontsize=8)
 
     axes[-1].set_xlabel('Tiempo (ms)', fontsize=12)
-    fig.suptitle('Panel de Vesículas Sinápticas — Dinámica del RRP (HSR)',
+    fig.suptitle(f'Panel de Vesículas Sinápticas — Dinámica del RRP ({fiber_type})',
+                 fontsize=14, fontweight='bold', y=1.02)
+    fig.tight_layout()
+
+    return fig, axes
+
+
+def plot_vesicle_panel_combined(output, cf_targets=None, fig=None, axes=None):
+    """
+    Panel de vesículas sinápticas combinado — Compara el RRP (qt) de las 3 poblaciones
+    de fibras (HSR, MSR, LSR) simultáneamente en las frecuencias seleccionadas.
+
+    Parámetros:
+    -----------
+    output : ModelOutput
+        Salida del modelo con storeflag 'd' activo.
+    cf_targets : list of float, opcional
+        Frecuencias características a graficar (Hz). Default: [500, 1000, 4000, 8000]
+    fig, axes : matplotlib Figure y Axes, opcionales
+
+    Retorna:
+    --------
+    fig, axes : matplotlib Figure y array de Axes
+    """
+    if output.qt_H is None:
+        raise ValueError("qt_H no disponible. Ejecutar con storeflag que incluya 'd'.")
+
+    if cf_targets is None:
+        cf_targets = [500, 1000, 4000, 8000]
+
+    n_plots = len(cf_targets)
+    if fig is None or axes is None:
+        fig, axes = plt.subplots(n_plots, 1, figsize=(12, 3.2 * n_plots), sharex=True)
+    if n_plots == 1:
+        axes = [axes]
+
+    t = _make_time_axis(output.qt_H, output.fs_an)
+    cf = output.cf
+
+    color_hsr = '#1E88E5'  # Azul para HSR (Alta tasa)
+    color_msr = '#FB8C00'  # Naranja para MSR (Media tasa)
+    color_lsr = '#E53935'  # Rojo para LSR (Baja tasa / umbral alto)
+
+    for i, target_hz in enumerate(cf_targets):
+        idx = _find_cf_index(cf, target_hz)
+        actual_cf = cf[idx]
+        ax = axes[i]
+
+        # RRP HSR
+        ax.plot(t * 1000, output.qt_H[:, idx], color=color_hsr, linewidth=1.8,
+                label='HSR (Alta tasa, umbral bajo)', alpha=0.9)
+
+        # RRP MSR (si está disponible)
+        if output.qt_M is not None:
+            ax.plot(t * 1000, output.qt_M[:, idx], color=color_msr, linewidth=1.8,
+                    label='MSR (Tasa media)', alpha=0.9, linestyle='--')
+
+        # RRP LSR (si está disponible)
+        if output.qt_L is not None:
+            ax.plot(t * 1000, output.qt_L[:, idx], color=color_lsr, linewidth=1.8,
+                    label='LSR (Baja tasa, umbral alto)', alpha=0.9, linestyle='-.')
+
+        ax.axhline(y=14, color='gray', linestyle=':', alpha=0.5, label='Capacidad RRP (máx 14)')
+
+        ax.set_ylabel('Vesículas RRP (qt)', fontsize=10)
+        ax.set_ylim([-0.5, 16])
+        ax.set_title(f'CF ≈ {actual_cf:.0f} Hz — Comparación HSR vs MSR vs LSR',
+                     fontsize=11, fontweight='bold')
+        ax.legend(loc='upper right', fontsize=8.5)
+
+    axes[-1].set_xlabel('Tiempo (ms)', fontsize=12)
+    fig.suptitle('Panel Integrado de Vesículas Sinápticas — Depleción RRP por Tipo de Fibra (HSR / MSR / LSR)',
                  fontsize=14, fontweight='bold', y=1.02)
     fig.tight_layout()
 
@@ -416,10 +501,25 @@ def plot_all_diagnostics(output, save_dir=None, show=True):
     fig1, _ = plot_cochlear_heatmap(output)
     figs['cochlear_heatmap'] = fig1
 
-    # 2. Panel de vesículas sinápticas
-    print("  [2/4] Generando panel de vesículas sinápticas...")
-    fig2, _ = plot_vesicle_panel(output)
+    # 2. Panel de vesículas sinápticas (HSR, MSR, LSR y Combinado)
+    print("  [2/4] Generando panel de vesículas sinápticas (HSR)...")
+    fig2, _ = plot_vesicle_panel(output, fiber_type='HSR')
     figs['vesicle_panel'] = fig2
+
+    if hasattr(output, 'qt_M') and output.qt_M is not None:
+        print("        Generando panel de vesículas sinápticas (MSR)...")
+        fig2_msr, _ = plot_vesicle_panel(output, fiber_type='MSR')
+        figs['vesicle_panel_msr'] = fig2_msr
+
+    if hasattr(output, 'qt_L') and output.qt_L is not None:
+        print("        Generando panel de vesículas sinápticas (LSR)...")
+        fig2_lsr, _ = plot_vesicle_panel(output, fiber_type='LSR')
+        figs['vesicle_panel_lsr'] = fig2_lsr
+
+    if hasattr(output, 'qt_H') and output.qt_H is not None:
+        print("        Generando panel combinado de vesículas (HSR/MSR/LSR)...")
+        fig2_comb, _ = plot_vesicle_panel_combined(output)
+        figs['vesicle_panel_combined'] = fig2_comb
 
     # 3. Corrientes de la IHC
     print("  [3/4] Generando corrientes de la IHC...")
