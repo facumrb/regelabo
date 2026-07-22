@@ -127,7 +127,7 @@ resting_potential=-0.05703; #resting_potential at equilibrium
 # A este voltaje, la tasa de liberación de neurotransmisor es máxima.
 peak_potential=-0.04; #peak resting potential at 100 dB 4 kHz (where nerve fibers saturate)
 
-def inner_hair_cell_potential(mu,fs):
+def inner_hair_cell_potential(mu,fs, store_internals=False):
     """
     Calcula el potencial de membrana (Vm) de la IHC en respuesta a la
     velocidad de la membrana basilar (mu).
@@ -180,6 +180,12 @@ def inner_hair_cell_potential(mu,fs):
     # La función doble Boltzmann captura la asimetría de la transducción:
     # deflexiones positivas (hacia el kinocilio) abren más canales,
     # deflexiones negativas (opuestas) los cierran.
+    # ---- Array para variables internas (visualizaciones detalladas) ----
+    if store_internals:
+        mt_sol=zeros_like(mu,dtype=float)
+        Imet_sol=zeros_like(mu,dtype=float)
+        Ikf_sol=zeros_like(mu,dtype=float)
+        Iks_sol=zeros_like(mu,dtype=float)
     mtIn=1/(1+exp((x0-mu)/s0)*(1+exp((x0-mu)/s1)));
     # Variables de activación de K⁺ inicializadas con los valores de reposo.
     mkf1=1/(1+exp(-(Vm-xk)/sk));
@@ -237,7 +243,14 @@ def inner_hair_cell_potential(mu,fs):
         Vm=Vm+dV*dt;
         # Almacenamiento del potencial de membrana para esta muestra temporal:
         Vsol[i,:]=Vm
+        if store_internals:
+            mt_sol[i,:]=mt
+            Imet_sol[i,:]=Imet
+            Ikf_sol[i,:]=Ikf
+            Iks_sol[i,:]=Iks
     # print(Vsol)
+    if store_internals:
+        return Vsol, mt_sol, Imet_sol, Ikf_sol, Iks_sol
     return Vsol
 
 

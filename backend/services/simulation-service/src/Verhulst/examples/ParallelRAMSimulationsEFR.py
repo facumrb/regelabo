@@ -31,6 +31,7 @@ import pandas as pd
 import multiprocessing as mp
 import time
 from tqdm import tqdm
+from concurrent.futures import ProcessPoolExecutor, as_completed
 import os
 import sys
 
@@ -62,7 +63,7 @@ def load_shera_poles_profile(sheraP_folder):
         print(f"Error loading Shera poles profile from {sheraP_folder}: {e}")
         return None
 
-def run_simulation(stim, fs, sheraP, HSR, MSR, LSR):
+def run_simulation(stim, fs, sheraP, HSR, MSR, LSR, store_diagnostics=True):
     """
     Ejecuta una simulación completa del modelo auditivo para un sujeto.
     
@@ -70,7 +71,8 @@ def run_simulation(stim, fs, sheraP, HSR, MSR, LSR):
     Sonido → Cóclea → IHC → AN (HSR+MSR+LSR) → CN → IC → ABR (W1+W3+W5)
     """
     try:
-        output = model2018(stim, fs, 'abr', 1, 'evihmlbw', 1, sheraP, 0.05, 'vel', HSR, MSR, LSR, 1, os.getcwd())
+        storeflag = 'evihmlbwd' if store_diagnostics else 'evihmlbw'
+        output = model2018(stim, fs, 'abr', 1, storeflag, 1, sheraP, 0.05, 'vel', HSR, MSR, LSR, 1, os.getcwd())
         return output
     except Exception as e:
         print(f"Error running simulation: {e}")

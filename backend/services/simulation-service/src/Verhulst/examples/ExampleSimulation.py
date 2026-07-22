@@ -4,22 +4,22 @@
 EJEMPLO DE SIMULACIÓN: Interfaz simplificada para el modelo Verhulst 2018
 =============================================================================
 Este script proporciona una interfaz fácil de usar para ejecutar el modelo
-completo de la periferia auditiva y calcular el EFR (Envelope Following Response).
+completo de la periferia auditiva y calcular el EFR (Envelope Following Response) y demás gráficas.
 
 Pipeline completo:
   1. Genera un estímulo RAM (Rectangular Amplitude Modulation) automáticamente
   2. Carga el perfil auditivo (polos de Shera) desde un archivo .dat
-  3. Ejecuta la simulación completa: Sonido → Cóclea → IHC → AN → CN → IC → ABR
+  3. Ejecuta la simulación completa: Sonido → Cóclea → IHC → Nervio Auditivo → CN → IC → ABR
   4. Calcula el EFR usando análisis FFT (suma de armónicos a 110 Hz)
-  5. Muestra los resultados y genera gráficos de diagnóstico
+  5. Muestra los resultados y genera gráficas de diagnóstico
 
 Contexto clínico:
   El EFR es una medida objetiva de la sincronización neural auditiva.
   Un EFR reducido (en µV) puede indicar pérdida auditiva, neuropatía
-  auditiva o sinapatopatía coclear (sordera oculta).
+  auditiva o sinaptopatía coclear (sordera oculta).
 
 Uso:
-    python ExampleSimulation.py
+  python ExampleSimulation.py
 
 Creado por: Brent Nissens
 Basado en: Verhulst et al. 2018 y FullSimulationRAM.py
@@ -35,6 +35,7 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 
 from utils.get_RAM_stims import get_RAM_stims
+from utils.diagnostic_plots import plot_all_diagnostics
 from model2018 import model2018
 
 def calculate_EFR(output):
@@ -50,7 +51,7 @@ def calculate_EFR(output):
     Un EFR bajo indica que las neuronas auditivas no logran sincronizarse
     con el ritmo del estímulo, lo cual puede deberse a:
       - Daño en las OHC (pérdida auditiva sensorineural)
-      - Pérdida de sinapsis ribbon (sinapatopatía coclear / sordera oculta)
+      - Pérdida de sinapsis ribbon (sinaptopatía coclear / sordera oculta)
       - Neuropatía del nervio auditivo
     
     Parámetros:
@@ -61,7 +62,7 @@ def calculate_EFR(output):
     Retorna:
     --------
     float
-        Valor del EFR en microvoltios (μV)
+        Valor del EFR en microvoltios (µV)
     """
     try:
         # Manejar el caso donde la salida es una lista conteniendo un diccionario
@@ -105,7 +106,7 @@ def calculate_EFR(output):
         print(f"Error calculating EFR: {e}")
         return np.nan, None, None, None, None
 
-def run_easy_model(carrier_freq=4000, poles_profile='Flat00', show_plots=True, save_results=True):
+def run_easy_model(carrier_freq=4000, poles_profile='Flat00', show_plots=True, save_results=True, show_diagnostics=True):
     """
     Interfaz simplificada para ejecutar el modelo auditivo y calcular el EFR.
     
@@ -118,9 +119,11 @@ def run_easy_model(carrier_freq=4000, poles_profile='Flat00', show_plots=True, s
         Nombre del perfil de polos en ./Poles/ (default: 'Flat00' = audición normal).
         Otros perfiles simulan diferentes grados de pérdida auditiva.
     show_plots : bool
-        Si generar gráficos de resultados
+        Si generar gráficas de resultados
     save_results : bool
         Si guardar resultados en archivos .mat
+    show_diagnostics : bool
+        Si mostrar las 4 gráficas de diagnóstico detalladas
         
     Retorna:
     --------
@@ -150,11 +153,11 @@ def run_easy_model(carrier_freq=4000, poles_profile='Flat00', show_plots=True, s
     print("Generating RAM stimulus...")
     try:
         stimulus = get_RAM_stims(fs, fRAM)
-        print(f"✓ Generated stimulus: {stimulus.shape[1]} samples, duration: {stimulus.shape[1]/fs:.3f} s")
+        print(f"[OK] Generated stimulus: {stimulus.shape[1]} samples, duration: {stimulus.shape[1]/fs:.3f} s")
     except Exception as e:
-        print(f"✗ Error generating stimulus: {e}")
+        print(f"[ERROR] Error generating stimulus: {e}")
         return None
-    
+
     # Cargar perfil de polos de Shera
     poles_path = os.path.join(os.path.dirname(__file__), f'../data/Poles/{poles_profile}/StartingPoles.dat')
     print(f"Loading poles from: {poles_path}")
@@ -163,9 +166,9 @@ def run_easy_model(carrier_freq=4000, poles_profile='Flat00', show_plots=True, s
         # Take only the first row if there are multiple rows
         if sheraP.ndim > 1:
             sheraP = sheraP[0, :]
-        print(f"✓ Loaded poles profile: {len(sheraP)} values")
+        print(f"[OK] Loaded poles profile: {len(sheraP)} values")
     except Exception as e:
-        print(f"✗ Error loading poles: {e}")
+        print(f"[ERROR] Error loading poles: {e}")
         print(f"Available poles profiles in ../data/Poles/:")
         try:
             poles_base_dir = os.path.join(os.path.dirname(__file__), '../data/Poles/')
@@ -175,23 +178,24 @@ def run_easy_model(carrier_freq=4000, poles_profile='Flat00', show_plots=True, s
         except:
             print("  Could not list poles directories")
         return None
-    
+
     # Ejecutar modelo
     print("\nRunning model2018...")
     try:
         # Ejecutar la simulación completa del modelo auditivo.
         # Parámetros clave:
         #   fc='abr': secciones cocleares usadas para calcular las ondas ABR
-        #   storeflag='evihmlbw': almacenar todas las variables del pipeline
+        #   storeflag='evihmlbwd': almacenar todas las variables del pipeline + diagnósticos
         #   nH=13, nM=3, nL=3: distribución normal de fibras AN por IHC
         #   IrrPct=0.05: 5% de irregularidades en la BM (genera OAE)
         #   non_linear_type='vel': compresión coclear basada en velocidad BM
+        storeflag = 'evihmlbwd' if show_diagnostics else 'evihmlbw'
         results = model2018(
             stimulus, 
             fs, 
             fc='abr',                    # Puntos de sondeo para ABR
             irregularities=1,            # Habilitar irregularidades de Zweig (OAE)
-            storeflag='evihmlbw',        # Almacenar: emisión, velocidad, IHC, fibras, ondas
+            storeflag=storeflag,         # Almacenar: emisión, velocidad, IHC, fibras, ondas + diagnósticos
             subject=1,                   # Semilla para irregularidades aleatorias
             sheraPo=sheraP,              # Perfil auditivo (polos de Shera)
             IrrPct=0.05,                 # Magnitud de irregularidades BM (5%)
@@ -202,29 +206,29 @@ def run_easy_model(carrier_freq=4000, poles_profile='Flat00', show_plots=True, s
             clean=1,
             data_folder='./'
         )
-        print("✓ Model simulation completed successfully!")
+        print("[OK] Model simulation completed successfully!")
     except Exception as e:
-        print(f"✗ Error running model: {e}")
+        print(f"[ERROR] Error running model: {e}")
         return None
-    
+
     # Calcular EFR
     print("\nCalculating EFR...")
     try:
         efr_value, f, P1, harmonics, harmonic_idx = calculate_EFR(results)
         if not np.isnan(efr_value):
-            print(f"✓ EFR calculated: {efr_value:.4f} μV")
+            print(f"[OK] EFR calculated: {efr_value:.4f} µV")
         else:
-            print("✗ EFR calculation failed")
+            print("[ERROR] EFR calculation failed")
             return None
     except Exception as e:
-        print(f"✗ Error calculating EFR: {e}")
+        print(f"[ERROR] Error calculating EFR: {e}")
         return None
     
     # Mostrar detalles de armónicos
     print("\nHarmonic Analysis:")
     for i, (harm_freq, idx) in enumerate(zip(harmonics, harmonic_idx)):
         power_uv = P1[idx] * 1e6
-        print(f"  {harm_freq} Hz (harmonic {i+1}): {power_uv:.4f} μV")
+        print(f"  {harm_freq} Hz (harmonic {i+1}): {power_uv:.4f} µV")
     
     # Guardar resultados si fue solicitado
     if save_results:
@@ -245,24 +249,69 @@ def run_easy_model(carrier_freq=4000, poles_profile='Flat00', show_plots=True, s
                 'poles_profile': poles_profile
             })
             
-            # Guardar velocidad BM y otras salidas
-            sio.savemat('easy_model_output.mat', {
+            # Guardar velocidad BM y otras salidas (incluyendo diagnósticos si están disponibles)
+            save_dict = {
                 'v': output.v,
                 'cf': output.cf,
                 'stimulus': stimulus,
-                'fs_bm': output.fs_bm
-            })
+                'fs_bm': output.fs_bm,
+                'fs_an': output.fs_an,
+                'fs_ihc': output.fs_ihc,
+                'fs_abr': output.fs_abr
+            }
+            # Add diagnostic variables if present
+            if hasattr(output, 'sheraPt') and output.sheraPt is not None:
+                save_dict['sheraPt'] = output.sheraPt
+            if hasattr(output, 'mt_ihc') and output.mt_ihc is not None:
+                save_dict['mt_ihc'] = output.mt_ihc
+            if hasattr(output, 'Imet') and output.Imet is not None:
+                save_dict['Imet'] = output.Imet
+            if hasattr(output, 'Ikf') and output.Ikf is not None:
+                save_dict['Ikf'] = output.Ikf
+            if hasattr(output, 'Iks') and output.Iks is not None:
+                save_dict['Iks'] = output.Iks
+            if hasattr(output, 'qt_H') and output.qt_H is not None:
+                save_dict['qt_H'] = output.qt_H
+            if hasattr(output, 'wt_H') and output.wt_H is not None:
+                save_dict['wt_H'] = output.wt_H
+            if hasattr(output, 'avail_H') and output.avail_H is not None:
+                save_dict['avail_H'] = output.avail_H
+            if hasattr(output, 'cn_exc') and output.cn_exc is not None:
+                save_dict['cn_exc'] = output.cn_exc
+            if hasattr(output, 'cn_inh') and output.cn_inh is not None:
+                save_dict['cn_inh'] = output.cn_inh
+            if hasattr(output, 'ic_exc') and output.ic_exc is not None:
+                save_dict['ic_exc'] = output.ic_exc
+            if hasattr(output, 'ic_inh') and output.ic_inh is not None:
+                save_dict['ic_inh'] = output.ic_inh
+                
+            sio.savemat('easy_model_output.mat', save_dict)
             
-            print("✓ Results saved to:")
+            print("[OK] Results saved to:")
             print("  - easy_model_EFR.mat (EFR and waves)")
-            print("  - easy_model_output.mat (full model output)")
+            print("  - easy_model_output.mat (full model output, including diagnostics)")
             
         except Exception as e:
-            print(f"✗ Error saving results: {e}")
+            print(f"[ERROR] Error saving results: {e}")
     
-    # Crear gráficos si fue solicitado
-    if show_plots and f is not None:
-        print("\nGenerating plots...")
+    # Mostrar gráficos de diagnóstico primero (antes de plt.show() para no bloquear)
+    figs = {}
+    if show_diagnostics:
+        print("\nGenerating diagnostic plots...")
+        try:
+            output = results[0]
+            save_dir = 'diagnostic_plots' if save_results else None
+            figs = plot_all_diagnostics(output, save_dir=save_dir, show=False)  # Don't show yet
+            print("[OK] Diagnostic plots completed!")
+            if save_dir:
+                print(f"[OK] Diagnostic plots saved to '{save_dir}' directory")
+            
+        except Exception as e:
+            print(f"[ERROR] Error creating diagnostic plots: {e}")
+    
+    # Crear gráficas y guardarlas (si tenemos los datos)
+    if f is not None:
+        print("\nGenerating main plots...")
         try:
             fig, axes = plt.subplots(2, 2, figsize=(12, 8))
             fig.suptitle(f'Model2018 Results - Carrier: {carrier_freq} Hz, Profile: {poles_profile}', fontsize=14)
@@ -309,12 +358,16 @@ def run_easy_model(carrier_freq=4000, poles_profile='Flat00', show_plots=True, s
             
             plt.tight_layout()
             plt.savefig('easy_model_results.png', dpi=150, bbox_inches='tight')
-            plt.show()
+            print("[OK] Plots saved as 'easy_model_results.png'")
             
-            print("✓ Plots saved as 'easy_model_results.png'")
+            # Show all plots only if requested
+            if show_plots:
+                plt.show()
+            else:
+                plt.close(fig)  # Close the figure to free memory
             
         except Exception as e:
-            print(f"✗ Error creating plots: {e}")
+            print(f"[ERROR] Error creating plots: {e}")
     
     # Preparar diccionario de retorno
     result_dict = {
@@ -329,7 +382,7 @@ def run_easy_model(carrier_freq=4000, poles_profile='Flat00', show_plots=True, s
     }
     
     print(f"\n" + "="*60)
-    print(f"SUMMARY: EFR = {efr_value:.4f} μV")
+    print(f"SUMMARY: EFR = {efr_value:.4f} µV")
     print("="*60)
     
     return result_dict
@@ -338,10 +391,10 @@ if __name__ == "__main__":
     # Ejemplo de uso con diferentes configuraciones
     
     print("Running easy model with default parameters...")
-    results = run_easy_model()
+    results = run_easy_model(show_plots=False)
     
     if results is not None:
-        print(f"\nSuccess! EFR value: {results['efr_value']:.4f} μV")
+        print(f"\nSuccess! EFR value: {results['efr_value']:.4f} µV")
         
         # You can also run with different parameters:
         # results = run_easy_model(carrier_freq=2000, poles_profile='Normal', show_plots=False)
