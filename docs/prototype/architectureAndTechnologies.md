@@ -81,7 +81,7 @@ El Motor Científico constituye el subsistema de procesamiento intensivo. Ejecut
 *   **ChromaDB:** Vector DB para alojar embeddings de documentos y papers.
 *   **DeepSeek R1 + Qwen 2.5:** Modelos LLM *open-source* para el razonamiento y recuperación.
 *   **Zotero API:** Interfaz para recuperación automatizada de metadatos de papers.
-*   **Ray:** Paralelismo distribuido para clústeres y modelos LLMs (opcional, pero recomendado).
+*   **Ray:** Paralelismo distribuido para clústeres y modelos LLMs (opcional, pero recomendado). - implementación futura, no se considera por el momento.
 
 ---
 

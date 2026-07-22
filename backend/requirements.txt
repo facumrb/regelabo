@@ -9,7 +9,6 @@ plotly
 matplotlib
 seaborn
 dask
-ray
 langchain
 chromadb
 supabase
