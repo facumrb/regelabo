@@ -23,6 +23,7 @@ from typing import Union, Optional, Dict, List, Any
 import os
 from utils.get_RAM_stims import get_RAM_stims
 import scipy.io as sio
+from utils.plot_orchestrator import PlotOrchestrator, save_partial_output
 
 # Importa los componentes del modelo (cada etapa del procesamiento auditivo)
 from core.cochlear_model2018 import cochlea_model
@@ -79,7 +80,7 @@ class ModelOutput:
 def _solve_one_cochlea(model_data, fs, sectionsNo, probes, storeflag,
                       sheraPo_val, subject, IrrPct, non_linear_type,
                       DECIMATION, numH, numM, numL,
-                      on_stage_complete=None):
+                      outdir='./', on_stage_complete=None):
     """
         Procesa un canal completo de la simulación auditiva.
         
@@ -127,6 +128,12 @@ def _solve_one_cochlea(model_data, fs, sectionsNo, probes, storeflag,
     if 'd' in storeflag:
         output.sheraPt = coch.SheraPsolution
 
+    # save partial output for this stage so an external watcher can plot
+    try:
+        save_partial_output(channel_idx, 'cochlea', output, outdir)
+    except Exception:
+        pass
+
     if on_stage_complete:
         on_stage_complete(channel_idx, 'cochlea', output)
 
@@ -150,6 +157,11 @@ def _solve_one_cochlea(model_data, fs, sectionsNo, probes, storeflag,
 
         if on_stage_complete:
             on_stage_complete(channel_idx, 'ihc', output)
+
+        try:
+            save_partial_output(channel_idx, 'ihc', output, outdir)
+        except Exception:
+            pass
 
         # ---- Etapa 3: Submuestreo para el nervio auditivo ----
         # El nervio auditivo opera a frecuencias de muestreo menores
@@ -192,6 +204,11 @@ def _solve_one_cochlea(model_data, fs, sectionsNo, probes, storeflag,
             if on_stage_complete:
                 on_stage_complete(channel_idx, 'an_fibers', output)
 
+            try:
+                save_partial_output(channel_idx, 'an_fibers', output, outdir)
+            except Exception:
+                pass
+
             # ---- Etapa 5: Núcleos del tronco encefálico (CN e IC) ----
             # CN: suma ponderada de las fibras AN + excitación-inhibición
             # IC: segundo nivel de integración neural
@@ -217,6 +234,11 @@ def _solve_one_cochlea(model_data, fs, sectionsNo, probes, storeflag,
                 if on_stage_complete:
                     on_stage_complete(channel_idx, 'brainstem', output)
 
+                try:
+                    save_partial_output(channel_idx, 'brainstem', output, outdir)
+                except Exception:
+                    pass
+
                 # ---- Etapa 6: Ondas del ABR ----
                 # W1 (Onda I): nervio auditivo sumado × M1
                 # W3 (Onda III): núcleo coclear sumado × M3
@@ -229,6 +251,11 @@ def _solve_one_cochlea(model_data, fs, sectionsNo, probes, storeflag,
 
                     if on_stage_complete:
                         on_stage_complete(channel_idx, 'abr', output)
+
+                    try:
+                        save_partial_output(channel_idx, 'abr', output, outdir)
+                    except Exception:
+                        pass
 
     return output
 
@@ -391,7 +418,7 @@ def model2018(
         _solve_one_cochlea, fs=fs, sectionsNo=sectionsNo, probes=probes,
         storeflag=storeflag, sheraPo_val=sheraPo_val, subject=subject,
         IrrPct=IrrPct, non_linear_type=non_linear_type, DECIMATION=DECIMATION,
-        numH=numH, numM=numM, numL=numL
+        numH=numH, numM=numM, numL=numL, outdir=data_folder
     )
     
     # ---- Ejecución paralela o secuencial ----
@@ -403,13 +430,32 @@ def model2018(
             _solve_one_cochlea, fs=fs, sectionsNo=sectionsNo, probes=probes,
             storeflag=storeflag, sheraPo_val=sheraPo_val, subject=subject,
             IrrPct=IrrPct, non_linear_type=non_linear_type, DECIMATION=DECIMATION,
-            numH=numH, numM=numM, numL=numL,
+            numH=numH, numM=numM, numL=numL, outdir=data_folder,
             on_stage_complete=on_stage_complete
         )
-        results = [_solve_with_cb(cochlear_list[0])]
+        # Start orchestrator even for single-channel runs so plots appear
+        # while the simulation progresses and the partial outputs are saved.
+        orchestrator = PlotOrchestrator(data_folder)
+        orchestrator.start()
+        try:
+            results = [_solve_with_cb(cochlear_list[0])]
+        finally:
+            try:
+                orchestrator.stop()
+            except Exception:
+                pass
     else:
+        # Start a plot orchestrator in the parent process to generate
+        # visualizations as soon as workers write partial outputs.
+        orchestrator = PlotOrchestrator(data_folder)
+        orchestrator.start()
         with mp.Pool(mp.cpu_count(), maxtasksperchild=1) as p:
             results = p.map(_solve_channel, cochlear_list)
+        # stop the watcher after workers finish
+        try:
+            orchestrator.stop()
+        except Exception:
+            pass
     
     print("cochlear simulation: done")
     
