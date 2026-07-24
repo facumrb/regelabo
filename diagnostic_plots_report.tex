@@ -10,10 +10,12 @@
 \usepackage{hyperref}
 \usepackage{booktabs}
 \usepackage{array}
+\usepackage{tabularx}
 \usepackage{listings}
 \usepackage{caption}
 \usepackage{subcaption}
 \usepackage{float}
+\usepackage{microtype}
 
 % --- CONFIGURACIÓN DE PÁGINA ---
 \geometry{
@@ -22,6 +24,10 @@
     top=3cm,
     bottom=3cm
 }
+
+\setlength{\emergencystretch}{3em}
+\hbadness=10000
+\vbadness=10000
 
 % --- PALETA DE COLORES ---
 \definecolor{primary}{RGB}{30, 58, 138}    % Azul marino profundo
@@ -86,7 +92,7 @@ Este documento presenta una descripción exhaustiva del módulo de visualizacion
 \section{Desarrollo y Propósito del Módulo}
 % =============================================================================
 
-El módulo \texttt{diagnostic\_plots.py} {\texttt{src/utils/diagnostic\_plots.py}} fue concebido para resolver una limitación fundamental de las simulaciones auditivas convencionales: la opacidad de los estados intermedios. 
+El módulo \texttt{diagnostic\_plots.py}, ubicado en \path{src/utils/diagnostic_plots.py}, fue concebido para resolver una limitación fundamental de las simulaciones auditivas convencionales: la opacidad de los estados intermedios.
 
 En los estudios electrofisiológicos y computacionales tradicionales, las salidas principales se reducen a medidas macroscópicas agregadas, tales como el Potencial Evocado Auditivo del Tronco Encefálico (ABR) o la Respuesta de Seguimiento de la Envolvente (EFR). Si bien estas señales son de alto valor diagnóstico clínico, ocultan la compleja cadena de fenómenos biofísicos que ocurren en los micro-compartimentos del sistema auditivo periférico y central.
 
@@ -132,7 +138,7 @@ El módulo \texttt{diagnostic\_plots.py} recibe directamente el objeto \texttt{o
 Los estados internos extraídos corresponden a matrices bidimensionales de NumPy (\texttt{np.ndarray}) donde la primera dimensión ($N_{\text{muestras}}$) representa la evolución temporal y la segunda dimensión ($N_{\text{canales}} = 401$) representa la posición espacial o Frecuencia Característica ($CF$) de la membrana basilar.
 
 \subsection{Selección de Puntos de Prueba (\emph{Probe Points})}
-Dado que visualizar 401 canales simultáneamente en gráficos temporales genera saturación visual, las funciones del módulo emplean la función auxiliar \texttt{\_find_cf_index(cf, target\_hz)} para identificar el índice del canal coclear más cercano a las frecuencias audiológicas de interés:
+Dado que visualizar 401 canales simultáneamente en gráficos temporales genera saturación visual, las funciones del módulo emplean la función auxiliar \path{_find_cf_index(cf, target_hz)} para identificar el índice del canal coclear más cercano a las frecuencias audiológicas de interés:
 
 \begin{equation}
 i_{\text{target}} = \arg\min_{i} \left| CF[i] - f_{\text{target}} \right|
@@ -144,7 +150,7 @@ Por defecto, se analizan los puntos de prueba en las frecuencias estándar de $5
 \section{Sincronización Temporal y Frecuencia de Muestreo}
 % =============================================================================
 
-Debido a que las distintas etapas del modelo ejecutan dinámicas biofísicas con escalas temporales disímiles, el modelo de Verhulst opera con frecuencias de muestreo multiescala. El módulo diagnósticos realiza la alineación temporal estricta mediante la función auxiliar \texttt{\_make\_time\_axis(data, fs)}:
+Debido a que las distintas etapas del modelo ejecutan dinámicas biofísicas con escalas temporales disímiles, el modelo de Verhulst opera con frecuencias de muestreo multiescala. El módulo diagnóstico realiza la alineación temporal estricta mediante la función auxiliar \path{_make_time_axis(data, fs)}:
 
 \begin{equation}
 t(k) = \frac{k}{f_s}, \quad k \in \{0, 1, \dots, N-1\}
@@ -154,7 +160,7 @@ t(k) = \frac{k}{f_s}, \quad k \in \{0, 1, \dots, N-1\}
 \centering
 \caption{Frecuencias de muestreo por etapa del modelo e impacto en la sincronización.}
 \label{tab:frecuencias}
-\begin{tabular}{l c p{8cm}}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.2cm} >{\centering\arraybackslash}p{3.0cm} X}
 \toprule
 \textbf{Etapa Biofísica} & \textbf{Frecuencia ($f_s$)} & \textbf{Justificación y Sincronización} \\
 \midrule
@@ -163,7 +169,7 @@ Célula Ciliada Interna (IHC) & $100\,\text{kHz}$ & Captura de la cinéticas rá
 Sinapsis Nervio Auditivo (AN) & $100\,\text{kHz} / 20\,\text{kHz}$ & Resolución de períodos refractarios ($0.6\,\text{ms}$) e intervalos inter-espiga. \\
 Tronco Encefálico / ABR & $20\,\text{kHz}$ & Submuestreo adecuado para frecuencias bioeléctricas macroscópicas ($< 3\,\text{kHz}$). \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 La alineación temporal entre gráficos se logra convirtiendo el vector $t$ a milisegundos ($t \times 1000$), garantizando que los eventos transitorios (como los picos del estímulo RAM) coincidan exactamente en el eje X a través de todos los paneles.
@@ -188,7 +194,7 @@ En señales de alta densidad muestreadas a $100\,\text{kHz}$ durante ventanas la
 \end{itemize}
 
 \subsection{Escalas Logarítmicas y Mapeos de Color}
-En la gráfica de mapa de calor coclear, el eje de frecuencias ($CF$) se grafica en escala logarítmica para reflejar la distribución tonotópica de la membrana basilar. Se utiliza la paleta \texttt{RdYlGn\_r} (Red-Yellow-Green invertido), fijando el límite superior de saturación en $v_{\max} = 0.31$ (punto de saturación del Polo de Shera, $Pole_E$).
+En la gráfica de mapa de calor coclear, el eje de frecuencias ($CF$) se grafica en escala logarítmica para reflejar la distribución tonotópica de la membrana basilar. Se utiliza la paleta \texttt{RdYlGn\_r} (Red-Yellow-Green invertido), fijando el límite superior de saturación en $v_{\max} = 0.31$ (punto de saturación del Polo de Shera, $P_{\mathrm{E}}$).
 
 % =============================================================================
 \section{Catálogo de las Ocho Gráficas Diagnósticas}
@@ -200,7 +206,7 @@ El directorio {\texttt{plots/}} contiene el conjunto completo de las ocho figura
     \centering
     \caption{Resumen visual del catálogo de ocho figuras diagnósticas del directorio \texttt{plots/}.}
     \label{fig:catalogo_plots}
-    \begin{tabular}{cc}
+    \begin{tabularx}{\textwidth}{>{\centering\arraybackslash}X >{\centering\arraybackslash}X}
         \textbf{(1) Cochlear Heatmap} & \textbf{(2) Vesicle Panel HSR} \\
         \texttt{cochlear\_heatmap.png} & \texttt{vesicle\_panel\_hsr.png} \\[0.5em]
         \textbf{(3) Vesicle Panel MSR} & \textbf{(4) Vesicle Panel LSR} \\
@@ -209,18 +215,18 @@ El directorio {\texttt{plots/}} contiene el conjunto completo de las ocho figura
         \texttt{vesicle\_panel\_combined.png} & \texttt{ihc\_currents.png} \\[0.5em]
         \textbf{(7) Brainstem Balance} & \textbf{(8) EFR Model Results} \\
         \texttt{brainstem\_balance.png} & \texttt{EFR\_model\_results.png} \\
-    \end{tabular}
+    \end{tabularx}
 \end{figure}
 
 \begin{enumerate}
-    \item \textbf{\texttt{cochlear\_heatmap.png}:} Mapa 2D de Ganancia OHC (Polo de Shera) en función del tiempo y $CF$. Muestra la compresión coclear no lineal.
-    \item \textbf{\texttt{vesicle\_panel\_hsr.png}:} Dinámica de depleción vesicular ($q_t$), reserva ($w_t$) y fracción de fibras disponibles ($A_t$) para fibras HSR.
-    \item \textbf{\texttt{vesicle\_panel\_msr.png}:} Dinámica de vesículas sinápticas para fibras MSR.
-    \item \textbf{\texttt{vesicle\_panel\_lsr.png}:} Dinámica de vesículas sinápticas para fibras LSR (sensibles a la sinaptopatía).
-    \item \textbf{\texttt{vesicle\_panel\_combined.png}:} Gráfica integrada que superpone las curvas de depleción $q_t$ de las tres poblaciones (HSR, MSR, LSR) para evaluación directa de la jerarquía de reclutamiento.
-    \item \textbf{\texttt{ihc\_currents.png}:} Corrientes iónicas ($I_{\text{MET}}, I_{\text{kf}}, I_{\text{ks}}$) y potencial de membrana ($V_m$) de la célula ciliada interna.
-    \item \textbf{\texttt{brainstem\_balance.png}:} Perfiles temporalizados de excitación, inhibición y actividad neta en el Núcleo Coclear (CN) y Colículo Inferior (IC).
-    \item \textbf{\texttt{EFR\_model_results.png}:} Respuesta macroscópica EFR/ABR resultante, incluyendo la forma de onda temporal y el espectro de frecuencia FFT.
+    \item \path{cochlear_heatmap.png}: Mapa 2D de Ganancia OHC (Polo de Shera) en función del tiempo y $CF$. Muestra la compresión coclear no lineal.
+    \item \path{vesicle_panel_hsr.png}: Dinámica de depleción vesicular ($q_t$), reserva ($w_t$) y fracción de fibras disponibles ($A_t$) para fibras HSR.
+    \item \path{vesicle_panel_msr.png}: Dinámica de vesículas sinápticas para fibras MSR.
+    \item \path{vesicle_panel_lsr.png}: Dinámica de vesículas sinápticas para fibras LSR (sensibles a la sinaptopatía).
+    \item \path{vesicle_panel_combined.png}: Gráfica integrada que superpone las curvas de depleción $q_t$ de las tres poblaciones (HSR, MSR, LSR) para evaluación directa de la jerarquía de reclutamiento.
+    \item \path{ihc_currents.png}: Corrientes iónicas ($I_{\text{MET}}, I_{\text{kf}}, I_{\text{ks}}$) y potencial de membrana ($V_m$) de la célula ciliada interna.
+    \item \path{brainstem_balance.png}: Perfiles temporalizados de excitación, inhibición y actividad neta en el Núcleo Coclear (CN) y Colículo Inferior (IC).
+    \item \path{EFR_model_results.png}: Respuesta macroscópica EFR/ABR resultante, incluyendo la forma de onda temporal y el espectro de frecuencia FFT.
 \end{enumerate}
 
 % =============================================================================
@@ -230,7 +236,7 @@ El directorio {\texttt{plots/}} contiene el conjunto completo de las ocho figura
 \subsection{¿Es posible realizar una comparación numérica?}
 \textbf{Sí, es totalmente posible y metodológicamente recomendado.} La arquitectura del proyecto RegelABO y la naturaleza determinista de las ecuaciones biofísicas permiten auditar cuantitativamente la precisión de las simulaciones en Python frente a ejecuciones de referencia (como la implementación original en MATLAB de Verhulst et al. o archivos precalculados).
 
-En el espacio de trabajo se dispone de archivos de referencia como \texttt{easy\_model\_output.mat}, \texttt{easy\_model\_EFR.mat} y archivos comprimidos de NumPy (\texttt{cochlea\_0.npz}, \texttt{ihc\_0.npz}, \texttt{an\_fibers\_0.npz}, \texttt{brainstem\_0.npz}).
+En el espacio de trabajo se dispone de archivos de referencia como \path{easy_model_output.mat}, \path{easy_model_EFR.mat} y archivos comprimidos de NumPy (\path{cochlea_0.npz}, \path{ihc_0.npz}, \path{an_fibers_0.npz}, \path{brainstem_0.npz}).
 
 \subsection{Métricas Cuantitativas Propuestas}
 Para verificar la convergencia numérica y la fidelidad biofísica, se deben calcular tres métricas sobre las matrices de estado interno $Y_{\text{sim}}$ vs. $Y_{\text{ref}}$:
@@ -267,7 +273,7 @@ Para verificar la convergencia numérica y la fidelidad biofísica, se deben cal
         \item \texttt{matplotlib >= 3.5.0}: Generación y renderizado de figuras multicanal.
         \item \texttt{scipy >= 1.7.0}: Filtros de procesamiento de señales y lectura de archivos \texttt{.mat}.
     \end{itemize}
-    \item \textbf{Ubicación en el Repositorio:} {\texttt{diagnostic_plots.py}}.
+    \item \textbf{Ubicación en el Repositorio:} \path{diagnostic_plots.py}.
     \item \textbf{Licencia y Disponibilidad:} Incluido bajo la licencia académica y de código abierto del modelo Verhulst (ver \texttt{license.txt} en el directorio del módulo).
 \end{itemize}
 
@@ -276,7 +282,7 @@ Para verificar la convergencia numérica y la fidelidad biofísica, se deben cal
 \section{Manual Exhaustivo e Interpretación de Variables Internas por Figura}
 % =============================================================================
 
-Esta sección detalla cada una de las variables internas procesadas por \texttt{diagnostic\_plots.py}, proporcionando una explicación biológica y computacional completa para permitir su interpretación independiente sin consultar documentación complementaria.
+Esta sección detalla cada una de las variables internas procesadas por \path{diagnostic_plots.py}, proporcionando una explicación biológica y computacional completa para permitir su interpretación independiente sin consultar documentación complementaria.
 
 % -----------------------------------------------------------------------------
 \subsection{Figura 1: Mapa de Calor Coclear (Ganancia OHC / Polo de Shera)}
@@ -285,7 +291,7 @@ Esta sección detalla cada una de las variables internas procesadas por \texttt{
 \begin{table}[H]
 \centering
 \caption{Variables del Mapa de Calor Coclear.}
-\begin{tabular}{l c l p{6cm}}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.0cm} >{\raggedright\arraybackslash}p{3.4cm} >{\raggedright\arraybackslash}p{2.8cm} X}
 \toprule
 \textbf{Variable} & \textbf{Símbolo / Atributo} & \textbf{Rango / Unidades} & \textbf{Significado Fisiológico y Diagnóstico} \\
 \midrule
@@ -293,7 +299,7 @@ Polo de Shera & \texttt{output.sheraPt} ($P_{\text{shera}}$) & $0.05 \text{ a } 
 Frecuencia Característica & \texttt{output.cf} & $125 \text{ a } 12000\,\text{Hz}$ & Posición tonotópica a lo largo de la membrana basilar. \\
 Tiempo Coclear & $t_{\text{bm}}$ & Milisegundos ($\text{ms}$) & Evolución temporal a $f_s = 100\,\text{kHz}$. \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \textbf{Interpretación Fonoaudiológica:} Un patrón periódico de franjas verdes y rojas indica que la compresión no lineal está activa: las OHC amplifican durante los silencios (verde) y se saturan/protegen durante los picos de presión sonora (rojo). Si una banda de frecuencia se mantiene permanentemente en rojo, evidencia un daño irrecuperable en las células ciliadas externas (hipoacusia neurosensorial).
@@ -305,7 +311,7 @@ Tiempo Coclear & $t_{\text{bm}}$ & Milisegundos ($\text{ms}$) & Evolución tempo
 \begin{table}[H]
 \centering
 \caption{Variables de los Paneles de Vesículas Sinápticas.}
-\begin{tabular}{l c l p{6cm}}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.0cm} >{\raggedright\arraybackslash}p{3.4cm} >{\raggedright\arraybackslash}p{2.8cm} X}
 \toprule
 \textbf{Variable} & \textbf{Atributo} & \textbf{Rango / Unidades} & \textbf{Significado Fisiológico y Diagnóstico} \\
 \midrule
@@ -313,14 +319,14 @@ Pool RRP & \texttt{qt\_H}, \texttt{qt\_M}, \texttt{qt\_L} ($q(t)$) & $0 \text{ a
 Pool de Reserva & \texttt{wt\_H}, \texttt{wt\_M}, \texttt{wt\_L} ($w(t)$) & $0 \text{ a } 60$ vesículas & Vesículas en la reserva citoplasmática. Reabastecen al RRP a una tasa finita ($\sim 700/\text{s}$). \\
 Fracción Disponible & \texttt{avail\_H}, \texttt{avail\_M}, \texttt{avail\_L} & $0.0 \text{ a } 1.0$ (fracción) & Proporción de fibras que no están en período refractario (absoluto de $0.6\,\text{ms}$ o relativo). \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \textbf{Diferenciación de Poblaciones Neuronales:}
 \begin{itemize}
     \item \textbf{HSR (Alta Tasa Espontánea, $68.5\,\text{sp/s}$):} Umbral bajo. Son las primeras en activarse y agotarse ($q_t$ cae a $<3$ rápidamente). Codifican sonidos suaves.
     \item \textbf{MSR (Tasa Media Espontánea, $10\,\text{sp/s}$):} Umbral intermedio.
-    \item \textbf{LSR (Baja Tasa Espontánea, $1\,\text{sp/s}$):} Umbral alto. Mantienen su pool RRP ($q_t \approx 14$) en ambientes silenciosos o sonidos moderados. **Son las fibras más vulnerables a la sinaptopatía coclear (sordera oculta)**. La ausencia de depleción en LSR ante estímulos intensos confirma la pérdida de fibras de alto umbral, explicando la incapacidad de entender el habla en ruido a pesar de tener un audiograma tonal normal.
+    \item \textbf{LSR (Baja Tasa Espontánea, $1\,\text{sp/s}$):} Umbral alto. Mantienen su pool RRP ($q_t \approx 14$) en ambientes silenciosos o sonidos moderados. \textbf{Son las fibras más vulnerables a la sinaptopatía coclear (sordera oculta).} La ausencia de depleción en LSR ante estímulos intensos confirma la pérdida de fibras de alto umbral, explicando la incapacidad de entender el habla en ruido a pesar de tener un audiograma tonal normal.
 \end{itemize}
 
 % -----------------------------------------------------------------------------
@@ -330,7 +336,7 @@ Fracción Disponible & \texttt{avail\_H}, \texttt{avail\_M}, \texttt{avail\_L} &
 \begin{table}[H]
 \centering
 \caption{Variables de las Corrientes Iónicas de la IHC.}
-\begin{tabular}{l c l p{6cm}}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.0cm} >{\raggedright\arraybackslash}p{3.4cm} >{\raggedright\arraybackslash}p{2.8cm} X}
 \toprule
 \textbf{Variable} & \textbf{Atributo} & \textbf{Unidades} & \textbf{Significado Biofísico} \\
 \midrule
@@ -339,7 +345,7 @@ Potasio Rápido & \texttt{output.Ikf} & Nanoamperes ($\text{nA}$) & Corriente sa
 Potasio Lento & \texttt{output.Iks} & Nanoamperes ($\text{nA}$) & Corriente saliente de potasio lento ($K^+$ slow, canales KCNQ4, $\tau \approx 8\,\text{ms}$). Responsable de la adaptación de potencial sostenida. \\
 Potencial Membrana & \texttt{output.ihc} ($V_m$) & Milivolts ($\text{mV}$) & Potencial intracelular de la IHC (reposo $\sim -60\,\text{mV}$). Rige la apertura de canales de $Ca^{2+}$ presinápticos. \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \textbf{Ecuación Biofísica Directora:} La evolución del potencial de membrana $V_m$ responde al balance capacitivo e iónico:
@@ -354,15 +360,15 @@ C_m \frac{dV_m}{dt} = - \left( I_{\text{MET}} + I_{\text{kf}} + I_{\text{ks}} \r
 \begin{table}[H]
 \centering
 \caption{Variables del Tronco Encefálico (CN e IC).}
-\begin{tabular}{l c l p{6cm}}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.0cm} >{\raggedright\arraybackslash}p{3.4cm} >{\raggedright\arraybackslash}p{2.8cm} X}
 \toprule
 \textbf{Estación / Variable} & \textbf{Atributos} & \textbf{Unidades} & \textbf{Parámetros y Significado} \\
 \midrule
-Núcleo Coclear (CN) & \texttt{cn\_exc}, \texttt{cn\_inh} & Spikes/s ($\text{sp/s}$) & Excitación directa del AN ($G_{\text{exc}} = 1.5$). Inhibición retardada $\tau_{\text{delay}} = 1.0\,\text{ms}$ con peso $w_{\text{inh}} = 0.6$. Genera la **Onda III del ABR**. \\
-Colículo Inferior (IC) & \texttt{ic_exc}, \texttt{ic_inh} & Spikes/s ($\text{sp/s}$) & Excitación desde CN ($G_{\text{exc}} = 1.0$). Inhibición severa retardada $\tau_{\text{delay}} = 2.0\,\text{ms}$ con peso $w_{\text{inh}} = 1.5$. Genera la **Onda V del ABR**. \\
+Núcleo Coclear (CN) & \texttt{cn\_exc}, \texttt{cn\_inh} & Spikes/s ($\text{sp/s}$) & Excitación directa del AN ($G_{\text{exc}} = 1.5$). Inhibición retardada $\tau_{\text{delay}} = 1.0\,\text{ms}$ con peso $w_{\text{inh}} = 0.6$. Genera la \textbf{Onda III del ABR}. \\
+Colículo Inferior (IC) & \texttt{ic\_exc}, \texttt{ic\_inh} & Spikes/s ($\text{sp/s}$) & Excitación desde CN ($G_{\text{exc}} = 1.0$). Inhibición severa retardada $\tau_{\text{delay}} = 2.0\,\text{ms}$ con peso $w_{\text{inh}} = 1.5$. Genera la \textbf{Onda V del ABR}. \\
 Actividad Neta & $Net = E - I$ & Spikes/s ($\text{sp/s}$) & Resultado efectivo $Net(t)$. Determina la forma de los picos en el ABR. \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \textbf{Interpretación Fonoaudiológica:} La inhibición en el IC es $2.5\times$ más fuerte que en el CN. Esto recorta temporalmente el perfil de disparo excitatorio, produciendo el pico agudo característico de la Onda V del ABR clínico. Un desbalance en el peso inhibitorio se asocia clínicamente con afecciones como la hiperacusia o el tinnitus.
@@ -374,14 +380,14 @@ Actividad Neta & $Net = E - I$ & Spikes/s ($\text{sp/s}$) & Resultado efectivo $
 \begin{table}[H]
 \centering
 \caption{Variables del Resultado Macroscópico EFR / ABR.}
-\begin{tabular}{l c l p{6cm}}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.5cm} >{\raggedright\arraybackslash}p{3.0cm} X}
 \toprule
 \textbf{Variable} & \textbf{Unidades} & \textbf{Significado Fisiológico y Diagnóstico} \\
 \midrule
 Onda ABR & Microvolts ($\mu V$) & Sumatoria electrofisiológica far-field en el cuero cabelludo. \\
 Espectro EFR & dB / V & Amplitud en la frecuencia de modulación del estímulo ($110\,\text{Hz}$). Mide la fidelidad de procesamiento temporal de la envolvente. \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 % =============================================================================
