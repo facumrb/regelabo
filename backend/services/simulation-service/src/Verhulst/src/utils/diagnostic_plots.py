@@ -503,8 +503,8 @@ def plot_all_diagnostics(output, save_dir=None, show=True):
 
     # 2. Panel de vesículas sinápticas (HSR, MSR, LSR y Combinado)
     print("  [2/4] Generando panel de vesículas sinápticas (HSR)...")
-    fig2, _ = plot_vesicle_panel(output, fiber_type='HSR')
-    figs['vesicle_panel'] = fig2
+    fig2_hsr, _ = plot_vesicle_panel(output, fiber_type='HSR')
+    figs['vesicle_panel_hsr'] = fig2_hsr
 
     if hasattr(output, 'qt_M') and output.qt_M is not None:
         print("        Generando panel de vesículas sinápticas (MSR)...")
