@@ -1,8 +1,14 @@
 # Diagrama de Actividad: Apoyo Diagnóstico por Arquetipos Clínicos
 
 > **Caso de uso #16:** Apoyo Diagnóstico por Arquetipos Clínicos (Clasificación Vectorial)
-> **Fecha:** 2026-05-12 | **Revisión:** v1
+> **Fecha:** 2026-08-04 | **Revisión:** v2
 > **Fuentes:** [functionalitiesOverview.md](../functionalitiesOverview.md), [analisisScreeningNeonatal.md](../analisisScreeningNeonatal.md)
+
+> [!CAUTION]
+> **Estado de implementación: Parcialmente postergado.**
+> Este módulo se divide en dos fases con horizontes de implementación distintos:
+> - **Fase 1 (Implementable ahora):** Subida y visualización del ABR real del paciente superpuesto a arquetipos seleccionados manualmente de la tabla `precomputed_profiles`. No requiere IA ni vector DB.
+> - **Fase 2 (Futura — IA):** La búsqueda automática de similitud vectorial (`pgvector` / ChromaDB en `llm-service`) queda postergada hasta que la infraestructura de IA del proyecto esté madura. El paso 8 del flujo abajo corresponde íntegramente a esta fase.
 
 ---
 
