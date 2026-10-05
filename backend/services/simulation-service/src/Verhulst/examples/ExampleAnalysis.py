@@ -10,6 +10,7 @@
 #   3. Vibración BM y potencial IHC: mecánica coclear y transducción
 #   4. Respuestas unitarias: fibras AN (HSR/MSR/LSR), CN e IC
 #   5. Ondas poblacionales ABR: W1, W3, W5 y EFR
+#   6. (Opcional) Gráficos diagnósticos detallados
 #
 # Contexto clínico:
 # Los gráficos de las ondas ABR (W1, W3, W5) son los equivalentes simulados
@@ -21,6 +22,56 @@ import matplotlib.pyplot as plt
 import scipy.io as sio
 from scipy import signal
 import os
+import sys
+
+# Agregar carpeta src al path para importar utils
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+from utils.diagnostic_plots import plot_all_diagnostics
+
+
+class MatOutputWrapper:
+    """Wrapper para convertir un array estructurado de .mat a un objeto compatible con diagnostic_plots.py"""
+    def __init__(self, mat_struct):
+        self.mat_struct = mat_struct
+        # Mapear campos
+        self.cf = mat_struct['cf'].item().flatten()
+        self.fs_bm = mat_struct['fs_bm'].item().item()
+        self.fs_an = mat_struct['fs_an'].item().item()
+        self.fs_ihc = self.fs_bm  # IHC samples at BM rate
+        self.fs_abr = self.fs_an  # ABR samples at AN rate
+        
+        # Variables opcionales (diagnósticas)
+        self.sheraPt = self._get_optional('sheraPt')
+        self.qt_H = self._get_optional('qt_H')
+        self.wt_H = self._get_optional('wt_H')
+        self.avail_H = self._get_optional('avail_H')
+        self.Imet = self._get_optional('Imet')
+        self.Ikf = self._get_optional('Ikf')
+        self.Iks = self._get_optional('Iks')
+        self.ihc = self._get_optional('ihc')  # Vm
+        self.cn_exc = self._get_optional('cn_exc')
+        self.cn_inh = self._get_optional('cn_inh')
+        self.ic_exc = self._get_optional('ic_exc')
+        self.ic_inh = self._get_optional('ic_inh')
+        # Variables requeridas por otros plots
+        self.v = self._get_optional('v')
+        self.w1 = self._get_optional('w1')
+        self.w3 = self._get_optional('w3')
+        self.w5 = self._get_optional('w5')
+        
+    def _get_optional(self, key):
+        if key in self.mat_struct.dtype.fields:
+            arr = self.mat_struct[key].item()
+            if arr.size == 0:
+                return None
+            # Si es un array con dimensiones extra, aplanar si es necesario
+            if arr.ndim > 1:
+                if arr.shape[0] == 1:
+                    arr = arr[0]
+                elif arr.shape[1] == 1:
+                    arr = arr[:, 0]
+            return arr
+        return None
 
 # Carga los resultados de la simulación (archivo .mat generado previamente)
 data = sio.loadmat('Simulations.mat')
@@ -305,4 +356,23 @@ plt.grid(True)
 plt.tight_layout()
 plt.show()
 
-print("Analysis complete!")
+# ---- Gráficos Diagnósticos (si están disponibles los datos) ----
+print("\nGenerando gráficos diagnósticos...")
+try:
+    wrapped_output = MatOutputWrapper(output)
+    # Comprobar si tenemos los datos necesarios para diagnósticos
+    if (wrapped_output.sheraPt is not None or
+        wrapped_output.qt_H is not None or
+        wrapped_output.Imet is not None or
+        wrapped_output.cn_exc is not None):
+        
+        save_dir = os.path.join(os.path.dirname(__file__), 'diagnostic_plots_from_mat')
+        os.makedirs(save_dir, exist_ok=True)
+        figs = plot_all_diagnostics(wrapped_output, save_dir=save_dir, show=True)
+        print(f"✓ Gráficos diagnósticos guardados en: {save_dir}")
+    else:
+        print("⚠ No hay datos diagnósticos disponibles. Ejecuta la simulación con storeflag que incluya 'd'.")
+except Exception as e:
+    print(f"✗ Error al generar gráficos diagnósticos: {e}")
+
+print("\nAnalysis complete!")

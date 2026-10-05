@@ -1,5 +1,5 @@
 from numpy import *
-from inner_hair_cell2018 import resting_potential, peak_potential
+from core.inner_hair_cell2018 import resting_potential, peak_potential
 
 # =============================================================================
 # MÓDULO: FIBRA DEL NERVIO AUDITIVO (Auditory Nerve Fiber — ANF)
@@ -86,7 +86,7 @@ tCa=0.2e-3 #time constant of the Ca2 channel
 
 #driven exocytosis rate is a boltzmann version of Vm, low-pass filter with the time constant of the Ca2+ channels. This is a shortcut to tune the nonlinear relationship between Vm and exocytosis rate based on AF data. Ca2+ signaling varies substantialy between synapses of the same IHC (Frank 2009,Ohn 2016). We use a shortcut Vm->Exocytosis rate, otherwise Vm->Ca2+ (at individual synapse)->exocytosis rate would require the tuning of too many parameters (here one free parameter ss, and 2 fitted parameters sp,psr)
 
-def auditory_nerve_fiber(Vm,fs,spont):
+def auditory_nerve_fiber(Vm,fs,spont,store_internals=False):
     """
     Simula la respuesta de una fibra del nervio auditivo (ANF).
     
@@ -211,6 +211,10 @@ def auditory_nerve_fiber(Vm,fs,spont):
     # Convierte el potencial de la IHC en una variable de activación de Ca²⁺.
     kin=sqrt(1/(1+exp(-(Vm-vh)/ss)))
     solution=zeros_like(Vm)
+    if store_internals:
+        qt_sol=zeros_like(Vm)
+        wt_sol=zeros_like(Vm)
+        avail_sol=zeros_like(Vm)
     for i in range(len(kin[:,0])):
         # Filtrado paso bajo de la activación de Ca²⁺ (constante tCa):
         # Modela la inercia de apertura/cierre de los canales iónicos de calcio.
@@ -249,6 +253,12 @@ def auditory_nerve_fiber(Vm,fs,spont):
         buf_pointer=mod(buf_pointer+1,buf_lgt)
         # Almacenamiento de la tasa de disparo instantánea:
         solution[i,:]=firing
+        if store_internals:
+            qt_sol[i,:]=qt
+            wt_sol[i,:]=wt
+            avail_sol[i,:]=available
+    if store_internals:
+        return solution,qt_sol,wt_sol,avail_sol
     return solution
 
 

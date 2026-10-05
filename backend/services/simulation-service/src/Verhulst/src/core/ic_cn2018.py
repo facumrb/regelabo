@@ -31,7 +31,7 @@ M1=4.2767e-14
 M3=5.1435e-14 
 M5=13.3093e-14 
 
-def cochlearNuclei(anfH,anfM,anfL,numH,numM,numL,fs):
+def cochlearNuclei(anfH,anfM,anfL,numH,numM,numL,fs,store_internals=False):
     """
     Simula la respuesta del Núcleo Coclear (CN).
     
@@ -105,10 +105,13 @@ def cochlearNuclei(anfH,anfM,anfL,numH,numM,numL,fs):
     # Respuesta del CN = Excitación directa - Inhibición retardada.
     # Esto implementa un modelo "chopper" simplificado donde la inhibición
     # lateral con retardo temporal refina la precisión de la codificación.
-    cn=Acn*(signal.lfilter(bEx,aEx,summedAN,axis=0)-Scn*signal.lfilter(bIncn,aIncn,delayed_inhibition,axis=0))
-    return cn,summedAN
-             
-def inferiorColliculus(cn,fs):
+    cn_exc=Acn*signal.lfilter(bEx,aEx,summedAN,axis=0)
+    cn_inh=Acn*Scn*signal.lfilter(bIncn,aIncn,delayed_inhibition,axis=0)
+    cn=cn_exc-cn_inh
+    if store_internals:
+        return cn, summedAN, cn_exc, cn_inh
+    return cn, summedAN
+def inferiorColliculus(cn,fs,store_internals=False):
     """
     Simula la respuesta del Colículo Inferior (IC).
     
@@ -161,5 +164,9 @@ def inferiorColliculus(cn,fs):
     # Respuesta del IC: mismo esquema excitación - inhibición retardada,
     # pero con inhibición más fuerte (Sic=1.5) simulando la convergencia
     # de múltiples vías inhibitorias en el colículo inferior.
-    ic=Aic*(signal.lfilter(bEx,aEx,cn,axis=0)-Sic*signal.lfilter(bIncn,aIncn,delayed_inhibition,axis=0))
+    ic_exc=Aic*signal.lfilter(bEx,aEx,cn,axis=0)
+    ic_inh=Aic*Sic*signal.lfilter(bIncn,aIncn,delayed_inhibition,axis=0)
+    ic=ic_exc-ic_inh
+    if store_internals:
+        return ic, ic_exc, ic_inh
     return ic

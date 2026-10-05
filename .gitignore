@@ -64,3 +64,8 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+
+# Outputs del modelo (no agregar a menos que se necesite)
+*.npz
+*.png
+
