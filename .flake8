@@ -7,5 +7,6 @@ exclude =
     frontend,
     node_modules,
     backend/simulacion/verhulst,
+    backend/datos/migraciones/versions,
     validacionPlanAnalisis,
     agent

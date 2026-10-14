@@ -20,6 +20,16 @@ uv run fastapi dev app.py            # Swagger en http://localhost:8000/docs
 uv run flake8                        # estilo PEP8 (config en .flake8)
 uv run pytest                        # tests (cuando existan, en backend/tests/)
 
+# Base de datos (desarrollo): copiar .env.example a .env antes
+docker compose up -d db              # PostgreSQL 17 local
+uv run alembic upgrade head          # aplicar migraciones (backend/datos/migraciones/)
+uv run alembic revision --autogenerate -m "descripcion"   # tras cambiar backend/datos/tablas.py
+uv run alembic check                 # confirma que tablas.py y la base coinciden
+```
+
+Al autogenerar, **revisar la migración**: Alembic duplica los `CHECK` de los campos de valores fijos (`sa.Enum(..., native_enum=False)` ya los crea); hay que borrar las líneas `sa.CheckConstraint(...)` que agrega, o `upgrade` falla con `DuplicateObject`.
+
+```bash
 # Frontend solo
 cd frontend && pnpm run dev          # también: pnpm run build / pnpm run preview
 
@@ -40,7 +50,7 @@ views/ (HTTP) → controller/ (negocio) → datos/ (persistencia)
 
 - **`backend/views/`**: routers FastAPI. Solo reciben el pedido, llaman al controller y traducen excepciones a códigos HTTP (`ValueError` → 400). No importan nada de `datos/` ni de `simulacion/`.
 - **`backend/controller/`**: lógica de negocio. `modelos.py` tiene los objetos de negocio (Pydantic) que también usan las views como `response_model`. Nunca accede al disco ni al modelo directamente.
-- **`backend/datos/`**: todo acceso a persistencia. Hoy, `perfiles.py` lee y escribe los perfiles de polos en `simulacion/verhulst/data/Poles/<perfil>/StartingPoles.dat`.
+- **`backend/datos/`**: todo acceso a persistencia. `tablas.py` define las 9 tablas (SQLAlchemy, internas a la capa: las funciones devuelven objetos de negocio del controller); `conexion.py` lee `DATABASE_URL` y ofrece `transaccion()`, que el controller usa para agrupar operaciones (ej. verificar cupo + encolar) pasando la sesión a las funciones de datos; `perfiles.py` lee y escribe los perfiles de polos en `simulacion/verhulst/data/Poles/<perfil>/StartingPoles.dat`.
 - **`backend/simulacion/motor.py`**: adaptador del modelo; único lugar que manipula `sys.path` para importar el código de Verhulst como módulos top-level (`model2018`, `core`, `utils`). Expone `ejecutar_modelo(...)` y `solver_c_disponible()`.
 - **`backend/simulacion/verhulst/`**: código del modelo Verhulst 2018 copiado al repo (Python + C). No se edita salvo necesidad; está excluido de Flake8. Hay `EXPLICACION.md` en `src/core/`, `src/utils/` y `src/c_lib/`.
 
@@ -53,10 +63,26 @@ Detalles a tener en cuenta:
 React 18 + Vite + Tailwind + Plotly. `src/App.jsx` concentra el estado global y lo pasa a `src/components/`. Todas las llamadas HTTP pasan por `src/services/api.js` (axios, base `VITE_API_URL` o `http://localhost:8000`). Está planificada la migración a TypeScript.
 
 ### Otros directorios
+- `docs/reglas-de-negocio.md` (RN1–RN10) y `docs/decisiones/` (una decisión por archivo, con alternativas descartadas): leerlos antes de proponer cambios de diseño.
 - `docs/specs/`: casos de uso y requerimientos por funcionalidad, y el plan de cuellos de botella. `docs/guias/`: visualización y metodología SDD. `docs/CC3D/`: idea descartada de CompuCell3D (solo referencia).
 - `agent/`, `.agents/`, `.claude/skills/`, `.opencode/`: configuración de agentes IA; no forman parte de la app.
 - `validacionPlanAnalisis/`: scripts y salidas de validación del plan de análisis.
 
 ## Estado
 
-El sprint 0 está en curso (rama `feature/setup-entorno`): ya se hizo la reorganización en capas; faltan PostgreSQL + SQLAlchemy + Alembic, autenticación propia, cola de simulaciones con worker, módulo de ejemplo (Casos), CI y la migración del frontend a TypeScript.
+El sprint 0 está en curso (rama `feature/setup-entorno`): ya están la reorganización en capas y la base de datos (9 tablas, migración inicial); faltan autenticación propia, cola de simulaciones con worker, módulo de ejemplo (Casos), CI y la migración del frontend a TypeScript.
+
+## Reglas
+- Nunca tomar una desición, ya sea de negocio, diseño, codigo, etc por tu cuenta. Siempre consultar, dar opciones y justificacion del porque de las mismas.
+- Cualquier plan que tengamos para realizar, ya sea de organización, funcionalidad, etc., consulta todo lo que sea necesario para validar bien. Si se requiere se puede hacer uso de la skill `.claude/skills/grill-me`.
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+Rules:
+- When graphify-out/graph.json exists, run `graphify query "<question>"` before your first grep, search or source-file read for a codebase question, and put this rule in every subagent prompt that explores code. Read raw files only for lines the graph or an earlier read already located. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+- A committed graphify-out/graph.json is rewritten whole on every build, so a large diff to it in a pull request is expected. Do not flag it as churn or suggest skipping the graph rebuild or its hooks.
