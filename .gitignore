@@ -69,3 +69,6 @@ Thumbs.db
 *.npz
 *.png
 
+
+# Perfiles de audición generados en runtime desde audiogramas
+backend/**/data/Poles/Custom_*/

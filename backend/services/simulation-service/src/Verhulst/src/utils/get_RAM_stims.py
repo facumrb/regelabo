@@ -1,7 +1,7 @@
 import numpy as np
 from scipy import signal
 
-def get_RAM_stims(fs, fRAM):
+def get_RAM_stims(fs, fRAM, level=70, fMod=110, dur=0.4):
     """
     Genera estímulos RAM (Rectangular Amplitude Modulation) para simulaciones
     auditivas y mediciones clínicas de EFR.
@@ -30,6 +30,12 @@ def get_RAM_stims(fs, fRAM):
     fRAM : array_like
         [Mx1] vector de frecuencias portadoras [Hz]
         M - número de estímulos a generar
+    level : float, opcional
+        Intensidad del estímulo en dB SPL (default: 70)
+    fMod : float, opcional
+        Frecuencia de modulación en Hz (default: 110)
+    dur : float, opcional
+        Duración del estímulo en segundos (default: 0.4)
     
     Retorna:
     --------
@@ -44,17 +50,13 @@ def get_RAM_stims(fs, fRAM):
     # ---- Parámetros de referencia SAM ----
     # SAM (Sinusoidal Amplitude Modulation): tono de referencia para
     # calibrar la intensidad de los estímulos RAM.
-    level = 70                    # Intensidad del estímulo [dB SPL]
     p0 = 20e-6                    # Presión de referencia audiológica [Pa] (20 µPa)
     fSAM = 4000                   # Frecuencia portadora del SAM de referencia [Hz]
     
     # ---- Parámetros del estímulo RAM ----
-    fMod = 110                    # Frecuencia de modulación [Hz]: ritmo al que las
-                                  # neuronas deberán sincronizarse (genera el EFR)
     md = 1                        # Profundidad de modulación (1 = 100%: silencio completo
                                   # entre los pulsos, máxima activación neural)
     phi = 3 * np.pi / 2           # Fase de la portadora [rad]
-    dur = 0.4                     # Duración del estímulo [s]
     
     # Vector temporal
     n = round(dur * fs)

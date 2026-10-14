@@ -1,4 +1,4 @@
-fastapi
+fastapi[standard]
 uvicorn
 celery
 redis
@@ -14,4 +14,4 @@ chromadb
 supabase
 python-dotenv
 pdfplumber
-pydantic
+pydantic[email]
