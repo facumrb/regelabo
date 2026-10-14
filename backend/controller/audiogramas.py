@@ -2,17 +2,13 @@
 Servicio de procesamiento y conversión de audiogramas a perfiles de simulación coclear.
 """
 
-import os
-import io
-import csv
 import re
+from typing import List
+
 import numpy as np
-from typing import List, Tuple, Dict, Any, Optional
 
-from src.models.audiogram_model import AudiogramPoint, AudiogramResponse
-
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-POLES_DIR = os.path.join(BASE_DIR, "Verhulst", "data", "Poles")
+from backend.controller.modelos import AudiogramPoint, AudiogramResponse
+from backend.datos import perfiles
 
 
 class AudiogramService:
@@ -43,7 +39,8 @@ class AudiogramService:
 
         if not points:
             raise ValueError(
-                "No se pudieron extraer datos válidos del archivo. Asegurate de incluir pares de número como '1000, 25'."
+                "No se pudieron extraer datos válidos del archivo. "
+                "Asegurate de incluir pares de número como '1000, 25'."
             )
 
         # Ordenar por frecuencia ascendente
@@ -52,8 +49,8 @@ class AudiogramService:
 
     @classmethod
     def analyze_and_map(
-        cls, 
-        patient_name: str, 
+        cls,
+        patient_name: str,
         points: List[AudiogramPoint]
     ) -> AudiogramResponse:
         """
@@ -143,21 +140,16 @@ class AudiogramService:
 
     @classmethod
     def _synthesize_custom_poles(
-        cls, 
-        custom_name: str, 
-        base_profile: str, 
-        freqs: np.ndarray, 
+        cls,
+        custom_name: str,
+        base_profile: str,
+        freqs: np.ndarray,
         losses: np.ndarray
     ):
         """
-        Guarda una carpeta de perfil en data/Poles/<custom_name> con StartingPoles.dat
-        asegurando compatibilidad total con el motor de simulación.
+        Guarda el perfil <custom_name> asegurando compatibilidad total con el motor de simulación.
+        Por ahora copia los polos del perfil base (no los deriva de la curva del paciente).
         """
-        target_dir = os.path.join(POLES_DIR, custom_name)
-        os.makedirs(target_dir, exist_ok=True)
-
-        base_poles_path = os.path.join(POLES_DIR, base_profile, "StartingPoles.dat")
-        if os.path.exists(base_poles_path):
-            base_poles = np.loadtxt(base_poles_path)
-            # Guardar el perfil para este paciente
-            np.savetxt(os.path.join(target_dir, "StartingPoles.dat"), base_poles, fmt="%.6E")
+        base_poles = perfiles.cargar_polos(base_profile)
+        if base_poles is not None:
+            perfiles.guardar_perfil(custom_name, base_poles)

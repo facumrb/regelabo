@@ -1,113 +1,75 @@
 """
-Servicio de simulación biológica de la vía auditiva periférica humana (Verhulst 2018).
+Lógica de negocio de la simulación biológica de la vía auditiva periférica (Verhulst 2018).
 """
 
-import os
-import sys
 import time
+from typing import Any, Dict, List
+
 import numpy as np
-from typing import List, Dict, Any, Tuple
 
-# Rutas hacia el código del modelo Verhulst
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-VERHULST_DIR = os.path.join(BASE_DIR, "Verhulst")
-VERHULST_SRC = os.path.join(VERHULST_DIR, "src")
-POLES_DIR = os.path.join(VERHULST_DIR, "data", "Poles")
-
-# Agregar paths si no están en sys.path
-if VERHULST_SRC not in sys.path:
-    sys.path.insert(0, VERHULST_SRC)
-
-from model2018 import model2018  # noqa: E402
-from utils.get_RAM_stims import get_RAM_stims  # noqa: E402
-from src.models.simulation_model import (  # noqa: E402
+from backend.controller.modelos import (
+    ABRWavesData,
+    HarmonicPeak,
     SimulationRequest,
     SimulationResponse,
     SpectrumData,
-    ABRWavesData,
-    HarmonicPeak,
 )
+from backend.datos import perfiles
+from backend.simulacion import motor
 
 
 class SimulationService:
     """Orquestador de simulaciones biológicas."""
 
     @staticmethod
+    def get_engine_status() -> Dict[str, Any]:
+        """Estado del motor de simulación y disponibilidad del solver en C."""
+        return {
+            "status": "online",
+            "service": "simulation-service",
+            "c_solver_available": motor.solver_c_disponible(),
+        }
+
+    @staticmethod
     def list_available_profiles() -> List[str]:
-        """Retorna los nombres de los perfiles de polos disponibles en data/Poles/."""
-        if not os.path.exists(POLES_DIR):
-            return ["Flat00", "Normal"]
-        profiles = []
-        for d in sorted(os.listdir(POLES_DIR)):
-            full_path = os.path.join(POLES_DIR, d)
-            poles_file = os.path.join(full_path, "StartingPoles.dat")
-            if os.path.isdir(full_path) and os.path.exists(poles_file):
-                profiles.append(d)
-        return profiles
+        """Retorna los nombres de los perfiles de polos disponibles."""
+        return perfiles.listar_perfiles()
 
     @classmethod
     def execute_simulation(cls, req: SimulationRequest) -> SimulationResponse:
         """
         Ejecuta el pipeline completo de simulación:
         1. Carga de polos auditivos
-        2. Generación del estímulo acústico RAM
-        3. Simulación biológica en cóclea, sinapsis y tronco encefálico
-        4. Extracción de ABR, EFR y espectro FFT
+        2. Simulación biológica en cóclea, sinapsis y tronco encefálico
+        3. Extracción de ABR, EFR y espectro FFT
         """
         start_time = time.time()
 
         # 1. Validar y cargar perfil de polos
-        profile_path = os.path.join(POLES_DIR, req.poles_profile, "StartingPoles.dat")
-        if not os.path.exists(profile_path):
+        sheraP = perfiles.cargar_polos(req.poles_profile)
+        if sheraP is None:
             available = cls.list_available_profiles()
             raise ValueError(
                 f"Perfil '{req.poles_profile}' no encontrado. Disponibles: {available[:5]}..."
             )
 
-        sheraP = np.loadtxt(profile_path)
-        if sheraP.ndim > 1:
-            sheraP = sheraP[0, :]
-
-        # 2. Configurar y generar estímulo RAM
-        fs = 1e5  # 100 kHz de muestreo para precisión temporal de la membrana basilar
-        fRAM = np.array([req.carrier_freq])
-
-        stimulus = get_RAM_stims(
-            fs=fs,
-            fRAM=fRAM,
-            level=req.spl_level,
-            fMod=req.f_mod,
-            dur=0.4
+        # 2. Ejecutar simulación biológica (Verhulst et al. 2018)
+        output = motor.ejecutar_modelo(
+            polos=sheraP,
+            frecuencia_portadora=req.carrier_freq,
+            nivel_db_spl=req.spl_level,
+            frecuencia_modulacion=req.f_mod,
+            n_h=req.nH,
+            n_m=req.nM,
+            n_l=req.nL,
         )
 
-        # 3. Ejecutar simulación biológica (Verhulst et al. 2018)
-        results = model2018(
-            stimulus,
-            fs,
-            fc='abr',
-            irregularities=1,
-            storeflag='evihmlbw',
-            subject=1,
-            sheraPo=sheraP,
-            IrrPct=0.05,
-            non_linear_type='vel',
-            nH=req.nH,
-            nM=req.nM,
-            nL=req.nL,
-            clean=1,
-            data_folder='./'
-        )
-
-        output = results[0] if isinstance(results, list) else results
-
-        # 4. Procesar ondas ABR y EFR
-        fs_an = float(output.fs_an)
-        w1 = output.w1.flatten()
-        w3 = output.w3.flatten()
-        w5 = output.w5.flatten()
+        # 3. Procesar ondas ABR y EFR
+        fs_an = output.fs
+        w1, w3, w5 = output.w1, output.w3, output.w5
         efr_wave = w1 + w3 + w5
 
-        # 5. Cálculo FFT y Armónicos del EFR
+        # 4. Cálculo FFT y Armónicos del EFR
         L = len(efr_wave)
         Y = np.fft.fft(efr_wave)
         P2 = np.abs(Y / L)
@@ -138,7 +100,7 @@ class SimulationService:
             amplitudes=[round(float(x * 1e6), 4) for x in P1[fft_mask]]
         )
 
-        # 6. Decimación para visualización web fluida (< 800 puntos)
+        # 5. Decimación para visualización web fluida (< 800 puntos)
         time_vec_ms = (np.arange(L) / fs_an) * 1000.0
         step = max(1, L // 750)
 

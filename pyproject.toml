@@ -1,0 +1,21 @@
+[project]
+name = "regelabo"
+version = "0.1.0"
+description = "Laboratorio Virtual Auditivo: simulación del modelo Verhulst et al. (2018)"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi[standard]",
+    "numpy",
+    "scipy",
+    "matplotlib",
+]
+
+[dependency-groups]
+dev = [
+    "flake8",
+    "pytest",
+]
+
+[tool.uv]
+package = false
