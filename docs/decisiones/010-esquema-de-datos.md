@@ -3,7 +3,7 @@
 **Fecha:** 2026-10-14 · **Estado:** aceptada
 
 ## Decisión
-- **9 tablas** creadas de una vez:
+- **9 tablas** creadas de una vez (la décima, `sesion`, llegó con la autenticación: ver [013](013-sesion-en-el-servidor.md)):
   - usuario, caso, audiograma, punto_audiograma;
   - simulacion, resultado_simulacion;
   - arquetipo, registro_abr, comparacion.

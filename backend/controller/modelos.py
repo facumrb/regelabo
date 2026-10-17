@@ -1,10 +1,83 @@
 """
-Objetos de negocio de simulación y audiogramas (Pydantic).
+Objetos de negocio (Pydantic): usuarios, simulación y audiogramas.
 """
 
-from typing import Dict, List, Optional
+from datetime import datetime
+from typing import Dict, List, Literal, Optional
+from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
+TipoPerfil = Literal["estudiante", "investigador", "fonoaudiologo"]
+
+
+class Usuario(BaseModel):
+    """Usuario del sistema tal como lo ve la capa de negocio (incluye datos de seguridad)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    email: str
+    nombre: str
+    tipo_perfil: TipoPerfil
+    es_admin: bool
+    # exclude=True: nunca sale en un model_dump, así no se filtra por una respuesta de la API
+    password_hash: str = Field(exclude=True)
+    intentos_fallidos: int
+    bloqueado_hasta: Optional[datetime]
+
+
+class UsuarioPublico(BaseModel):
+    """Lo que la API muestra de un usuario."""
+
+    id: UUID
+    email: str
+    nombre: str
+    tipo_perfil: TipoPerfil
+    es_admin: bool
+
+
+class RegistroInput(BaseModel):
+    email: EmailStr
+    password: str
+    nombre: str = Field(min_length=1, max_length=100)
+    tipo_perfil: TipoPerfil
+    acepta_aviso: bool = Field(description="Aceptación del aviso de uso no profesional (RN9)")
+
+
+class LoginInput(BaseModel):
+    email: str
+    password: str
+
+
+class CambioContrasenaInput(BaseModel):
+    actual: str
+    nueva: str
+
+
+Sexo = Literal["femenino", "masculino", "otro"]
+
+
+class CasoInput(BaseModel):
+    """Datos de un caso al crearlo o editarlo. Nada que identifique a una persona (decisión 008)."""
+
+    alias: str = Field(min_length=1, max_length=100)
+    edad: Optional[int] = Field(default=None, ge=0, le=120)
+    sexo: Optional[Sexo] = None
+    notas: Optional[str] = Field(default=None, max_length=2000)
+
+
+class Caso(CasoInput):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    creado_en: datetime
+
+
+class PaginaDeCasos(BaseModel):
+    casos: List[Caso]
+    siguiente: Optional[UUID] = Field(description="Pasarlo como `despues_de` para pedir la página siguiente; "
+                                                  "null si no hay más")
 
 
 class SimulationRequest(BaseModel):
@@ -18,6 +91,9 @@ class SimulationRequest(BaseModel):
     )
     poles_profile: str = Field(
         default="Flat00",
+        # Solo estos caracteres: el nombre se usa para armar una ruta de archivo
+        pattern=r"^[A-Za-z0-9_-]+$",
+        max_length=100,
         description="Perfil de polos de Shera para modelar pérdida auditiva (ej: Flat00, Flat20, Slope20)."
     )
     spl_level: float = Field(

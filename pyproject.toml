@@ -13,6 +13,8 @@ dependencies = [
     "psycopg[binary]>=3.3.6",
     "alembic>=1.20.0",
     "python-dotenv>=1.2.4",
+    "argon2-cffi>=25.1.0",
+    "slowapi>=0.1.10",
 ]
 
 [dependency-groups]
@@ -23,3 +25,7 @@ dev = [
 
 [tool.uv]
 package = false
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+pythonpath = ["."]

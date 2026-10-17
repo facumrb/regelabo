@@ -1,22 +1,18 @@
 """
 Conexión a la base de datos.
 
-La URL se lee de la variable de entorno DATABASE_URL. En desarrollo se toma del
-archivo `.env` de la raíz (ver `.env.example`); en producción la define el servidor.
+La URL sale de `backend.configuracion` (variable de entorno DATABASE_URL).
 """
 
-import os
 from contextlib import contextmanager
 from typing import Iterator
 
-from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-# Ruta explícita: la búsqueda automática de python-dotenv falla cuando Alembic carga este módulo
-load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
+from backend.configuracion import DATABASE_URL
 
-engine = create_engine(os.environ["DATABASE_URL"])
+engine = create_engine(DATABASE_URL)
 
 
 @contextmanager

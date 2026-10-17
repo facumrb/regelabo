@@ -16,5 +16,12 @@ Cada archivo documenta una decisión: el contexto, lo que se eligió, las altern
 | [010](010-esquema-de-datos.md) | Detalles del esquema de datos |
 | [011](011-infraestructura.md) | Hosting y dominio |
 | [012](012-frontend.md) | Frontend |
+| [013](013-sesion-en-el-servidor.md) | Sesión en el servidor |
+| [014](014-convenciones-de-la-api.md) | Convenciones de la API y de los tests |
+| [015](015-interfaz-de-autenticacion.md) | Interfaz de autenticación y primeros pasos en TypeScript |
+| [016](016-coleccion-de-bruno.md) | Colección de Bruno para la API |
+| [017](017-paginacion-por-cursor.md) | Paginación por cursor |
+| [018](018-cambio-de-contrasena.md) | Cambio de contraseña |
+| [019](019-endpoints-del-prototipo-con-sesion.md) | Endpoints del prototipo con sesión |
 
 Las reglas de negocio están en [`../reglas-de-negocio.md`](../reglas-de-negocio.md).

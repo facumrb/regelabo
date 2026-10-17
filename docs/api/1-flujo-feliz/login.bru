@@ -1,0 +1,43 @@
+meta {
+  name: 2. Login
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{email}}",
+    "password": "{{password}}"
+  }
+}
+
+script:post-response {
+  // Guardamos el token a mano para mandarlo en las requests siguientes (ver el README de esta carpeta)
+  const cookies = [].concat(res.getHeader("set-cookie") || []);
+  const sesion = cookies.find(function (c) { return String(c).startsWith("sesion="); });
+  bru.setVar("token", sesion ? String(sesion).split(";")[0].slice("sesion=".length) : "");
+}
+
+tests {
+  test("responde 200", function () { expect(res.getStatus()).to.equal(200); });
+  test("devuelve el usuario", function () { expect(res.getBody().email).to.equal(bru.getVar("email")); });
+  test("la cookie de sesión es HttpOnly, SameSite=Lax y de ruta /api", function () {
+    const cookies = [].concat(res.getHeader("set-cookie") || []).map(function (c) { return String(c).toLowerCase(); });
+    const sesion = cookies.find(function (c) { return c.startsWith("sesion="); });
+    expect(sesion, "falta la cookie sesion").to.be.a("string");
+    expect(sesion).to.include("httponly");
+    expect(sesion).to.include("samesite=lax");
+    expect(sesion).to.include("path=/api");
+  });
+  test("hay un token", function () { expect(bru.getVar("token")).to.not.equal(""); });
+}
+
+docs {
+  Inicia sesión. El servidor responde con una cookie `sesion` (HttpOnly) que guarda un token aleatorio.
+}

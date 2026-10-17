@@ -5,10 +5,11 @@ Endpoints de simulación biológica.
 import logging
 from typing import Any, Dict, List
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from backend.controller.modelos import SimulationRequest, SimulationResponse
 from backend.controller.simulacion import SimulationService
+from backend.views.dependencias import usuario_actual
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Simulación Biológica"])
@@ -20,7 +21,8 @@ def health_check() -> Dict[str, Any]:
     return SimulationService.get_engine_status()
 
 
-@router.get("/profiles", response_model=List[str], status_code=status.HTTP_200_OK)
+@router.get("/profiles", response_model=List[str], status_code=status.HTTP_200_OK,
+            dependencies=[Depends(usuario_actual)])
 def list_profiles() -> List[str]:
     """Retorna la lista de todos los perfiles de pérdida auditiva (polos de Shera) disponibles."""
     try:
@@ -33,7 +35,8 @@ def list_profiles() -> List[str]:
         )
 
 
-@router.post("/simulate", response_model=SimulationResponse, status_code=status.HTTP_200_OK)
+@router.post("/simulate", response_model=SimulationResponse, status_code=status.HTTP_200_OK,
+             dependencies=[Depends(usuario_actual)])
 def simulate(request: SimulationRequest) -> SimulationResponse:
     """
     Ejecuta el modelo Verhulst 2018 para los parámetros provistos.

@@ -1,0 +1,42 @@
+meta {
+  name: 1. Registro
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/auth/registro
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{email}}",
+    "password": "{{password}}",
+    "nombre": "Usuario de Bruno",
+    "tipo_perfil": "estudiante",
+    "acepta_aviso": true
+  }
+}
+
+script:pre-request {
+  // Un email nuevo en cada corrida; las demás requests de la colección lo reutilizan
+  bru.setVar("email", "bruno-" + Date.now() + "@example.com");
+  bru.setVar("password", "clave-larga-1");
+}
+
+tests {
+  test("responde 201 Creado", function () { expect(res.getStatus()).to.equal(201); });
+  test("devuelve el usuario sin datos sensibles", function () {
+    const u = res.getBody();
+    expect(u.email).to.equal(bru.getVar("email"));
+    expect(u.es_admin).to.equal(false);
+    expect(u).to.not.have.property("password_hash");
+    expect(u).to.not.have.property("password");
+  });
+}
+
+docs {
+  Crea la cuenta. **No** inicia sesión: eso lo hace la request 2.
+}

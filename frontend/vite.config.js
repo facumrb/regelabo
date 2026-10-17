@@ -6,6 +6,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
-    host: true
+    host: true,
+    // El navegador habla solo con este origen; /api se reenvía al backend (igual que en producción)
+    proxy: { '/api': 'http://localhost:8000' }
   }
 })

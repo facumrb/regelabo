@@ -1,0 +1,35 @@
+meta {
+  name: Registro con un email ya registrado
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/auth/registro
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{email_mayusculas}}",
+    "password": "clave-larga-1",
+    "nombre": "Rechazado",
+    "tipo_perfil": "estudiante",
+    "acepta_aviso": true
+  }
+}
+
+script:pre-request {
+  // El mismo email del flujo feliz, pero en mayúsculas: el servidor los trata como iguales
+  bru.setVar("email_mayusculas", String(bru.getVar("email") || "bruno-no-registrado@example.com").toUpperCase());
+}
+
+tests {
+  test("409 Conflict", function () { expect(res.getStatus()).to.equal(409); });
+  test("código email_ya_registrado", function () { expect(res.getBody().detail.codigo).to.equal("email_ya_registrado"); });
+}
+
+docs {
+  Necesita el email que crea `1-flujo-feliz/1. Registro`: correr esa carpeta antes (el runner ya lo hace en orden).
+}

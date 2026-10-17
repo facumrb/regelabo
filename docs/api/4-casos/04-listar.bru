@@ -1,0 +1,25 @@
+meta {
+  name: 4. Listar mis casos
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/casos?limite=20
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token_ana}}
+}
+
+tests {
+  test("responde 200", function () { expect(res.getStatus()).to.equal(200); });
+  test("aparece el caso creado", function () { expect(res.getBody().casos.map(function (c) { return c.id; })).to.include(bru.getVar("caso_id")); });
+  test("no hay página siguiente", function () { expect(res.getBody().siguiente).to.equal(null); });
+}
+
+docs {
+  Paginación por cursor: si `siguiente` no es null, pedir `/casos?despues_de=<siguiente>` para la página que sigue.
+}

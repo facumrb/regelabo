@@ -1,0 +1,23 @@
+meta {
+  name: 11. Cambiar sin sesión
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{base_url}}/auth/contrasena
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "actual": "clave-nueva-1",
+    "nueva": "clave-otra-1"
+  }
+}
+
+tests {
+  test("responde 401", function () { expect(res.getStatus()).to.equal(401); });
+  test("código no_autenticado", function () { expect(res.getBody().detail.codigo).to.equal("no_autenticado"); });
+}

@@ -1,0 +1,23 @@
+meta {
+  name: 12. Logout (otro usuario)
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{base_url}}/auth/logout
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token_beto}}
+}
+
+tests {
+  test("responde 204", function () { expect(res.getStatus()).to.equal(204); });
+}
+
+docs {
+  Bruno guarda la cookie del último login y la manda por su cuenta, por encima del header `Cookie`. Este logout la borra, así las requests siguientes vuelven a usar la sesión de la dueña (`token_ana`) y la 17 sale sin sesión.
+}

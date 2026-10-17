@@ -1,0 +1,20 @@
+meta {
+  name: Perfiles de audición (sin sesión)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/profiles
+  body: none
+  auth: none
+}
+
+tests {
+  test("sin sesión responde 401", function () { expect(res.getStatus()).to.equal(401); });
+  test("código no_autenticado", function () { expect(res.getBody().detail.codigo).to.equal("no_autenticado"); });
+}
+
+docs {
+  Los endpoints de simulación y audiogramas piden sesión. Con sesión, ver `1-flujo-feliz/perfiles`. `/health` y `/` siguen públicos.
+}

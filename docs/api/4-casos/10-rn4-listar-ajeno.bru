@@ -1,0 +1,19 @@
+meta {
+  name: 10. RN4: el otro no lo ve en su lista
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{base_url}}/casos
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token_beto}}
+}
+
+tests {
+  test("lista vacía", function () { expect(res.getBody().casos).to.have.lengthOf(0); });
+}

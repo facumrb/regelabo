@@ -1,0 +1,24 @@
+meta {
+  name: 4. Perfiles de audición (con sesión)
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/profiles
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token}}
+}
+
+tests {
+  test("responde 200", function () { expect(res.getStatus()).to.equal(200); });
+  test("incluye el perfil Flat00", function () { expect(res.getBody()).to.be.an("array").that.includes("Flat00"); });
+}
+
+docs {
+  Endpoint de la simulación: con la cookie de sesión, devuelve los perfiles disponibles.
+}

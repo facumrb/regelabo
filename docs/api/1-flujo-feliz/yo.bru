@@ -1,0 +1,23 @@
+meta {
+  name: 3. Quién soy (yo)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/auth/yo
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token}}
+}
+
+tests {
+  test("responde 200", function () { expect(res.getStatus()).to.equal(200); });
+  test("es el usuario que inició sesión", function () {
+    expect(res.getBody().email).to.equal(bru.getVar("email"));
+    expect(res.getBody().tipo_perfil).to.equal("estudiante");
+  });
+}

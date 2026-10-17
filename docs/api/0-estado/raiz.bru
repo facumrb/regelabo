@@ -1,0 +1,18 @@
+meta {
+  name: Raíz de la API
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/
+  body: none
+  auth: none
+}
+
+tests {
+  test("responde 200 con el nombre del servicio", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().service).to.equal("regelabo");
+  });
+}

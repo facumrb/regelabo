@@ -1,0 +1,23 @@
+meta {
+  name: 8. Login con la contraseña vieja
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{base_url}}/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{email_cuenta}}",
+    "password": "clave-vieja-1"
+  }
+}
+
+tests {
+  test("responde 401", function () { expect(res.getStatus()).to.equal(401); });
+  test("código credenciales_invalidas", function () { expect(res.getBody().detail.codigo).to.equal("credenciales_invalidas"); });
+}

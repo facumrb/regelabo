@@ -52,13 +52,21 @@ class Usuario(ConIdYFecha, Base):
     bloqueado_hasta: Mapped[Optional[datetime]]
 
 
+class Sesion(ConIdYFecha, Base):
+    __tablename__ = "sesion"
+
+    usuario_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("usuario.id", ondelete="CASCADE"), index=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)  # SHA-256 del token de la cookie
+    expira_en: Mapped[datetime] = mapped_column(index=True)
+
+
 class Caso(ConIdYFecha, Base):
     __tablename__ = "caso"
 
     usuario_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("usuario.id"), index=True)
     alias: Mapped[str] = mapped_column(String(100))
     edad: Mapped[Optional[int]]
-    sexo: Mapped[Optional[str]] = mapped_column(String(20))
+    sexo: Mapped[Optional[str]] = mapped_column(_valores_fijos("sexo", "femenino", "masculino", "otro"))
     notas: Mapped[Optional[str]] = mapped_column(Text)
     borrado_en: Mapped[Optional[datetime]]  # borrado lógico: el caso se oculta pero se puede recuperar
 

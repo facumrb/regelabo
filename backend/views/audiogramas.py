@@ -5,13 +5,14 @@ Endpoints de carga y análisis de audiogramas.
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 
 from backend.controller.audiogramas import AudiogramService
 from backend.controller.modelos import AudiogramInput, AudiogramResponse
+from backend.views.dependencias import usuario_actual
 
 logger = logging.getLogger(__name__)
-router = APIRouter(tags=["Simulación Biológica"])
+router = APIRouter(tags=["Simulación Biológica"], dependencies=[Depends(usuario_actual)])
 
 
 @router.post("/audiogram/upload", response_model=AudiogramResponse, status_code=status.HTTP_200_OK)

@@ -1,0 +1,33 @@
+meta {
+  name: 3. Crear caso
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/casos
+  body: json
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token_ana}}
+}
+
+body:json {
+  {
+    "alias": "Caso de Bruno",
+    "edad": 30,
+    "sexo": "femenino",
+    "notas": "Creado por la colección de Bruno"
+  }
+}
+
+script:post-response {
+  bru.setVar("caso_id", res.getBody().id);
+}
+
+tests {
+  test("responde 201", function () { expect(res.getStatus()).to.equal(201); });
+  test("devuelve el caso con id", function () { expect(res.getBody().alias).to.equal("Caso de Bruno"); expect(res.getBody().id).to.be.a("string"); });
+}

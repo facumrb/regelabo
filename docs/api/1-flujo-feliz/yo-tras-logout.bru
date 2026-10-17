@@ -1,0 +1,24 @@
+meta {
+  name: 6. Yo con el token viejo
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{base_url}}/auth/yo
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token}}
+}
+
+tests {
+  test("el token ya no sirve: 401", function () { expect(res.getStatus()).to.equal(401); });
+  test("código no_autenticado", function () { expect(res.getBody().detail.codigo).to.equal("no_autenticado"); });
+}
+
+docs {
+  Manda **el mismo token** de antes del logout. Prueba que el logout lo invalidó en el servidor (no solo borró la cookie del navegador).
+}

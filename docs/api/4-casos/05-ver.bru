@@ -1,0 +1,20 @@
+meta {
+  name: 5. Ver caso
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url}}/casos/{{caso_id}}
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token_ana}}
+}
+
+tests {
+  test("responde 200", function () { expect(res.getStatus()).to.equal(200); });
+  test("es el caso pedido", function () { expect(res.getBody().id).to.equal(bru.getVar("caso_id")); });
+}

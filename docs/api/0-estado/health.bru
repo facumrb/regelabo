@@ -1,0 +1,19 @@
+meta {
+  name: Estado del backend
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/health
+  body: none
+  auth: none
+}
+
+tests {
+  test("responde 200", function () { expect(res.getStatus()).to.equal(200); });
+  test("el backend está online", function () { expect(res.getBody().status).to.equal("online"); });
+  test("informa si el solver en C está disponible", function () {
+    expect(res.getBody().c_solver_available).to.be.a("boolean");
+  });
+}
