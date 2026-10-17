@@ -10,7 +10,7 @@ import numpy as np
 from backend.controller.modelos import (
     ABRWavesData,
     HarmonicPeak,
-    SimulationRequest,
+    ParametrosSimulacion,
     SimulationResponse,
     SpectrumData,
 )
@@ -36,7 +36,7 @@ class SimulationService:
         return perfiles.listar_perfiles()
 
     @classmethod
-    def execute_simulation(cls, req: SimulationRequest) -> SimulationResponse:
+    def execute_simulation(cls, req: ParametrosSimulacion) -> SimulationResponse:
         """
         Ejecuta el pipeline completo de simulación:
         1. Carga de polos auditivos

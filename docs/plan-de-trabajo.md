@@ -29,7 +29,7 @@ Cada paso queda funcionando antes del siguiente. Al terminar, cada compañero so
 | 4 | **Módulo de ejemplo completo: Casos** (con RN4), de punta a punta, con tests y pantalla en React + TypeScript: CRUD con borrado lógico, `sexo` con valores fijos, paginación por cursor (decisión 017). | Hecho, sin commitear | — |
 | 4a | Cambio de contraseña con la sesión iniciada, página *Mi cuenta* y comando de reseteo para el admin (decisión 018). Agregado el 2026-10-16. | Hecho, sin commitear | — |
 | 4b | Pasar el frontend del prototipo a TypeScript (`App`, `Header` y los 4 componentes de simulación y audiogramas). Separado del paso 4 por decisión del 2026-10-16. | Hecho, sin commitear | — |
-| 5 | Simulación: cola en la tabla `simulacion`, proceso trabajador (`worker.py`), caché por huella (RN10), RN3 y RN5, y consulta del estado desde el frontend. | Pendiente | — |
+| 5 | Simulación: cola en la tabla `simulacion`, proceso trabajador (`worker.py`), caché por huella (RN10), RN3 y RN5, consulta del estado desde el frontend e historial (decisión 020). Quedan para después las latencias y amplitudes de las ondas. | Hecho, sin commitear | — |
 | 6 | Integración continua con GitHub Actions (Flake8 + pytest) y `CONTRIBUTING.md` con las reglas de capas. | Pendiente | — |
 | 7 | Actualizar la documentación: `CLAUDE.md`, `PROYECTO.md` (template del TPI), `docs/arquitectura.md`, el diagrama de dominio y `docs/decisiones/`. | Parcial: `CLAUDE.md` y `docs/decisiones/` al día. | — |
 | 8 | Conectar GitHub a la sesión de Claude, crear las issues de los 3 módulos y el tag `semana-01`. | Pendiente | — |
@@ -68,6 +68,7 @@ El [Plan de Mitigación de Cuellos de Botella](specs/Plan%20de%20Mitigación%20d
 
 - **Licencia de Verhulst (UGent):** el repo es público y contiene el código del modelo; la licencia prohíbe redistribuirlo sin autorización escrita. Hasta resolverlo con la cátedra, no se traen los `.mat` de `OHC_ind`, lo que bloquea el perfil propio del módulo de casos y audiogramas.
 - **`proposal.md` desactualizado:** su sección 4 habla de Celery, Supabase Auth y Storage. Hay que alinearlo con las decisiones.
+- **Latencias y amplitudes de las ondas I, III y V**: definir con fonoaudiología las ventanas de búsqueda y el criterio de amplitud (decisión 020). Las necesita la comparación con arquetipos.
 - **Perfiles `Custom_*` compartidos entre usuarios** (se pisan por nombre y `/profiles` los muestra a todos): se resuelve en el módulo de audiogramas, ligándolos a un caso (decisión 019).
 
 ---

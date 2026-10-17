@@ -1,0 +1,23 @@
+meta {
+  name: 14. Logout (otro usuario)
+  type: http
+  seq: 14
+}
+
+post {
+  url: {{base_url}}/auth/logout
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token_sim_beto}}
+}
+
+tests {
+  test("responde 204", function () { expect(res.getStatus()).to.equal(204); });
+}
+
+docs {
+  Bruno guarda la cookie del último login y la manda por su cuenta: este logout la borra, así la 15 sale sin sesión.
+}

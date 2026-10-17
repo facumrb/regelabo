@@ -9,7 +9,7 @@ Requests con sus aserciones para probar la API a mano o por terminal. Son archiv
 3. Arriba a la derecha, elegir el entorno:
    - `desarrollo`: le pega directo al backend, `http://localhost:8000/api`.
    - `vite`: pasa por el proxy de Vite, `http://localhost:5173/api` (como el navegador).
-4. Para correrla toda: clic derecho sobre la colección → **Run**. Corre en orden las carpetas `0` a `5`, pero `4-casos` y `5-cuenta` van a dar 429 (ver *Límite de pedidos*): conviene correr `0`–`3`, y pasado un minuto cada una de las otras sola (clic derecho sobre la carpeta → **Run**).
+4. Para correrla toda: clic derecho sobre la colección → **Run**. Corre en orden las carpetas `0` a `6`, pero `4-casos`, `5-cuenta` y `6-simulaciones` van a dar 429 (ver *Límite de pedidos*): conviene correr `0`–`3`, y pasado un minuto cada una de las otras sola (clic derecho sobre la carpeta → **Run**).
 
 El backend tiene que estar corriendo (`npm run dev`, o `uv run fastapi dev app.py`) y la base levantada (`docker compose up -d db`).
 
@@ -20,8 +20,9 @@ cd docs/api
 pnpm dlx @usebruno/cli run 0-estado 1-flujo-feliz 2-errores 3-manuales -r --env desarrollo
 # pasado un minuto:
 pnpm dlx @usebruno/cli run 4-casos -r --env desarrollo
-# pasado otro minuto:
+# pasado otro minuto, cada una:
 pnpm dlx @usebruno/cli run 5-cuenta -r --env desarrollo
+pnpm dlx @usebruno/cli run 6-simulaciones -r --env desarrollo
 ```
 
 Opciones útiles: `--env vite` para el otro entorno, `--env-var base_url=http://localhost:8010/api` para apuntar a otro backend, `--reporter-html resultado.html` para guardar un informe.
@@ -35,6 +36,7 @@ Opciones útiles: `--env vite` para el otro entorno, `--env-var base_url=http://
 | `2-errores` | Registro sin aviso (400), contraseña corta (400), email inválido (422), email repetido incluso en mayúsculas (409), login con clave incorrecta y con email inexistente (401, **respuestas idénticas**), `yo` sin sesión y con un token inventado (401). |
 | `3-manuales` | El límite de 5 pedidos por minuto y el bloqueo de cuenta a los 10 fallos. Hay que enviarlas varias veces y esperar, así que **no están pensadas para correrse en bloque** (en una corrida completa responden 401 y pasan). El procedimiento está en la pestaña *Docs* de cada request. |
 | `4-casos` | El módulo de ejemplo. Crea su propia dueña y un segundo usuario (no depende de las otras carpetas): crear → listar (paginación por cursor) → ver → editar (PUT reemplaza todo) → **RN4**: el otro usuario recibe 404 al ver o borrar el caso y no lo ve en su lista → borrar (lógico) → ver el borrado (404) → sexo inválido y límite fuera de rango (422) → sin sesión (401). |
+| `6-simulaciones` | Pedir una simulación (202), listar, ver, RN3 (nivel fuera de rango, sin fibras, perfil inexistente, nombre inválido), RN4 (otro usuario recibe 404 y no la ve en su lista) y sin sesión (401). Con un worker corriendo (`npm run dev`) la simulación se ejecuta de verdad (~75 s). Los cupos, la caché y el worker los prueba pytest. |
 | `5-cuenta` | Cambio de contraseña. Crea su propio usuario: actual incorrecta, nueva corta y nueva repetida (400) → cambio (204) → la sesión actual sigue → login con la vieja (401) y con la nueva (200) → sin sesión (401). Que se cierren las **otras** sesiones lo prueba pytest. |
 
 Cada request verifica el estado HTTP, el `codigo` del error y, donde corresponde, la cookie. Los errores de formato (422) conservan el formato de FastAPI: `detail` es una lista.
@@ -52,6 +54,6 @@ Cada request verifica el estado HTTP, el `codigo` del error y, donde corresponde
 
 ## Qué falta
 
-Las rutas del prototipo `/simulate` y `/audiogram/*` no tienen requests (piden sesión; `/profiles` sí, en `1-flujo-feliz`): las van a reemplazar los módulos de casos y simulación. Para traerlas igual, en Bruno: **Import Collection → OpenAPI** con `http://localhost:8000/api/openapi.json`.
+Las rutas del prototipo `/audiogram/*` no tienen requests (piden sesión; `/profiles` sí, en `1-flujo-feliz`; `/simulate` ya no existe): las van a reemplazar los módulos de casos y simulación. Para traerlas igual, en Bruno: **Import Collection → OpenAPI** con `http://localhost:8000/api/openapi.json`.
 
 Al sumar un módulo, agregarle su carpeta (`5-…`) con el flujo feliz y sus errores, tomando `4-casos` como modelo. Para crear una request nueva, copiar una existente y cambiar la ruta, el cuerpo y los `tests`.

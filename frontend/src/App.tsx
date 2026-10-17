@@ -4,7 +4,7 @@ import SimulationControls from './components/SimulationControls'
 import ResultsSummary from './components/ResultsSummary'
 import PlotsPanel from './components/PlotsPanel'
 import AudiogramManager from './components/AudiogramManager'
-import { Route, Routes } from 'react-router-dom'
+import { Link, Route, Routes } from 'react-router-dom'
 import PanelPruebas from './components/PanelPruebas'
 import Login from './pages/Login'
 import Registro from './pages/Registro'
@@ -13,11 +13,17 @@ import MisCasos from './pages/casos/MisCasos'
 import NuevoCaso from './pages/casos/NuevoCaso'
 import FichaCaso from './pages/casos/FichaCaso'
 import MiCuenta from './pages/MiCuenta'
+import Historial from './pages/simulaciones/Historial'
+import DetalleSimulacion from './pages/simulaciones/DetalleSimulacion'
 import Bienvenida from './pages/Bienvenida'
 import { useSesion } from './context/SesionContext'
 import { api } from './services/api'
 import { mensajeDeError } from './services/auth'
-import type { EstadoServidor, ParametrosSimulacion, ResultadoSimulacion } from './services/tiposSimulacion'
+import { casosApi, type Caso } from './services/casos'
+import { enCurso, INTERVALO_CONSULTA_MS, simulacionesApi } from './services/simulaciones'
+import type {
+  EstadoServidor, ParametrosSimulacion, ResultadoSimulacion, Simulacion,
+} from './services/tiposSimulacion'
 
 export default function App() {
   const { usuario, cargando } = useSesion()
@@ -37,6 +43,10 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [elapsedTime, setElapsedTime] = useState(0)
   const [result, setResult] = useState<ResultadoSimulacion | null>(null)
+  const [casos, setCasos] = useState<Caso[]>([])
+  const [casoId, setCasoId] = useState('') // '' = sin caso
+  const [simulacion, setSimulacion] = useState<Simulacion | null>(null) // la que se está esperando
+  const montado = useRef(true)
   const [error, setError] = useState<string | null>(null)
   const [successToast, setSuccessToast] = useState<string | null>(null)
 
@@ -63,7 +73,22 @@ export default function App() {
     } catch (err) {
       console.warn('No se pudieron cargar los perfiles:', mensajeDeError(err))
     }
+
+    try {
+      // shortcut: el selector ofrece solo los 100 casos más nuevos; si hace falta más, paginar o buscar
+      setCasos((await casosApi.listar(null, 100)).casos)
+    } catch (err) {
+      console.warn('No se pudieron cargar los casos:', mensajeDeError(err))
+    }
   }
+
+  // Si se sale de la página mientras se espera una simulación, se deja de consultar su estado
+  useEffect(() => {
+    montado.current = true
+    return () => {
+      montado.current = false
+    }
+  }, [])
 
   // Se repite al iniciar o cerrar sesión: los perfiles solo se piden con sesión
   useEffect(() => {
@@ -91,13 +116,26 @@ export default function App() {
     setError(null)
     setSuccessToast(null)
     try {
-      const data = await api.runSimulation(params)
-      setResult(data)
+      // El pedido solo deja la simulación en cola: la ejecuta el worker y se consulta su estado cada pocos segundos
+      let actual = await simulacionesApi.crear(params, casoId || null)
+      setSimulacion(actual)
+      while (enCurso(actual.estado) && montado.current) {
+        await new Promise((resolver) => setTimeout(resolver, INTERVALO_CONSULTA_MS))
+        if (!montado.current) return
+        actual = await simulacionesApi.ver(actual.id)
+        setSimulacion(actual)
+      }
+      if (actual.estado === 'completada' && actual.resultado) {
+        setResult(actual.resultado)
+      } else {
+        setError(actual.mensaje_error ?? 'La simulación no se pudo completar.')
+      }
     } catch (err) {
       console.error('Error en simulación:', err)
       setError(mensajeDeError(err))
     } finally {
       setIsLoading(false)
+      setSimulacion(null)
     }
   }
 
@@ -126,6 +164,8 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/registro" element={<Registro />} />
           <Route path="/cuenta" element={<RequiereSesion><MiCuenta /></RequiereSesion>} />
+          <Route path="/simulaciones" element={<RequiereSesion><Historial /></RequiereSesion>} />
+          <Route path="/simulaciones/:id" element={<RequiereSesion><DetalleSimulacion /></RequiereSesion>} />
           <Route path="/casos" element={<RequiereSesion><MisCasos /></RequiereSesion>} />
           <Route path="/casos/nuevo" element={<RequiereSesion><NuevoCaso /></RequiereSesion>} />
           <Route path="/casos/:id" element={<RequiereSesion><FichaCaso /></RequiereSesion>} />
@@ -164,7 +204,8 @@ export default function App() {
                   </button>
                 </div>
 
-                <div className="text-xs text-slate-400 flex items-center space-x-2">
+                <div className="text-xs text-slate-400 flex items-center space-x-4">
+                  <Link to="/simulaciones" className="text-cyan-400 hover:underline">Ver historial de simulaciones</Link>
                   <span>Perfil activo:</span>
                   <span className="font-mono text-cyan-400 font-semibold px-2 py-0.5 rounded bg-dark-800 border border-slate-700">
                     {params.poles_profile}
@@ -213,6 +254,10 @@ export default function App() {
                       onRunSimulation={handleRunSimulation}
                       isLoading={isLoading}
                       elapsedTime={elapsedTime}
+                      simulacion={simulacion}
+                      casos={casos}
+                      casoId={casoId}
+                      setCasoId={setCasoId}
                     />
                   </div>
 

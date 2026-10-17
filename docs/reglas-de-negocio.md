@@ -6,7 +6,7 @@ Reglas acordadas para el TPI. Cada una se implementa en `backend/controller/` y 
 |---|---|---|
 | **RN1** | Un audiograma válido tiene frecuencias entre 125 y 8000 Hz, sin repetir, con valores entre −10 y 120 dB HL, e incluye obligatoriamente 500, 1000, 2000 y 4000 Hz. | 400 con el detalle del error |
 | **RN2** | Gravedad según el PTA (promedio de pérdida en 500, 1000, 2000 y 4000 Hz): normal ≤ 20, leve ≤ 40, moderada ≤ 70, severa > 70 dB HL. El patrón es **pendiente** si los agudos (≥ 3 kHz) pierden ≥ 15 dB más que los graves (≤ 1 kHz); si no, es **plano**. | — (es un cálculo) |
-| **RN3** | Parámetros de simulación válidos: nivel de 0 a 100 dB SPL; portadora de 125 a 8000 Hz; modulación de 20 a 1000 Hz; fibras nH, nM y nL enteras ≥ 0 con suma > 0; el perfil de audición tiene que existir. | 400 |
+| **RN3** | Parámetros de simulación válidos: nivel de 0 a 100 dB SPL; portadora de 125 a 8000 Hz; modulación de 20 a 1000 Hz; fibras nH, nM y nL enteras ≥ 0 con suma > 0 (máximos: nH 30, nM 15, nL 15); el perfil de audición tiene que existir. | 400 |
 | **RN4** | Ningún usuario tiene permiso sobre casos, simulaciones o comparaciones de otro. La interfaz nunca los lista; si se intenta acceder por URL o API, se responde como si no existieran. El admin tampoco ve el contenido de casos ajenos: solo totales. | 404 (no 403, para no revelar que existen) |
 | **RN5a** | Cupo de simulaciones simultáneas (en cola o ejecutando) según el tipo de usuario: estudiante 1, investigador 3, fonoaudiólogo 3. El lugar se libera cuando la simulación termina, bien o con error. | 429 |
 | **RN5b** | Simulaciones nuevas por hora (ventana móvil de 60 min): estudiante 10, investigador 30, fonoaudiólogo 30. | 429 |

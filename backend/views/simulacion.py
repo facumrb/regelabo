@@ -7,7 +7,6 @@ from typing import Any, Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from backend.controller.modelos import SimulationRequest, SimulationResponse
 from backend.controller.simulacion import SimulationService
 from backend.views.dependencias import usuario_actual
 
@@ -32,26 +31,4 @@ def list_profiles() -> List[str]:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"No se pudieron cargar los perfiles de audición: {str(e)}"
-        )
-
-
-@router.post("/simulate", response_model=SimulationResponse, status_code=status.HTTP_200_OK,
-             dependencies=[Depends(usuario_actual)])
-def simulate(request: SimulationRequest) -> SimulationResponse:
-    """
-    Ejecuta el modelo Verhulst 2018 para los parámetros provistos.
-    Devuelve los datos de EFR, armónicos, espectro FFT y ondas ABR para visualización.
-    """
-    try:
-        return SimulationService.execute_simulation(request)
-    except ValueError as ve:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(ve)
-        )
-    except Exception as e:
-        logger.error(f"Error en la simulación: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error durante el cálculo de simulación: {str(e)}"
         )

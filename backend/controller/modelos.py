@@ -80,13 +80,14 @@ class PaginaDeCasos(BaseModel):
                                                   "null si no hay más")
 
 
-class SimulationRequest(BaseModel):
-    """Parámetros de entrada para ejecutar una simulación del modelo auditivo."""
+class ParametrosSimulacion(BaseModel):
+    """
+    Parámetros de entrada de una simulación del modelo auditivo.
+    Los rangos válidos (RN3) los verifica `controller.simulaciones.validar_parametros`.
+    """
 
     carrier_freq: float = Field(
         default=4000.0,
-        ge=100.0,
-        le=12000.0,
         description="Frecuencia portadora del estímulo en Hz (típicamente 500, 1000, 2000, 4000)."
     )
     poles_profile: str = Field(
@@ -96,36 +97,21 @@ class SimulationRequest(BaseModel):
         max_length=100,
         description="Perfil de polos de Shera para modelar pérdida auditiva (ej: Flat00, Flat20, Slope20)."
     )
-    spl_level: float = Field(
-        default=70.0,
-        ge=0.0,
-        le=120.0,
-        description="Nivel de presión sonora del estímulo en dB SPL."
-    )
+    spl_level: float = Field(default=70.0, description="Nivel de presión sonora del estímulo en dB SPL.")
     f_mod: float = Field(
         default=110.0,
-        ge=20.0,
-        le=500.0,
         description="Frecuencia de modulación del estímulo RAM en Hz (default: 110 Hz)."
     )
     nH: int = Field(
         default=13,
-        ge=0,
-        le=30,
         description="Fibras HSR (alta tasa espontánea) por IHC. Reducir para simular sinaptopatía."
     )
-    nM: int = Field(
-        default=3,
-        ge=0,
-        le=15,
-        description="Fibras MSR (media tasa espontánea) por IHC."
-    )
-    nL: int = Field(
-        default=3,
-        ge=0,
-        le=15,
-        description="Fibras LSR (baja tasa espontánea) por IHC."
-    )
+    nM: int = Field(default=3, description="Fibras MSR (media tasa espontánea) por IHC.")
+    nL: int = Field(default=3, description="Fibras LSR (baja tasa espontánea) por IHC.")
+
+
+class SimulacionInput(ParametrosSimulacion):
+    caso_id: Optional[UUID] = Field(default=None, description="Caso asociado a la simulación (opcional)")
 
 
 class SpectrumData(BaseModel):
@@ -186,3 +172,30 @@ class AudiogramResponse(BaseModel):
     mean_hearing_loss: float = Field(description="Pérdida promedio tonal (PTA) en dB HL")
     clinical_classification: str = Field(description="Diagnóstico fonoaudiológico orientativo")
     notes: str = Field(description="Detalles sobre la interpolación coclear")
+
+
+EstadoSimulacion = Literal["en_cola", "ejecutando", "completada", "error"]
+
+
+class Simulacion(BaseModel):
+    """Una simulación pedida por un usuario, con su estado y, si terminó, su resultado."""
+
+    id: UUID
+    estado: EstadoSimulacion
+    caso_id: Optional[UUID]
+    parametros: ParametrosSimulacion
+    creado_en: datetime
+    iniciada_en: Optional[datetime]
+    finalizada_en: Optional[datetime]
+    mensaje_error: Optional[str]
+    reutilizada: bool = Field(description="True si el resultado ya existía (RN10) y no pasó por la cola")
+    posicion: Optional[int] = Field(default=None, description="Lugar en la cola; solo si está en_cola")
+    resultado: Optional[SimulationResponse] = Field(default=None, description="Solo si está completada")
+    # exclude=True: la huella es interna, nunca sale por la API
+    huella: str = Field(exclude=True)
+
+
+class PaginaDeSimulaciones(BaseModel):
+    simulaciones: List[Simulacion]
+    siguiente: Optional[UUID] = Field(description="Pasarlo como `despues_de` para pedir la página siguiente; "
+                                                  "null si no hay más")

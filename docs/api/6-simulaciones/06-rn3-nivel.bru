@@ -1,0 +1,26 @@
+meta {
+  name: 6. RN3: nivel fuera de rango
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{base_url}}/simulaciones
+  body: json
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token_sim_ana}}
+}
+
+body:json {
+  {
+    "spl_level": 150
+  }
+}
+
+tests {
+  test("responde 400", function () { expect(res.getStatus()).to.equal(400); });
+  test("código parametros_invalidos", function () { expect(res.getBody().detail.codigo).to.equal("parametros_invalidos"); });
+}

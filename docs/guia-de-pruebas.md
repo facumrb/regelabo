@@ -15,7 +15,7 @@ uv run alembic upgrade head           # crea las 10 tablas
 uv run python -m backend.comandos.crear_admin   # opcional: pide email, nombre y contraseña
 ```
 
-Para arrancar todo: `npm run dev` desde la raíz y abrir <http://localhost:5173>.
+Para arrancar todo: `npm run dev` desde la raíz (backend, frontend y el **worker** que ejecuta las simulaciones) y abrir <http://localhost:5173>.
 Swagger queda en <http://localhost:5173/api/docs> (o en `:8000/api/docs`).
 
 Si algo no anda, ver la sección 7.
@@ -82,6 +82,23 @@ Abrí el **Panel de pruebas** (barra inferior, solo en desarrollo) y la pestaña
 
 **Qué se prueba en el servidor y no en la pantalla.** Los formularios no validan nada en el navegador a propósito (`noValidate`): todo llega al servidor, así B1 a B4 ejercitan sus reglas de verdad.
 
+### Simulaciones
+
+Hace falta el worker (lo levanta `npm run dev`). Una simulación tarda ~75 s.
+
+| # | Qué hacer | Qué deberías ver |
+|---|---|---|
+| T1 | En el simulador, **Ejecutar Simulación Biológica** | El botón dice "En cola (lugar 1)…" y enseguida "Simulando modelo biológico… (Ns)". A los ~75 s aparecen el EFR y los gráficos. En la base, el estado pasó de `en_cola` a `ejecutando` y a `completada`. |
+| T2 | **Repetir** exactamente los mismos parámetros | El resultado aparece **al instante**, sin pasar por la cola. En el historial figura como "Resultado reutilizado" (RN10). |
+| T3 | Cambiar un parámetro (por ejemplo, el nivel) y simular | Es una simulación nueva: pasa por la cola. |
+| T4 | **Cupo (RN5a)**: como estudiante, lanzar una simulación y, **desde otra pestaña**, otra distinta | "Ya tenés el máximo de simulaciones en curso…" → **429** `cupo_agotado`. Al terminar la primera, se puede volver a pedir. (Un investigador o fonoaudiólogo admite 3.) |
+| T5 | **Salir de la página mientras corre**: ir a *Ver historial de simulaciones* | La simulación figura "Ejecutando". Abrila: la página se actualiza sola y muestra los gráficos al terminar. |
+| T6 | **Historial** (`/simulaciones`) | Lista de la más nueva a la más vieja, con estado, parámetros y fecha; clic en una abre su detalle. Con más de 20, aparece **Cargar más** (igual que *Mis casos*). |
+| T7 | Elegir un **caso** en el selector antes de simular, y luego filtrar el historial por ese caso | La simulación queda ligada al caso; el filtro "Todos los casos" / un caso la muestra u oculta. Es opcional: se puede simular sin caso. |
+| T8 | Pedir una simulación con el **worker apagado** (Ctrl+C solo del worker, o `npm run dev:backend` y `npm run dev:frontend` por separado) | Queda "En cola" y no avanza. Al levantar el worker (`npm run dev:worker`), la toma. |
+| T9 | **Worker caído a mitad**: matalo mientras ejecuta, vencé la simulación con SQL (sección 5) y reiniciá el worker | Pasa a **Error** ("La simulación se interrumpió. Podés volver a pedirla.") y libera el cupo. |
+| T10 | **RN4**: copiar la dirección de una simulación (`/simulaciones/<id>`), entrar con otro usuario y pegarla | "Simulación no encontrada" → **404**, igual que con un id inventado. |
+
 ### Casos
 
 Con sesión iniciada, botón **Mis casos** en el navbar (`/casos`).
@@ -140,6 +157,8 @@ select u.email, left(s.token_hash, 12) as hash, s.expira_en from sesion s join u
 select email, left(password_hash, 30) as hash from usuario;     -- empieza con $argon2id$: nunca la contraseña
 update sesion set expira_en = now() - interval '1 second';       -- vence todas las sesiones (prueba I)
 select alias, edad, sexo, borrado_en from caso order by id desc; -- casos, del más nuevo al más viejo
+select estado, perfil, left(huella, 10) as huella, iniciada_en, finalizada_en, mensaje_error from simulacion order by id desc;   -- la cola y el historial
+update simulacion set iniciada_en = now() - interval '6 minutes' where estado = 'ejecutando';   -- vence las que están ejecutando (prueba T9)
 -- 25 casos para la prueba P (cambiá el email). PostgreSQL 17 no trae uuidv7(): la expresión
 -- arma uno con la hora actual + n milisegundos, así quedan en orden como los que crea la API
 insert into caso (id, usuario_id, alias)
@@ -156,7 +175,7 @@ truncate usuario cascade;                                         -- borra todo 
 ## 6. Tests automáticos
 
 ```bash
-uv run pytest -v                                  # 69 tests, ~10 s; crea y usa la base regelabo_test
+uv run pytest -v                                  # 107 tests, ~10 s; crea y usa la base regelabo_test
 uv run flake8                                     # estilo
 pnpm --dir frontend run typecheck
 pnpm --dir frontend run build
@@ -167,7 +186,8 @@ pnpm --dir frontend run build
 | `test_autenticacion_reglas.py` | Largo de contraseña, `requiere_admin`, que el hash no salga al serializar. Sin base de datos. |
 | `test_autenticacion_api.py` | Registro y sus errores, hash argon2 en la base, cookie `httpOnly`, token no guardado en claro, login con la misma respuesta exista o no el email, bloqueo a los 10 fallos y desbloqueo, logout que invalida el token, sesión vencida, dos ventanas independientes, límite de 5 por minuto, creación y promoción de admin. |
 | `test_cambio_contrasena.py` | Cambio exitoso (la vieja deja de servir), cierra las demás sesiones y conserva la actual, actual incorrecta suma fallos y bloquea, el cambio reinicia los fallos, nueva corta o repetida, sin sesión, reseteo por comando (desbloquea y cierra todas las sesiones). |
-| `test_endpoints_protegidos.py` | `/health` público; `/profiles`, `/simulate` y `/audiogram/*` dan 401 sin sesión y funcionan con ella (la simulación con el motor reemplazado); nombre de perfil inválido, 422. |
+| `test_endpoints_protegidos.py` | `/health` público; `/profiles`, `/simulaciones` y `/audiogram/*` dan 401 sin sesión; nombre de perfil inválido, 422. |
+| `test_simulaciones.py` | Con el motor reemplazado por uno falso: RN3 (rangos, sin fibras, perfil inexistente), pedir deja en cola, el worker la ejecuta y la deja completada, orden de llegada, error del motor (mensaje genérico, libera el cupo), **RN10** (pedido idéntico reutilizado, sin cupo, la huella depende del contenido del perfil), **RN5a/b/c** (cupos por tipo, por hora, tope del sistema), **RN4**, caso opcional y filtro, paginación por cursor, y recuperación de las interrumpidas. |
 | `test_casos_api.py` | Crear, ver, editar (PUT reemplaza todo) y borrar (lógico) casos; validación de alias, edad, sexo y notas; orden y paginación por cursor (25 casos de a 10, sin repetir ni saltear); **RN4** (otro usuario recibe 404 al ver, editar o borrar, igual que con un id inexistente); sin sesión, 401. |
 
 No hay tests automáticos del frontend: sus páginas se verifican con la tabla de la sección 3.
@@ -183,6 +203,8 @@ No hay tests automáticos del frontend: sus páginas se verifican con la tabla d
 | Iniciás sesión y al recargar volvés a no tener sesión | La cookie no se guardó. Revisá que `COOKIE_SECURE=false` esté en tu `.env` (con `true` solo viaja por HTTPS). |
 | 429 todo el tiempo | Esperá un minuto (límite por IP) o 15 minutos (cuenta bloqueada); o desbloqueá con SQL. |
 | Los tests fallan al conectarse | Falta `docker compose up -d db`. |
+| La simulación se queda en "En cola" y no avanza | El worker no está corriendo. Con `npm run dev` arranca solo; si lo levantás por partes, `npm run dev:worker` (o `uv run python worker.py`). No se recarga solo: si cambiás código del backend, reinicialo. |
+| Una simulación falla con "Perfil … no encontrado" o similar | El perfil se borró o cambió de nombre después de pedirla; ver el mensaje en el detalle. |
 
 ## 8. Dónde corregir cada cosa
 
@@ -200,7 +222,11 @@ No hay tests automáticos del frontend: sus páginas se verifican con la tabla d
 | Requests y aserciones de Bruno | `docs/api/` |
 | Campos de un caso y sus límites (alias, edad, sexo, notas) | `backend/controller/modelos.py` (`CasoInput`); si cambia una columna, también `backend/datos/tablas.py` y una migración |
 | Qué casos ve cada usuario (RN4), orden y paginación | `backend/datos/casos.py` |
-| Tamaño de página por defecto y máximo | `listar` en `backend/views/casos.py` (servidor) y `casosApi.listar` en `frontend/src/services/casos.ts` |
+| Tamaño de página por defecto y máximo | `listar` en `backend/views/casos.py` y `backend/views/simulaciones.py` (servidor), y `casosApi.listar` / `simulacionesApi.listar` en `frontend/src/services/` |
+| Cupos de simulaciones, tope de la cola, minutos para dar por interrumpida una simulación | `backend/configuracion.py` (`CUPO_SIMULTANEAS`, `CUPO_POR_HORA`, `TOPE_COLA`, `SIMULACION_MINUTOS_MAX`) |
+| Rangos válidos de los parámetros (RN3) | `RANGOS` en `backend/controller/simulaciones.py` |
+| Versión del modelo (invalida la caché) y semilla | `VERSION_MODELO` y `SEMILLA` en `backend/simulacion/motor.py` |
+| Cada cuánto se consulta el estado de una simulación | `INTERVALO_CONSULTA_MS` en `frontend/src/services/simulaciones.ts` |
 | Pantallas de casos | `frontend/src/pages/casos/` |
 
 ## 9. Lo que todavía no está

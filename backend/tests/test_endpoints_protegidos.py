@@ -2,16 +2,7 @@
 
 import pytest
 
-from backend.controller.modelos import SimulationResponse
-from backend.controller.simulacion import SimulationService
-
 PUNTOS = [{"frequency": 500, "hearing_loss_db": 20}, {"frequency": 4000, "hearing_loss_db": 40}]
-RESPUESTA_FALSA = SimulationResponse.model_validate({
-    "execution_time_seconds": 0.1, "efr_value_uv": 0.2, "harmonics": [],
-    "fft_spectrum": {"frequencies": [], "amplitudes": []},
-    "abr_waves": {"time_ms": [], "w1": [], "w3": [], "w5": [], "efr_wave": []},
-    "parameters_used": {},
-})
 
 
 @pytest.fixture
@@ -28,7 +19,9 @@ def test_health_es_publico(cliente):
 
 @pytest.mark.parametrize("metodo, ruta, cuerpo", [
     ("get", "/api/profiles", None),
-    ("post", "/api/simulate", {}),
+    ("post", "/api/simulaciones", {}),
+    ("get", "/api/simulaciones", None),
+    ("get", "/api/simulaciones/00000000-0000-7000-8000-000000000000", None),
     ("post", "/api/audiogram/manual", {"points": PUNTOS}),
 ])
 def test_sin_sesion_da_401(cliente, metodo, ruta, cuerpo):
@@ -47,12 +40,6 @@ def test_con_sesion_los_perfiles_se_listan(ana):
     assert respuesta.status_code == 200 and "Flat00" in respuesta.json()
 
 
-def test_con_sesion_simula(ana, monkeypatch):
-    monkeypatch.setattr(SimulationService, "execute_simulation", staticmethod(lambda req: RESPUESTA_FALSA))
-    respuesta = ana.post("/api/simulate", json={"poles_profile": "Flat00"})
-    assert respuesta.status_code == 200 and respuesta.json()["efr_value_uv"] == 0.2
-
-
 @pytest.mark.parametrize("perfil", ["../secreto", "Flat00/../../x", "con espacio", "a" * 101, ""])
 def test_nombre_de_perfil_invalido_da_422(ana, perfil):
-    assert ana.post("/api/simulate", json={"poles_profile": perfil}).status_code == 422
+    assert ana.post("/api/simulaciones", json={"poles_profile": perfil}).status_code == 422

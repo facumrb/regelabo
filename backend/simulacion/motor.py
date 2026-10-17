@@ -8,6 +8,7 @@ de NumPy y tipos de Python, sin depender de los módulos internos del modelo.
 
 import os
 import sys
+import tempfile
 from dataclasses import dataclass
 
 import numpy as np
@@ -24,6 +25,12 @@ from utils.get_RAM_stims import get_RAM_stims  # noqa: E402
 # Frecuencia de muestreo del estímulo: 100 kHz para la precisión temporal de la membrana basilar
 FS_ESTIMULO = 1e5
 DURACION_ESTIMULO_S = 0.4
+
+# Semilla del ruido de la cóclea (`subject` del modelo): fija, así mismos parámetros dan el mismo resultado
+SEMILLA = 1
+# Entra en la huella de la caché (RN10). Cambiarla si se modifica el código del modelo: invalida los
+# resultados guardados, que dejarían de corresponder a lo que calcula el modelo.
+VERSION_MODELO = "verhulst2018-1"
 
 
 @dataclass
@@ -63,22 +70,31 @@ def ejecutar_modelo(
         dur=DURACION_ESTIMULO_S,
     )
 
-    resultados = model2018(
-        estimulo,
-        FS_ESTIMULO,
-        fc='abr',
-        irregularities=1,
-        storeflag='evihmlbw',
-        subject=1,
-        sheraPo=polos,
-        IrrPct=0.05,
-        non_linear_type='vel',
-        nH=n_h,
-        nM=n_m,
-        nL=n_l,
-        clean=1,
-        data_folder='./',
-    )
+    # El modelo deja archivos *_0.npz en el directorio de trabajo: cada simulación corre en una carpeta
+    # temporal, así dos workers no se pisan y no se ensucia el repo. (chdir es del proceso entero:
+    # sirve porque cada worker ejecuta una simulación a la vez.)
+    carpeta_original = os.getcwd()
+    with tempfile.TemporaryDirectory() as carpeta:
+        os.chdir(carpeta)
+        try:
+            resultados = model2018(
+                estimulo,
+                FS_ESTIMULO,
+                fc='abr',
+                irregularities=1,
+                storeflag='evihmlbw',
+                subject=SEMILLA,
+                sheraPo=polos,
+                IrrPct=0.05,
+                non_linear_type='vel',
+                nH=n_h,
+                nM=n_m,
+                nL=n_l,
+                clean=1,
+                data_folder='./',
+            )
+        finally:
+            os.chdir(carpeta_original)
     salida = resultados[0] if isinstance(resultados, list) else resultados
 
     return SalidaModelo(

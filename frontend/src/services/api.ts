@@ -1,10 +1,8 @@
 import axios from 'axios'
 import type {
   EstadoServidor,
-  ParametrosSimulacion,
   PuntoAudiograma,
   ResultadoAudiograma,
-  ResultadoSimulacion,
 } from './tiposSimulacion'
 
 // Mismo origen que la página: en desarrollo Vite reenvía /api al backend (ver vite.config.js)
@@ -25,12 +23,6 @@ export const api = {
   // Obtener perfiles de audición disponibles
   async getProfiles(): Promise<string[]> {
     const response = await apiClient.get<string[]>('/profiles')
-    return response.data
-  },
-
-  // Ejecutar simulación
-  async runSimulation(params: ParametrosSimulacion): Promise<ResultadoSimulacion> {
-    const response = await apiClient.post<ResultadoSimulacion>('/simulate', params)
     return response.data
   },
 

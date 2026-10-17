@@ -1,5 +1,6 @@
 import { useState, type Dispatch, type SetStateAction } from 'react'
-import type { ParametrosSimulacion } from '../services/tiposSimulacion'
+import type { Caso } from '../services/casos'
+import type { ParametrosSimulacion, Simulacion } from '../services/tiposSimulacion'
 
 interface Props {
   profiles: string[]
@@ -8,6 +9,11 @@ interface Props {
   onRunSimulation: () => void
   isLoading: boolean
   elapsedTime: number
+  /** La simulación que se está esperando, para mostrar si está en cola o ejecutando */
+  simulacion: Simulacion | null
+  casos: Caso[]
+  casoId: string
+  setCasoId: (id: string) => void
 }
 
 export default function SimulationControls({
@@ -16,7 +22,11 @@ export default function SimulationControls({
   setParams,
   onRunSimulation,
   isLoading,
-  elapsedTime
+  elapsedTime,
+  simulacion,
+  casos,
+  casoId,
+  setCasoId,
 }: Props) {
   const [showAdvanced, setShowAdvanced] = useState(false)
 
@@ -53,6 +63,22 @@ export default function SimulationControls({
 
       <div className="space-y-5">
         
+        {/* 0. Caso al que se asocia la simulación (opcional) */}
+        <div>
+          <label className="text-xs font-medium text-slate-300 block mb-1.5">Caso (opcional)</label>
+          <select
+            value={casoId}
+            onChange={(e) => setCasoId(e.target.value)}
+            disabled={isLoading}
+            className="w-full bg-dark-800 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 transition cursor-pointer"
+          >
+            <option value="">Sin caso</option>
+            {casos.map((c) => (
+              <option key={c.id} value={c.id}>{c.alias}</option>
+            ))}
+          </select>
+        </div>
+
         {/* 1. Perfil Auditivo (Polos de Shera) */}
         <div>
           <div className="flex justify-between items-center mb-1.5">
@@ -261,7 +287,11 @@ export default function SimulationControls({
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <span>Simulando modelo biológico... ({elapsedTime}s)</span>
+            <span>
+              {simulacion?.estado === 'en_cola'
+                ? `En cola (lugar ${simulacion.posicion ?? '…'})… (${elapsedTime}s)`
+                : `Simulando modelo biológico... (${elapsedTime}s)`}
+            </span>
           </>
         ) : (
           <>

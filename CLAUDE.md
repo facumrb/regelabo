@@ -13,7 +13,7 @@ Todo el trabajo en este repositorio se hace en **español**: respuestas en el ch
 ```bash
 # Todo junto desde la raíz (usa concurrently)
 npm install && npm run install:all   # uv sync + pnpm install en frontend/
-npm run dev                          # backend :8000 + frontend :5173
+npm run dev                          # backend :8000 + frontend :5173 + worker de simulaciones
 
 # Backend solo (desde la raíz)
 uv run fastapi dev app.py            # Swagger en http://localhost:8000/api/docs
@@ -39,7 +39,7 @@ cd frontend && pnpm run dev          # también: pnpm run build / typecheck / pr
 cd backend/simulacion/verhulst/src/c_lib && ./build.sh   # build.bat en Windows
 ```
 
-Para verificar el backend: `GET /api/health` (`c_solver_available` debe ser `true`) y un `POST /api/simulate` desde Swagger. Una simulación tarda ~75 s y usa ~1,1 GB de RAM en un solo núcleo.
+Para verificar el backend: `GET /api/health` (`c_solver_available` debe ser `true`) y una simulación desde la pantalla (con el worker corriendo: `POST /api/simulaciones` solo la deja en cola). Una simulación tarda ~75 s y usa ~1,1 GB de RAM en un solo núcleo.
 
 ## Arquitectura
 
@@ -55,7 +55,8 @@ views/ (HTTP) → controller/ (negocio) → datos/ (persistencia)
 - **`backend/datos/`**: todo acceso a persistencia. `tablas.py` define las 10 tablas (SQLAlchemy, internas a la capa: las funciones devuelven objetos de negocio del controller); `conexion.py` lee `DATABASE_URL` y ofrece `transaccion()`, que el controller usa para agrupar operaciones (ej. verificar cupo + encolar) pasando la sesión a las funciones de datos (`casos.py` es el ejemplo a copiar: filtra siempre por dueño y excluye los borrados, y pagina por cursor); `perfiles.py` lee y escribe los perfiles de polos en `simulacion/verhulst/data/Poles/<perfil>/StartingPoles.dat`.
 - **`backend/configuracion.py`**: parámetros leídos de variables de entorno (`.env` en desarrollo): `DATABASE_URL`, duración de sesión, intentos máximos, bloqueo y `COOKIE_SECURE` (por defecto `true`; el `.env` de desarrollo lo pone en `false`).
 - **`backend/comandos/`**: scripts de administración, fuera de las 3 capas; solo llaman al controller.
-- **`backend/simulacion/motor.py`**: adaptador del modelo; único lugar que manipula `sys.path` para importar el código de Verhulst como módulos top-level (`model2018`, `core`, `utils`). Expone `ejecutar_modelo(...)` y `solver_c_disponible()`.
+- **`worker.py`** (raíz): proceso que ejecuta las simulaciones en cola (`uv run python worker.py`, o junto con `npm run dev`); no se recarga solo. Pedir una simulación (`controller/simulaciones.py`) nunca ejecuta el modelo: la deja en cola, o completada si ya existe un resultado con la misma huella (RN10). Cupos y tope de cola en `configuracion.py`; ver decisión 020.
+- **`backend/simulacion/motor.py`**: adaptador del modelo; único lugar que manipula `sys.path` para importar el código de Verhulst como módulos top-level (`model2018`, `core`, `utils`). Expone `ejecutar_modelo(...)` (corre en una carpeta temporal), `solver_c_disponible()`, y `SEMILLA` y `VERSION_MODELO`, que entran en la huella: cambiar la versión si se modifica el código del modelo.
 - **`backend/simulacion/verhulst/`**: código del modelo Verhulst 2018 copiado al repo (Python + C). No se edita salvo necesidad; está excluido de Flake8. Hay `EXPLICACION.md` en `src/core/`, `src/utils/` y `src/c_lib/`.
 
 Detalles a tener en cuenta:
@@ -65,7 +66,7 @@ Detalles a tener en cuenta:
 - El flujo de audiograma clasifica por PTA (500/1k/2k/4k Hz) y patrón plano/pendiente, y genera `Custom_<nombre>` **copiando** los polos del perfil base más cercano; todavía no usa `OHC_ind` (faltan los `.mat` del repo oficial). Las carpetas `Custom_*` se generan en runtime y están en `.gitignore`.
 
 ### Frontend (`frontend/`)
-React 18 + Vite + Tailwind + Plotly, con `react-router-dom`. Todo el código está en TypeScript (`.tsx`/`.ts`; `pnpm run typecheck`, y `allowJs` está apagado: no se admiten `.js`/`.jsx` en `src`). Los tipos de la simulación y los audiogramas están en `src/services/tiposSimulacion.ts` y reflejan `backend/controller/modelos.py`: si cambia un modelo del backend, actualizar ahí. `src/App.tsx` concentra el estado del prototipo (ruta `/`) y muestra en `/` la pantalla de bienvenida (`pages/Bienvenida.tsx`) si no hay sesión, y define las rutas `/login`, `/registro`, `/cuenta` (cambio de contraseña) y `/casos` (`src/pages/`; las que piden sesión se envuelven en `components/RequiereSesion.tsx`). `src/context/SesionContext.tsx` guarda el usuario de la sesión (recuperado con `GET /api/auth/yo` al cargar). `src/components/PanelPruebas.tsx` es una barra solo de desarrollo que muestra los pedidos a `/api/auth/*` y `/api/casos`. Guía para probar todo: `docs/guia-de-pruebas.md`. Todas las llamadas HTTP pasan por `src/services/api.js` (axios, base `/api`: en desarrollo Vite reenvía `/api` a `localhost:8000`, igual que Caddy en producción, así que no hay CORS; **no definir `VITE_API_URL` en `frontend/.env`**, porque pisa ese valor y rompe las llamadas). 
+React 18 + Vite + Tailwind + Plotly, con `react-router-dom`. Todo el código está en TypeScript (`.tsx`/`.ts`; `pnpm run typecheck`, y `allowJs` está apagado: no se admiten `.js`/`.jsx` en `src`). Los tipos de la simulación y los audiogramas están en `src/services/tiposSimulacion.ts` y reflejan `backend/controller/modelos.py`: si cambia un modelo del backend, actualizar ahí. `src/App.tsx` concentra el estado del prototipo (ruta `/`) y muestra en `/` la pantalla de bienvenida (`pages/Bienvenida.tsx`) si no hay sesión, y define las rutas `/login`, `/registro`, `/cuenta` (cambio de contraseña), `/casos` y `/simulaciones` (historial y detalle) (`src/pages/`; las que piden sesión se envuelven en `components/RequiereSesion.tsx`). `src/context/SesionContext.tsx` guarda el usuario de la sesión (recuperado con `GET /api/auth/yo` al cargar). `src/components/PanelPruebas.tsx` es una barra solo de desarrollo que muestra los pedidos a `/api/auth/*` y `/api/casos`. Guía para probar todo: `docs/guia-de-pruebas.md`. Todas las llamadas HTTP pasan por `src/services/api.js` (axios, base `/api`: en desarrollo Vite reenvía `/api` a `localhost:8000`, igual que Caddy en producción, así que no hay CORS; **no definir `VITE_API_URL` en `frontend/.env`**, porque pisa ese valor y rompe las llamadas). 
 
 ### Otros directorios
 - `docs/reglas-de-negocio.md` (RN1–RN10) y `docs/decisiones/` (una decisión por archivo, con alternativas descartadas): leerlos antes de proponer cambios de diseño.
@@ -76,7 +77,7 @@ React 18 + Vite + Tailwind + Plotly, con `react-router-dom`. Todo el código est
 
 ## Estado
 
-El sprint 0 está en curso (rama `feature/setup-entorno`): ya están la reorganización en capas, la base de datos (10 tablas), la autenticación (con cambio de contraseña, decisión 018) y el **módulo de ejemplo Casos** (`views/casos.py` → `controller/casos.py` → `datos/casos.py`, `tests/test_casos_api.py`, `frontend/src/pages/casos/`, `docs/api/4-casos/`): es la plantilla para los módulos nuevos. Falta pasar el prototipo a TypeScript (paso 4b), la cola de simulaciones con worker y el CI. Plan y estado de cada paso: `docs/plan-de-trabajo.md`.
+El sprint 0 está en curso (rama `feature/setup-entorno`): ya están la reorganización en capas, la base de datos (10 tablas), la autenticación (con cambio de contraseña, decisión 018) y el **módulo de ejemplo Casos** (`views/casos.py` → `controller/casos.py` → `datos/casos.py`, `tests/test_casos_api.py`, `frontend/src/pages/casos/`, `docs/api/4-casos/`): es la plantilla para los módulos nuevos. El frontend ya está en TypeScript y la cola de simulaciones con worker, la caché y el historial están hechos (decisión 020). Falta el CI y la documentación final. Plan y estado de cada paso: `docs/plan-de-trabajo.md`.
 
 ## Reglas
 - Nunca tomar una desición, ya sea de negocio, diseño, codigo, etc por tu cuenta. Siempre consultar, dar opciones y justificacion del porque de las mismas.

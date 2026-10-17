@@ -33,6 +33,11 @@ def crear(tx: Session, email: str, password_hash: str, nombre: str, tipo_perfil:
     return Usuario.model_validate(fila)
 
 
+def bloquear(tx: Session, usuario_id: UUID) -> None:
+    """Bloquea la fila del usuario hasta el fin de la transacción: dos pedidos suyos se hacen en fila."""
+    tx.execute(select(UsuarioFila.id).where(UsuarioFila.id == usuario_id).with_for_update())
+
+
 def marcar_admin(tx: Session, usuario_id: UUID) -> None:
     tx.execute(update(UsuarioFila).where(UsuarioFila.id == usuario_id).values(es_admin=True))
 

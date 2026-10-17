@@ -59,3 +59,27 @@ export interface EstadoServidor {
   service?: string
   c_solver_available: boolean
 }
+
+export type EstadoSimulacion = 'en_cola' | 'ejecutando' | 'completada' | 'error'
+
+/** Una simulación pedida: su estado y, si terminó, el resultado (solo en el detalle, no en el listado). */
+export interface Simulacion {
+  id: string
+  estado: EstadoSimulacion
+  caso_id: string | null
+  parametros: ParametrosSimulacion
+  creado_en: string
+  iniciada_en: string | null
+  finalizada_en: string | null
+  mensaje_error: string | null
+  /** El resultado ya existía (RN10): no pasó por la cola */
+  reutilizada: boolean
+  posicion: number | null
+  resultado: ResultadoSimulacion | null
+}
+
+export interface PaginaDeSimulaciones {
+  simulaciones: Simulacion[]
+  /** Se pasa como `despuesDe` para pedir la página siguiente; null si no hay más. */
+  siguiente: string | null
+}

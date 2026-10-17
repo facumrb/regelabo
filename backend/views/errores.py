@@ -15,6 +15,10 @@ ESTADOS = {
     "caso_no_encontrado": 404,  # también para casos ajenos (RN4): no revela que existen
     "email_ya_registrado": 409,
     "cuenta_bloqueada": 429,
+    "cupo_agotado": 429,
+    "limite_por_hora": 429,
+    "sistema_saturado": 503,
+    "simulacion_no_encontrada": 404,
 }
 ESTADO_POR_DEFECTO = 400
 

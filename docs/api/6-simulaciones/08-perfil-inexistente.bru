@@ -1,0 +1,26 @@
+meta {
+  name: 8. Perfil inexistente
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{base_url}}/simulaciones
+  body: json
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token_sim_ana}}
+}
+
+body:json {
+  {
+    "poles_profile": "NoExiste"
+  }
+}
+
+tests {
+  test("responde 400", function () { expect(res.getStatus()).to.equal(400); });
+  test("código perfil_inexistente", function () { expect(res.getBody().detail.codigo).to.equal("perfil_inexistente"); });
+}
