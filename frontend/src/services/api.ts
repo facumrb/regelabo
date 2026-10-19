@@ -1,6 +1,7 @@
 import axios from 'axios'
 import type {
   EstadoServidor,
+  PerfilAuditivo,
   PuntoAudiograma,
   ResultadoAudiograma,
 } from './tiposSimulacion'
@@ -20,9 +21,15 @@ export const api = {
     return response.data
   },
 
-  // Obtener perfiles de audición disponibles
-  async getProfiles(): Promise<string[]> {
-    const response = await apiClient.get<string[]>('/profiles')
+  // Perfiles de audición base (sin duplicados), con su etiqueta y sus curvas
+  async getProfiles(): Promise<PerfilAuditivo[]> {
+    const response = await apiClient.get<PerfilAuditivo[]>('/profiles')
+    return response.data
+  },
+
+  // Un perfil, base o personalizado (para el detalle de una simulación)
+  async getProfile(nombre: string): Promise<PerfilAuditivo> {
+    const response = await apiClient.get<PerfilAuditivo>(`/profiles/${encodeURIComponent(nombre)}`)
     return response.data
   },
 

@@ -37,7 +37,7 @@ def test_subir_audiograma_sin_sesion_da_401(cliente):
 
 def test_con_sesion_los_perfiles_se_listan(ana):
     respuesta = ana.get("/api/profiles")
-    assert respuesta.status_code == 200 and "Flat00" in respuesta.json()
+    assert respuesta.status_code == 200 and "Flat00" in [p["nombre"] for p in respuesta.json()]
 
 
 @pytest.mark.parametrize("perfil", ["../secreto", "Flat00/../../x", "con espacio", "a" * 101, ""])

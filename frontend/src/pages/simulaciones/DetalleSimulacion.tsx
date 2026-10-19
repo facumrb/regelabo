@@ -1,21 +1,34 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import PerfilSimulado from '../../components/PerfilSimulado'
 import PlotsPanel from '../../components/PlotsPanel'
 import ResultsSummary from '../../components/ResultsSummary'
 import { Aviso, Tarjeta } from '../../components/ui'
 import { botonSecundario } from '../../components/estilos'
+import { api } from '../../services/api'
 import { mensajeDeError } from '../../services/auth'
 import {
   COLOR_ESTADO, enCurso, ETIQUETA_ESTADO, formatearFecha, INTERVALO_CONSULTA_MS, resumenDeParametros,
   simulacionesApi,
 } from '../../services/simulaciones'
-import type { Simulacion } from '../../services/tiposSimulacion'
+import type { PerfilAuditivo, Simulacion } from '../../services/tiposSimulacion'
 
 /** Una simulación: sus parámetros, su estado y, si terminó, los mismos gráficos del simulador. */
 export default function DetalleSimulacion() {
   const { id = '' } = useParams()
   const [simulacion, setSimulacion] = useState<Simulacion | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [perfil, setPerfil] = useState<PerfilAuditivo | null>(null)
+  const nombrePerfil = simulacion?.parametros.poles_profile
+
+  // Las curvas del perfil para el aviso final; los personalizados viejos no las guardaron (404) y no se muestran
+  useEffect(() => {
+    setPerfil(null)
+    if (!nombrePerfil) return
+    let activo = true
+    api.getProfile(nombrePerfil).then((p) => { if (activo) setPerfil(p) }).catch(() => {})
+    return () => { activo = false }
+  }, [nombrePerfil])
 
   // Mientras está en cola o ejecutando, se vuelve a consultar cada pocos segundos
   useEffect(() => {
@@ -62,6 +75,7 @@ export default function DetalleSimulacion() {
             {simulacion.estado === 'en_cola' && simulacion.posicion ? ` (lugar ${simulacion.posicion})` : ''}
           </span>
         </div>
+        {perfil && <p className="text-sm text-white">{perfil.etiqueta}</p>}
         <p className="font-mono text-sm text-cyan-300">{resumenDeParametros(simulacion.parametros)}</p>
         <div className="text-xs text-slate-400 flex flex-wrap gap-x-4 gap-y-1">
           <span>Pedida: {formatearFecha(simulacion.creado_en)}</span>
@@ -83,6 +97,7 @@ export default function DetalleSimulacion() {
 
       {simulacion.resultado && (
         <>
+          {perfil && <PerfilSimulado perfil={perfil} />}
           <ResultsSummary result={simulacion.resultado} />
           <PlotsPanel result={simulacion.resultado} />
         </>

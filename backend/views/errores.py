@@ -19,6 +19,7 @@ ESTADOS = {
     "limite_por_hora": 429,
     "sistema_saturado": 503,
     "simulacion_no_encontrada": 404,
+    "perfil_no_encontrado": 404,
 }
 ESTADO_POR_DEFECTO = 400
 

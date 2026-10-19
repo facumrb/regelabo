@@ -7,8 +7,8 @@ from typing import List
 
 import numpy as np
 
+from backend.controller import perfiles
 from backend.controller.modelos import AudiogramPoint, AudiogramResponse
-from backend.datos import perfiles
 
 
 class AudiogramService:
@@ -54,102 +54,43 @@ class AudiogramService:
         points: List[AudiogramPoint]
     ) -> AudiogramResponse:
         """
-        Analiza la curva audiométrica, clasifica el tipo de hipoacusia
-        y genera/asigna el perfil de polos cocleares correspondiente.
+        Clasifica la curva audiométrica (RN2) y genera el perfil de polos con su forma
+        (ver `controller/perfiles.py`).
         """
         if len(points) < 2:
             raise ValueError("Se requieren al menos 2 puntos audiométricos para trazar la curva.")
 
         freqs = np.array([p.frequency for p in points])
         losses = np.array([p.hearing_loss_db for p in points])
+        valor_pta = perfiles.pta(points)
 
-        # 1. Calcular PTA (Pure Tone Average) en frecuencias conversacionales (500, 1000, 2000, 4000 Hz)
-        core_losses = []
-        for target_f in [500, 1000, 2000, 4000]:
-            # Interpolar o tomar el valor más cercano
-            idx = int(np.argmin(np.abs(freqs - target_f)))
-            core_losses.append(losses[idx])
-        pta = float(np.mean(core_losses))
-
-        # 2. Determinar configuración de la curva (Plana vs Pendiente/Slope)
+        # RN2: patrón en pendiente si los agudos (>= 3 kHz) pierden >= 15 dB más que los graves (<= 1 kHz)
         low_idx = freqs <= 1000
         high_idx = freqs >= 3000
-        mean_low = np.mean(losses[low_idx]) if np.any(low_idx) else pta
-        mean_high = np.mean(losses[high_idx]) if np.any(high_idx) else pta
-        is_slope = (mean_high - mean_low) >= 15.0  # Caída pronunciada en agudos
+        mean_low = np.mean(losses[low_idx]) if np.any(low_idx) else valor_pta
+        mean_high = np.mean(losses[high_idx]) if np.any(high_idx) else valor_pta
+        pattern = "patrón en pendiente" if mean_high - mean_low >= 15.0 else "patrón plano"
+        grado = perfiles.grado(valor_pta)
+        nombre_grado = "Audición normal" if grado == "normal" else f"Hipoacusia {grado}"
+        classification = f"{nombre_grado} ({pattern}, PTA: {valor_pta:.1f} dB HL)"
 
-        # 3. Clasificación fonoaudiológica
-        if pta <= 20:
-            severity = "Audición Normal"
-        elif pta <= 40:
-            severity = "Hipoacusia Sensorineural Leve"
-        elif pta <= 70:
-            severity = "Hipoacusia Sensorineural Moderada"
-        else:
-            severity = "Hipoacusia Sensorineural Severa"
-
-        pattern = "con caída en agudos (patrón en pendiente)" if is_slope else "patrón plano"
-        classification = f"{severity} ({pattern}, PTA: {pta:.1f} dB HL)"
-
-        # 4. Asignar perfil clínico equivalente en data/Poles/
-        matched_profile = cls._match_best_profile(pta, is_slope)
-
-        # 5. Crear perfil personalizado si es necesario
-        sanitized_name = re.sub(r'[^a-zA-Z0-9_-]', '_', patient_name).strip('_') or "Paciente"
-        custom_profile_name = f"Custom_{sanitized_name}"
-
-        # Sintetizar StartingPoles.dat para el paciente
-        cls._synthesize_custom_poles(custom_profile_name, matched_profile, freqs, losses)
+        perfil = perfiles.crear_personalizado(patient_name, points)
+        notas = "Perfil generado con la forma de tu audiograma."
+        if perfil.frecuencias_recortadas:
+            notas += (" El modelo solo representa la pérdida de las células ciliadas externas: en "
+                      f"{_lista_hz(perfil.frecuencias_recortadas)} se simula menos pérdida que la pedida.")
 
         return AudiogramResponse(
             status="success",
             patient_name=patient_name,
             points=points,
-            matched_profile=custom_profile_name,
-            mean_hearing_loss=round(pta, 1),
+            matched_profile=perfil.nombre,
+            mean_hearing_loss=round(valor_pta, 1),
             clinical_classification=classification,
-            notes=f"Generado a partir de la curva audiométrica. Perfil base de referencia: {matched_profile}."
+            notes=notas,
+            perfil=perfil,
         )
 
-    @classmethod
-    def _match_best_profile(cls, pta: float, is_slope: bool) -> str:
-        """Selecciona el perfil de referencia más cercano entre los 33 precomputados."""
-        if pta < 10 and not is_slope:
-            return "Flat00"
 
-        if is_slope:
-            # Perfiles tipo Slope
-            if pta <= 20:
-                return "Slope20"
-            elif pta <= 35:
-                return "Slope35"
-            else:
-                return "Flat00_Slope35"
-        else:
-            # Perfiles tipo Flat
-            if pta <= 12:
-                return "Flat10"
-            elif pta <= 22:
-                return "Flat20"
-            elif pta <= 27:
-                return "Flat25"
-            elif pta <= 32:
-                return "Flat30"
-            else:
-                return "Flat35"
-
-    @classmethod
-    def _synthesize_custom_poles(
-        cls,
-        custom_name: str,
-        base_profile: str,
-        freqs: np.ndarray,
-        losses: np.ndarray
-    ):
-        """
-        Guarda el perfil <custom_name> asegurando compatibilidad total con el motor de simulación.
-        Por ahora copia los polos del perfil base (no los deriva de la curva del paciente).
-        """
-        base_poles = perfiles.cargar_polos(base_profile)
-        if base_poles is not None:
-            perfiles.guardar_perfil(custom_name, base_poles)
+def _lista_hz(frecuencias: List[float]) -> str:
+    return ", ".join(f"{f / 1000:g} kHz" if f >= 1000 else f"{f:g} Hz" for f in frecuencias)

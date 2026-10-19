@@ -44,6 +44,21 @@ export interface PuntoAudiograma {
   hearing_loss_db: number
 }
 
+/** Un perfil de polos descripto para el profesional, con la curva pedida y la que el modelo simula. */
+export interface PerfilAuditivo {
+  /** Identificador interno (carpeta): es el que va en `poles_profile` */
+  nombre: string
+  etiqueta: string
+  forma: 'plana' | 'descendente' | 'combinada' | 'personalizada'
+  grado: 'normal' | 'leve' | 'moderada' | 'severa'
+  pta: number
+  curva_pedida: PuntoAudiograma[]
+  /** La pedida, recortada al techo del modelo */
+  curva_simulada: PuntoAudiograma[]
+  /** Frecuencias donde se simulan más de 5 dB menos de lo pedido */
+  frecuencias_recortadas: number[]
+}
+
 export interface ResultadoAudiograma {
   status: string
   patient_name: string
@@ -52,6 +67,7 @@ export interface ResultadoAudiograma {
   mean_hearing_loss: number
   clinical_classification: string
   notes: string
+  perfil: PerfilAuditivo
 }
 
 export interface EstadoServidor {

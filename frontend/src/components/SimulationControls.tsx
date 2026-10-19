@@ -1,9 +1,19 @@
 import { useState, type Dispatch, type SetStateAction } from 'react'
+import CurvasPerfil, { avisoPrevio } from './CurvasPerfil'
 import type { Caso } from '../services/casos'
-import type { ParametrosSimulacion, Simulacion } from '../services/tiposSimulacion'
+import type { ParametrosSimulacion, PerfilAuditivo, Simulacion } from '../services/tiposSimulacion'
+
+const GRUPOS: { forma: PerfilAuditivo['forma']; titulo: string }[] = [
+  { forma: 'personalizada', titulo: 'Generado desde un audiograma' },
+  { forma: 'plana', titulo: 'Pérdida plana' },
+  { forma: 'descendente', titulo: 'Pérdida descendente (agudos)' },
+  { forma: 'combinada', titulo: 'Plana + descendente' },
+]
 
 interface Props {
-  profiles: string[]
+  profiles: PerfilAuditivo[]
+  /** El perfil elegido; puede ser uno personalizado, que no está en `profiles` */
+  perfilActivo: PerfilAuditivo | null
   params: ParametrosSimulacion
   setParams: Dispatch<SetStateAction<ParametrosSimulacion>>
   onRunSimulation: () => void
@@ -18,6 +28,7 @@ interface Props {
 
 export default function SimulationControls({
   profiles,
+  perfilActivo,
   params,
   setParams,
   onRunSimulation,
@@ -36,13 +47,11 @@ export default function SimulationControls({
     setParams(prev => ({ ...prev, [field]: value }))
   }
 
-  // Ayudante de descripción del perfil
-  const getProfileDescription = (profile: string) => {
-    if (profile === 'Flat00' || profile === 'Normal') return 'Audición Normal (control)'
-    if (profile.startsWith('Flat')) return 'Pérdida Sensorineural Plana (todas las frecs.)'
-    if (profile.startsWith('Slope')) return 'Pérdida en Pendiente (frecuencias agudas)'
-    return 'Perfil patológico coclear'
-  }
+  // El personalizado elegido no viene en la lista (es de este usuario): se suma a su grupo
+  const opciones = perfilActivo && !profiles.some(p => p.nombre === perfilActivo.nombre)
+    ? [perfilActivo, ...profiles]
+    : profiles
+  const aviso = perfilActivo ? avisoPrevio(perfilActivo) : null
 
   return (
     <div className="glass-panel rounded-2xl p-6 shadow-xl space-y-6">
@@ -81,30 +90,34 @@ export default function SimulationControls({
 
         {/* 1. Perfil Auditivo (Polos de Shera) */}
         <div>
-          <div className="flex justify-between items-center mb-1.5">
-            <label className="text-xs font-medium text-slate-300">
-              Perfil Auditivo (Audiograma)
-            </label>
-            <span className="text-[11px] text-cyan-400 font-mono">
-              {getProfileDescription(params.poles_profile)}
-            </span>
-          </div>
+          <label htmlFor="perfil-auditivo" className="text-xs font-medium text-slate-300 block mb-1.5">
+            Perfil auditivo
+          </label>
           <select
+            id="perfil-auditivo"
             value={params.poles_profile}
             onChange={(e) => handleChange('poles_profile', e.target.value)}
             disabled={isLoading}
             className="w-full bg-dark-800 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 transition cursor-pointer"
           >
-            {profiles.length > 0 ? (
-              profiles.map(p => (
-                <option key={p} value={p}>
-                  {p} — {getProfileDescription(p)}
-                </option>
-              ))
+            {opciones.length > 0 ? (
+              GRUPOS.map(({ forma, titulo }) => {
+                const delGrupo = opciones.filter(p => p.forma === forma)
+                return delGrupo.length > 0 && (
+                  <optgroup key={forma} label={titulo}>
+                    {delGrupo.map(p => <option key={p.nombre} value={p.nombre}>{p.etiqueta}</option>)}
+                  </optgroup>
+                )
+              })
             ) : (
-              <option value="Flat00">Flat00 (Audición Normal)</option>
+              <option value="Flat00">Sin pérdida (0 dB HL)</option>
             )}
           </select>
+          {perfilActivo && (
+            <div className="mt-2 rounded-xl bg-dark-800/60 border border-slate-800 p-2">
+              <CurvasPerfil perfil={perfilActivo} alto={170} />
+            </div>
+          )}
         </div>
 
         {/* 2. Frecuencia Portadora (Carrier Frequency) */}
@@ -269,6 +282,13 @@ export default function SimulationControls({
         </div>
 
       </div>
+
+      {/* Cartel previo (Q20): no frena, solo avisa que el perfil se simulará recortado */}
+      {aviso && (
+        <p role="status" className="text-xs text-amber-300 bg-amber-950/40 border border-amber-500/30 rounded-lg px-3 py-2">
+          ⚠ {aviso}
+        </p>
+      )}
 
       {/* Botón de Ejecución Principal */}
       <button

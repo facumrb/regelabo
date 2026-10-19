@@ -24,5 +24,6 @@ Cada archivo documenta una decisión: el contexto, lo que se eligió, las altern
 | [018](018-cambio-de-contrasena.md) | Cambio de contraseña |
 | [019](019-endpoints-del-prototipo-con-sesion.md) | Endpoints del prototipo con sesión |
 | [020](020-cola-de-simulaciones-en-detalle.md) | La cola de simulaciones en detalle |
+| [022](022-perfiles-auditivos.md) | Perfiles auditivos: forma real del audiograma y techo del modelo |
 
 Las reglas de negocio están en [`../reglas-de-negocio.md`](../reglas-de-negocio.md).

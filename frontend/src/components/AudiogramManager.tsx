@@ -6,16 +6,16 @@ import Plot from 'react-plotly.js'
 import type { Data, Layout } from 'plotly.js'
 import { api } from '../services/api'
 import { mensajeDeError } from '../services/auth'
-import type { PuntoAudiograma, ResultadoAudiograma } from '../services/tiposSimulacion'
+import CurvasPerfil from './CurvasPerfil'
+import type { PerfilAuditivo, PuntoAudiograma, ResultadoAudiograma } from '../services/tiposSimulacion'
 
 interface Props {
-  onSelectProfile: (perfil: string) => void
-  onRefreshProfiles?: () => void
+  onSelectProfile: (perfil: PerfilAuditivo) => void
 }
 
-export default function AudiogramManager({ onSelectProfile, onRefreshProfiles }: Props) {
+export default function AudiogramManager({ onSelectProfile }: Props) {
   const [activeTab, setActiveTab] = useState<'interactive' | 'filepond'>('interactive')
-  const [patientName, setPatientName] = useState('Paciente 01')
+  const [patientName, setPatientName] = useState('Mi perfil')
   const [files, setFiles] = useState<FilePondFile[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [analysisResult, setAnalysisResult] = useState<ResultadoAudiograma | null>(null)
@@ -99,7 +99,6 @@ export default function AudiogramManager({ onSelectProfile, onRefreshProfiles }:
     try {
       const res = await api.submitManualAudiogram(patientName, points)
       setAnalysisResult(res)
-      if (onRefreshProfiles) onRefreshProfiles()
     } catch (err) {
       setError(mensajeDeError(err))
     } finally {
@@ -118,7 +117,6 @@ export default function AudiogramManager({ onSelectProfile, onRefreshProfiles }:
       const res = await api.uploadAudiogram(fileItem, patientName)
       setAnalysisResult(res)
       setPoints(res.points)
-      if (onRefreshProfiles) onRefreshProfiles()
     } catch (err) {
       setError(mensajeDeError(err))
     } finally {
@@ -226,18 +224,23 @@ export default function AudiogramManager({ onSelectProfile, onRefreshProfiles }:
         </div>
       )}
 
-      {/* Input de Nombre del Paciente */}
+      {/* Nombre del perfil (decisión 008: sin datos personales) */}
       <div>
-        <label className="text-xs font-medium text-slate-300 block mb-1">
-          Identificador o Nombre del Paciente / Caso:
+        <label htmlFor="nombre-perfil" className="text-xs font-medium text-slate-300 block mb-1">
+          Nombre del perfil
         </label>
         <input
+          id="nombre-perfil"
           type="text"
           value={patientName}
           onChange={(e) => setPatientName(e.target.value)}
-          placeholder="Ej: Juan Perez"
+          placeholder="Ej: Trauma 4 kHz – caso 12"
+          aria-describedby="nombre-perfil-ayuda"
           className="w-full sm:w-72 bg-dark-800 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-rose-500/50"
         />
+        <p id="nombre-perfil-ayuda" className="text-[11px] text-slate-500 mt-1">
+          No uses nombres reales de pacientes.
+        </p>
       </div>
 
       {/* Pestaña 1: Curva Interactiva */}
@@ -306,7 +309,7 @@ export default function AudiogramManager({ onSelectProfile, onRefreshProfiles }:
             disabled={isProcessing}
             className="w-full py-3 px-4 rounded-xl font-semibold text-sm bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-400 hover:to-pink-500 text-white shadow-lg shadow-rose-500/20 active:scale-[0.99] transition flex items-center justify-center space-x-2"
           >
-            {isProcessing ? 'Sintetizando perfil coclear...' : 'Analizar Audiograma y Crear Perfil Coclear'}
+            {isProcessing ? 'Generando perfil...' : 'Analizar audiograma y generar perfil'}
           </button>
 
         </div>
@@ -355,30 +358,28 @@ export default function AudiogramManager({ onSelectProfile, onRefreshProfiles }:
       {/* Tarjeta de Resultado del Análisis */}
       {analysisResult && (
         <div className="p-4 rounded-xl bg-gradient-to-r from-rose-950/40 to-dark-800 border border-rose-500/30 space-y-3 animate-fadeIn">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-rose-500/20 pb-3">
-            <div>
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-rose-300">
-                Diagnóstico Audiológico Generado
-              </span>
-              <div className="text-sm font-bold text-white mt-0.5">
-                {analysisResult.clinical_classification}
-              </div>
+          <div className="border-b border-rose-500/20 pb-3">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-rose-300">
+              Clasificación del audiograma
+            </span>
+            <div className="text-sm font-bold text-white mt-0.5">
+              {analysisResult.clinical_classification}
             </div>
-            <div className="text-xs font-mono text-cyan-400 bg-cyan-950/60 px-2.5 py-1 rounded border border-cyan-500/30">
-              Perfil: {analysisResult.matched_profile}
-            </div>
+            <div className="text-xs text-cyan-300 mt-1">{analysisResult.perfil.etiqueta}</div>
           </div>
 
           <p className="text-xs text-slate-300">
             {analysisResult.notes}
           </p>
 
+          <CurvasPerfil perfil={analysisResult.perfil} alto={200} conAviso />
+
           <button
             type="button"
-            onClick={() => onSelectProfile(analysisResult.matched_profile)}
+            onClick={() => onSelectProfile(analysisResult.perfil)}
             className="w-full py-2.5 px-3 rounded-lg bg-cyan-500/20 border border-cyan-500/40 hover:bg-cyan-500/30 text-cyan-300 font-semibold text-xs flex items-center justify-center space-x-2 transition"
           >
-            <span>👉 Vincular "{analysisResult.matched_profile}" al Panel de Simulación</span>
+            <span>Usar este perfil y simular →</span>
           </button>
         </div>
       )}

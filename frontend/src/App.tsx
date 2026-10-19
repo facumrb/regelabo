@@ -4,6 +4,7 @@ import SimulationControls from './components/SimulationControls'
 import ResultsSummary from './components/ResultsSummary'
 import PlotsPanel from './components/PlotsPanel'
 import AudiogramManager from './components/AudiogramManager'
+import PerfilSimulado from './components/PerfilSimulado'
 import { Link, Route, Routes } from 'react-router-dom'
 import PanelPruebas from './components/PanelPruebas'
 import Login from './pages/Login'
@@ -22,14 +23,18 @@ import { mensajeDeError } from './services/auth'
 import { casosApi, type Caso } from './services/casos'
 import { enCurso, INTERVALO_CONSULTA_MS, simulacionesApi } from './services/simulaciones'
 import type {
-  EstadoServidor, ParametrosSimulacion, ResultadoSimulacion, Simulacion,
+  EstadoServidor, ParametrosSimulacion, PerfilAuditivo, ResultadoSimulacion, Simulacion,
 } from './services/tiposSimulacion'
 
 export default function App() {
   const { usuario, cargando } = useSesion()
   const [currentView, setCurrentView] = useState<'simulation' | 'audiogram'>('simulation')
   const [backendHealth, setBackendHealth] = useState<EstadoServidor | null>(null)
-  const [profiles, setProfiles] = useState<string[]>([])
+  const [profiles, setProfiles] = useState<PerfilAuditivo[]>([])
+  // El generado desde un audiograma: no viene en /profiles (sería visible para todos, RN4)
+  const [perfilPersonalizado, setPerfilPersonalizado] = useState<PerfilAuditivo | null>(null)
+  // Con el que se corrió el resultado que se muestra, para el aviso final (Q21)
+  const [perfilDelResultado, setPerfilDelResultado] = useState<PerfilAuditivo | null>(null)
   const [params, setParams] = useState<ParametrosSimulacion>({
     carrier_freq: 4000,
     poles_profile: 'Flat00',
@@ -52,6 +57,9 @@ export default function App() {
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
+  const perfilActivo = profiles.find(p => p.nombre === params.poles_profile)
+    ?? (perfilPersonalizado?.nombre === params.poles_profile ? perfilPersonalizado : null)
+
   // 1. Cargar salud del backend y lista de perfiles al montar
   const fetchInitialData = async () => {
     try {
@@ -67,8 +75,9 @@ export default function App() {
     try {
       const availableProfiles = await api.getProfiles()
       setProfiles(availableProfiles)
-      if (availableProfiles.length > 0 && !availableProfiles.includes(params.poles_profile)) {
-        setParams(prev => ({ ...prev, poles_profile: availableProfiles[0] }))
+      if (availableProfiles.length > 0 && !availableProfiles.some(p => p.nombre === params.poles_profile)
+          && perfilPersonalizado?.nombre !== params.poles_profile) {
+        setParams(prev => ({ ...prev, poles_profile: availableProfiles[0].nombre }))
       }
     } catch (err) {
       console.warn('No se pudieron cargar los perfiles:', mensajeDeError(err))
@@ -115,6 +124,7 @@ export default function App() {
     setIsLoading(true)
     setError(null)
     setSuccessToast(null)
+    const perfilPedido = perfilActivo
     try {
       // El pedido solo deja la simulación en cola: la ejecuta el worker y se consulta su estado cada pocos segundos
       let actual = await simulacionesApi.crear(params, casoId || null)
@@ -127,6 +137,7 @@ export default function App() {
       }
       if (actual.estado === 'completada' && actual.resultado) {
         setResult(actual.resultado)
+        setPerfilDelResultado(perfilPedido)
       } else {
         setError(actual.mensaje_error ?? 'La simulación no se pudo completar.')
       }
@@ -139,12 +150,12 @@ export default function App() {
     }
   }
 
-  // 4. Vincular perfil generado desde un audiograma
-  const handleSelectProfileFromAudiogram = async (profileName: string) => {
-    setParams(prev => ({ ...prev, poles_profile: profileName }))
-    await fetchInitialData()
+  // 4. Usar el perfil generado desde un audiograma: lleva directo a la simulación con el perfil elegido
+  const handleSelectProfileFromAudiogram = (perfil: PerfilAuditivo) => {
+    setPerfilPersonalizado(perfil)
+    setParams(prev => ({ ...prev, poles_profile: perfil.nombre }))
     setCurrentView('simulation')
-    setSuccessToast(`Perfil coclear "${profileName}" asignado a la simulación.`)
+    setSuccessToast(`Perfil "${perfil.etiqueta}" listo para simular.`)
     setTimeout(() => setSuccessToast(null), 5000)
   }
 
@@ -207,8 +218,8 @@ export default function App() {
                 <div className="text-xs text-slate-400 flex items-center space-x-4">
                   <Link to="/simulaciones" className="text-cyan-400 hover:underline">Ver historial de simulaciones</Link>
                   <span>Perfil activo:</span>
-                  <span className="font-mono text-cyan-400 font-semibold px-2 py-0.5 rounded bg-dark-800 border border-slate-700">
-                    {params.poles_profile}
+                  <span className="text-cyan-400 font-semibold px-2 py-0.5 rounded bg-dark-800 border border-slate-700">
+                    {perfilActivo?.etiqueta ?? params.poles_profile}
                   </span>
                 </div>
               </div>
@@ -249,6 +260,7 @@ export default function App() {
                   <div className="lg:col-span-4 sticky top-24">
                     <SimulationControls
                       profiles={profiles}
+                      perfilActivo={perfilActivo}
                       params={params}
                       setParams={setParams}
                       onRunSimulation={handleRunSimulation}
@@ -263,6 +275,7 @@ export default function App() {
 
                   {/* Columna Derecha: Métricas y Gráficos (8 columnas de 12) */}
                   <div className="lg:col-span-8 space-y-6">
+                    {result && perfilDelResultado && <PerfilSimulado perfil={perfilDelResultado} />}
                     <ResultsSummary result={result} />
                     <PlotsPanel result={result} />
                   </div>
@@ -273,10 +286,7 @@ export default function App() {
               {/* Vista 2: Gestor de Audiogramas con FilePond */}
               {currentView === 'audiogram' && (
                 <div className="max-w-4xl mx-auto">
-                  <AudiogramManager
-                    onSelectProfile={handleSelectProfileFromAudiogram}
-                    onRefreshProfiles={fetchInitialData}
-                  />
+                  <AudiogramManager onSelectProfile={handleSelectProfileFromAudiogram} />
                 </div>
               )}
             </>

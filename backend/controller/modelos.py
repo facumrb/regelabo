@@ -163,15 +163,29 @@ class AudiogramInput(BaseModel):
     points: List[AudiogramPoint] = Field(description="Lista de puntos audiométricos")
 
 
+class PerfilAuditivo(BaseModel):
+    """Un perfil de polos, descripto para un profesional, con la curva pedida y la que el modelo simula."""
+    nombre: str = Field(description="Identificador interno (carpeta); es el que va en poles_profile")
+    etiqueta: str = Field(description="Descripción legible, con el grado y el PTA")
+    forma: Literal["plana", "descendente", "combinada", "personalizada"]
+    grado: Literal["normal", "leve", "moderada", "severa"] = Field(description="RN2, según el PTA pedido")
+    pta: float = Field(description="PTA de la curva pedida, en dB HL")
+    curva_pedida: List[AudiogramPoint]
+    curva_simulada: List[AudiogramPoint] = Field(description="La pedida, recortada al techo del modelo")
+    frecuencias_recortadas: List[float] = Field(
+        description="Frecuencias donde se simulan más de 5 dB menos de lo pedido")
+
+
 class AudiogramResponse(BaseModel):
     """Resultado del análisis del audiograma y su perfil de polos asociado."""
     status: str = "success"
     patient_name: str
     points: List[AudiogramPoint]
-    matched_profile: str = Field(description="Perfil de polos de Shera asignado para la simulación")
+    matched_profile: str = Field(description="Perfil de polos generado para la simulación (nombre interno)")
     mean_hearing_loss: float = Field(description="Pérdida promedio tonal (PTA) en dB HL")
-    clinical_classification: str = Field(description="Diagnóstico fonoaudiológico orientativo")
-    notes: str = Field(description="Detalles sobre la interpolación coclear")
+    clinical_classification: str = Field(description="Clasificación del audiograma según RN2 (orientativa)")
+    notes: str = Field(description="Cómo se generó el perfil")
+    perfil: PerfilAuditivo
 
 
 EstadoSimulacion = Literal["en_cola", "ejecutando", "completada", "error"]
