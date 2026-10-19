@@ -1,0 +1,35 @@
+meta {
+  name: Login con contraseña incorrecta
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{email}}",
+    "password": "otra-clave-larga"
+  }
+}
+
+script:post-response {
+  bru.setVar("respuesta_clave_mala", JSON.stringify(res.getBody()));
+}
+
+tests {
+  test("401 Unauthorized", function () { expect(res.getStatus()).to.equal(401); });
+  test("código credenciales_invalidas", function () { expect(res.getBody().detail.codigo).to.equal("credenciales_invalidas"); });
+  test("no deja ninguna cookie de sesión", function () {
+    const cookies = [].concat(res.getHeader("set-cookie") || []);
+    expect(cookies.some(function (c) { return String(c).startsWith("sesion="); })).to.equal(false);
+  });
+}
+
+docs {
+  Suma 1 intento fallido a la cuenta (a los 10 seguidos se bloquea 15 minutos).
+}

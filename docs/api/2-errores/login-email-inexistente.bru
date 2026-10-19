@@ -1,0 +1,31 @@
+meta {
+  name: Login con un email que no existe
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{base_url}}/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "bruno-nadie@example.com",
+    "password": "otra-clave-larga"
+  }
+}
+
+tests {
+  test("401 Unauthorized", function () { expect(res.getStatus()).to.equal(401); });
+  test("código credenciales_invalidas", function () { expect(res.getBody().detail.codigo).to.equal("credenciales_invalidas"); });
+  test("responde exactamente igual que con una contraseña incorrecta", function () {
+    const anterior = bru.getVar("respuesta_clave_mala");
+    if (anterior) { expect(JSON.stringify(res.getBody())).to.equal(anterior); }
+  });
+}
+
+docs {
+  Con un email que existe y uno que no, la respuesta es idéntica: no se puede averiguar qué emails están registrados.
+}

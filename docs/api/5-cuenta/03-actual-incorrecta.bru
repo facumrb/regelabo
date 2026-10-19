@@ -1,0 +1,31 @@
+meta {
+  name: 3. Contraseña actual incorrecta
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/auth/contrasena
+  body: json
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token_cuenta}}
+}
+
+body:json {
+  {
+    "actual": "no-es-esta",
+    "nueva": "clave-nueva-1"
+  }
+}
+
+tests {
+  test("responde 400", function () { expect(res.getStatus()).to.equal(400); });
+  test("código contrasena_actual_incorrecta", function () { expect(res.getBody().detail.codigo).to.equal("contrasena_actual_incorrecta"); });
+}
+
+docs {
+  Suma un fallo al contador del login: a los 10 la cuenta se bloquea 15 minutos.
+}

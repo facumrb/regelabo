@@ -1,0 +1,33 @@
+meta {
+  name: 4. Perfiles de audición (con sesión)
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/profiles
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token}}
+}
+
+tests {
+  test("responde 200", function () { expect(res.getStatus()).to.equal(200); });
+  test("incluye el perfil Flat00", function () { expect(res.getBody().map(p => p.nombre)).to.include("Flat00"); });
+  test("cada perfil trae etiqueta y las dos curvas", function () {
+    const p = res.getBody()[0];
+    expect(p).to.include.keys("etiqueta", "grado", "curva_pedida", "curva_simulada", "frecuencias_recortadas");
+  });
+  test("no lista duplicados ni personalizados", function () {
+    const nombres = res.getBody().map(p => p.nombre);
+    expect(nombres).to.not.include("Normal");
+    expect(nombres.some(n => n.startsWith("Custom_"))).to.equal(false);
+  });
+}
+
+docs {
+  Endpoint de la simulación: con la cookie de sesión, devuelve los perfiles base (sin duplicados), con su etiqueta, grado (RN2), la curva pedida y la que el modelo simula (decisión 022).
+}

@@ -1,0 +1,39 @@
+meta {
+  name: 3. Pedir una simulación
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/simulaciones
+  body: json
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token_sim_ana}}
+}
+
+body:json {
+  {
+    "carrier_freq": 3000,
+    "spl_level": 65,
+    "nH": 7,
+    "nM": 2,
+    "nL": 2
+  }
+}
+
+script:post-response {
+  bru.setVar("simulacion_id", res.getBody().id);
+}
+
+tests {
+  test("responde 202 Aceptado", function () { expect(res.getStatus()).to.equal(202); });
+  test("queda en cola, o completada si el resultado ya existía (RN10)", function () { expect(["en_cola", "completada"]).to.include(res.getBody().estado); });
+  test("no expone la huella", function () { expect(res.getBody()).to.not.have.property("huella"); });
+}
+
+docs {
+  No espera a que termine. Si ya existe un resultado idéntico (de una corrida anterior), vuelve `completada` con `reutilizada: true` y no consume cupo.
+}

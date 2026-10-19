@@ -27,11 +27,13 @@ El Screening BERA/ABR es una **Sub-meta** de la Meta Principal "Simulación EFR 
 **Implicancia en reutilización de código:**
 
 La cadena computacional es **idéntica**. Ambos casos usan:
+
 - `ohc_ind()` → conversión de perfil auditivo a polos de Shera
 - `model2018()` → simulación completa con `storeflag='bw'`, `fc='abr'`
 - Salidas `output.w1`, `output.w3`, `output.w5`
 
 Lo que cambia es **exclusivamente la capa de presentación y análisis post-simulación**:
+
 - EFR → FFT del compuesto, magnitud espectral a la frecuencia de modulación
 - ABR → visualización temporal de ondas individuales, medición de latencias pico I-III-V, amplitudes
 
@@ -58,6 +60,7 @@ Meta Principal: Simulación EFR (Verhulst 2018)
 En un adulto, el flujo estándar es: `audiograma clínico → ohc_ind() → polos → simulación`.
 
 En un **neonato**, no existe audiograma conductual. Por lo tanto, los inputs son:
+
 1. **Perfiles patológicos paramétricos pre-computados** (Flat/Slope) que representan hipótesis de pérdida
 2. **Datos crudos en MAT/CSV** importados de equipos BERA reales (para validación/comparación)
 
@@ -115,6 +118,7 @@ Controlador     →   Retorna JSON al frontend               SimulationResponse 
 **Transformación a gráficos interactivos (Plotly.js):**
 
 El frontend recibe los arrays crudos y construye:
+
 1. **Gráfico principal:** 4 trazas superpuestas (W1, W3, W5, ABR) vs. tiempo (ms)
 2. **Marcadores interactivos:** Picos de latencia (I, III, V) detectados automáticamente con anotaciones hover
 3. **Panel de métricas:** Latencia absoluta W1/W3/W5, intervalos interpico I-III / III-V / I-V, amplitudes pico

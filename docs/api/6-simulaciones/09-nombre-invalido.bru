@@ -1,0 +1,25 @@
+meta {
+  name: 9. Nombre de perfil inválido
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{base_url}}/simulaciones
+  body: json
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token_sim_ana}}
+}
+
+body:json {
+  {
+    "poles_profile": "../secreto"
+  }
+}
+
+tests {
+  test("422 de validación", function () { expect(res.getStatus()).to.equal(422); });
+}

@@ -1,0 +1,25 @@
+meta {
+  name: 4. Listar mis simulaciones
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/simulaciones?limite=20
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token_sim_ana}}
+}
+
+tests {
+  test("responde 200", function () { expect(res.getStatus()).to.equal(200); });
+  test("aparece la simulación pedida", function () { expect(res.getBody().simulaciones.map(function (s) { return s.id; })).to.include(bru.getVar("simulacion_id")); });
+  test("el listado no trae las señales", function () { res.getBody().simulaciones.forEach(function (s) { expect(s.resultado).to.equal(null); }); });
+}
+
+docs {
+  Paginación por cursor, igual que los casos: `despues_de=<siguiente>`. Se puede filtrar con `caso_id=<id>`.
+}

@@ -1,0 +1,29 @@
+meta {
+  name: 7. Registro (otro usuario)
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{base_url}}/auth/registro
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{email_beto}}",
+    "password": "clave-larga-1",
+    "nombre": "Usuario de Bruno",
+    "tipo_perfil": "estudiante",
+    "acepta_aviso": true
+  }
+}
+
+script:pre-request {
+  bru.setVar("email_beto", "bruno-beto-" + Date.now() + "@example.com");
+}
+
+tests {
+  test("responde 201", function () { expect(res.getStatus()).to.equal(201); });
+}

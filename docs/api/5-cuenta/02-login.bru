@@ -1,0 +1,28 @@
+meta {
+  name: 2. Login
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{email_cuenta}}",
+    "password": "clave-vieja-1"
+  }
+}
+
+script:post-response {
+  const cookies = [].concat(res.getHeader("set-cookie") || []);
+  const sesion = cookies.find(function (c) { return String(c).startsWith("sesion="); });
+  if (sesion) bru.setVar("token_cuenta", String(sesion).split(";")[0].slice("sesion=".length));
+}
+
+tests {
+  test("responde 200", function () { expect(res.getStatus()).to.equal(200); });
+}

@@ -1,0 +1,19 @@
+meta {
+  name: 13. RN4: el otro no la ve en su lista
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{base_url}}/simulaciones
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token_sim_beto}}
+}
+
+tests {
+  test("lista vacía", function () { expect(res.getBody().simulaciones).to.have.lengthOf(0); });
+}

@@ -2,16 +2,35 @@
   "name": "laboratorio-frontend",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "plotly.js": "^2.30.0",
-    "react-plotly.js": "^2.6.0",
-    "filepond": "^4.30.6",
-    "react-filepond": "^7.1.2",
-    "pdfjs-dist": "^4.0.379",
     "@supabase/supabase-js": "^2.39.8",
     "axios": "^1.6.8",
+    "filepond": "^4.30.6",
+    "pdfjs-dist": "^4.0.379",
+    "plotly.js": "^2.30.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-filepond": "^7.1.2",
+    "react-plotly.js": "^2.6.0",
+    "react-router-dom": "^7.18.4",
     "tailwindcss": "^3.4.3"
+  },
+  "devDependencies": {
+    "@types/plotly.js": "^3.0.15",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@types/react-plotly.js": "^2.6.4",
+    "@vitejs/plugin-react": "^4.4.1",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.5.3",
+    "typescript": "^7.0.2",
+    "vite": "^6.3.2"
   }
 }

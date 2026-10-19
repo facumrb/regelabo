@@ -1,0 +1,26 @@
+meta {
+  name: 15. Crear con sexo inválido
+  type: http
+  seq: 15
+}
+
+post {
+  url: {{base_url}}/casos
+  body: json
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token_ana}}
+}
+
+body:json {
+  {
+    "alias": "Caso inválido",
+    "sexo": "F"
+  }
+}
+
+tests {
+  test("422 de validación", function () { expect(res.getStatus()).to.equal(422); });
+}

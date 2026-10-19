@@ -1,0 +1,25 @@
+meta {
+  name: 5. Logout
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/auth/logout
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token}}
+}
+
+tests {
+  test("responde 204 Sin contenido", function () { expect(res.getStatus()).to.equal(204); });
+  test("el servidor le pide al navegador que borre la cookie", function () {
+    const cookies = [].concat(res.getHeader("set-cookie") || []).map(function (c) { return String(c).toLowerCase(); });
+    const sesion = cookies.find(function (c) { return c.startsWith("sesion="); });
+    expect(sesion, "falta Set-Cookie para borrar la cookie").to.be.a("string");
+    expect(sesion).to.include("max-age=0");
+  });
+}

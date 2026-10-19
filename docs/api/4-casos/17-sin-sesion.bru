@@ -1,0 +1,15 @@
+meta {
+  name: 17. Listar sin sesión
+  type: http
+  seq: 17
+}
+
+get {
+  url: {{base_url}}/casos
+  body: none
+  auth: none
+}
+
+tests {
+  test("401 Unauthorized", function () { expect(res.getStatus()).to.equal(401); });
+}

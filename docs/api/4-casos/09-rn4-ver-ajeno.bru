@@ -1,0 +1,24 @@
+meta {
+  name: 9. RN4: ver un caso ajeno
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{base_url}}/casos/{{caso_id}}
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token_beto}}
+}
+
+tests {
+  test("404 No encontrado", function () { expect(res.getStatus()).to.equal(404); });
+  test("código caso_no_encontrado", function () { expect(res.getBody().detail.codigo).to.equal("caso_no_encontrado"); });
+}
+
+docs {
+  RN4: un caso ajeno responde 404, igual que uno inexistente, para no revelar que existe.
+}

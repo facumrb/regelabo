@@ -1,0 +1,20 @@
+# Servicios de desarrollo. Levantar la base con: docker compose up -d db
+services:
+  db:
+    # Misma versión mayor que el proyecto de Supabase (producción); revisar al crearlo
+    image: postgres:17
+    environment:
+      POSTGRES_USER: regelabo
+      POSTGRES_PASSWORD: regelabo
+      POSTGRES_DB: regelabo
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U regelabo"]
+      interval: 5s
+      retries: 10
+
+volumes:
+  pgdata:
