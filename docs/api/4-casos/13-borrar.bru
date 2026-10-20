@@ -1,0 +1,23 @@
+meta {
+  name: 13. Borrar caso
+  type: http
+  seq: 13
+}
+
+delete {
+  url: {{base_url}}/casos/{{caso_id}}
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token_ana}}
+}
+
+tests {
+  test("responde 204", function () { expect(res.getStatus()).to.equal(204); });
+}
+
+docs {
+  Borrado lógico: el caso queda en la base con `borrado_en`, pero para la API deja de existir.
+}

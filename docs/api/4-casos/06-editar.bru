@@ -1,0 +1,31 @@
+meta {
+  name: 6. Editar caso
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{base_url}}/casos/{{caso_id}}
+  body: json
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token_ana}}
+}
+
+body:json {
+  {
+    "alias": "Caso de Bruno (editado)",
+    "sexo": "otro"
+  }
+}
+
+tests {
+  test("responde 200", function () { expect(res.getStatus()).to.equal(200); });
+  test("reemplaza los datos", function () { expect(res.getBody().alias).to.equal("Caso de Bruno (editado)"); expect(res.getBody().edad).to.equal(null); });
+}
+
+docs {
+  PUT reemplaza el caso entero: lo que no se manda queda vacío (acá, la edad y las notas).
+}

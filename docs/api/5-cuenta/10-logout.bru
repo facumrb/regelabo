@@ -1,0 +1,23 @@
+meta {
+  name: 10. Logout
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{base_url}}/auth/logout
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token_cuenta}}
+}
+
+tests {
+  test("responde 204", function () { expect(res.getStatus()).to.equal(204); });
+}
+
+docs {
+  Borra la cookie que Bruno guardó, así la request 11 sale sin sesión.
+}

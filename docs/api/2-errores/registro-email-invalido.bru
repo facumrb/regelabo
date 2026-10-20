@@ -1,0 +1,32 @@
+meta {
+  name: Registro con email inválido
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/auth/registro
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "ana@",
+    "password": "clave-larga-1",
+    "nombre": "Rechazado",
+    "tipo_perfil": "estudiante",
+    "acepta_aviso": true
+  }
+}
+
+tests {
+  test("422 Unprocessable Entity", function () { expect(res.getStatus()).to.equal(422); });
+  test("el detalle es la lista de errores de validación de FastAPI", function () {
+    expect(res.getBody().detail).to.be.an("array").that.is.not.empty;
+  });
+}
+
+docs {
+  Los errores de formato (422) conservan el formato de FastAPI: `detail` es una lista, no `{codigo, mensaje}`.
+}

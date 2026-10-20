@@ -95,6 +95,12 @@ A continuación se detallan todas las utilidades identificadas para el modelo en
 *   **Parámetro manipulado:** Paciente "envejecido" = polos Slope (OHC degradadas gradualmente). Paciente "trauma" = polos normales + fibras AN reducidas (nL=0, nM=0).
 *   **Salida observada:** Comparación de EFR y formas de onda ABR entre ambos perfiles.
 
+**16. Apoyo Diagnóstico por Arquetipos Clínicos (Clasificación Vectorial)**
+*   **En simple:** Comparar automáticamente la onda cerebral del paciente contra una "biblioteca" de perfiles clásicos pre-calculados para dar un indicio instantáneo de qué estructura interna está fallando, sin necesidad de Inteligencia Artificial.
+*   **Caso de uso:** Un paciente presenta dificultades auditivas que un audiograma estándar no explica (sospecha de daño coclear oculto). El fonoaudiólogo carga el estudio ABR real del paciente; el sistema busca en la base de datos (vía `pgvector` en Supabase) cuál de los "Arquetipos Clínicos" pre-simulados (ej. Normal, Trauma Acústico Leve, Sordera Oculta Severa) tiene la firma eléctrica más parecida a la del paciente, brindando un indicio diagnóstico en milisegundos.
+*   **Parámetro manipulado:** Ninguno en tiempo real. El sistema consulta una base de datos de perfiles estáticos (combinaciones pre-definidas de polos de Shera y reducciones de fibras nH, nM, nL) que fueron generados previamente por lotes.
+*   **Salida observada:** Un reporte de probabilidad clínica (ej. *"85% de coincidencia morfológica con el Arquetipo de Trauma Acústico"*), junto con la superposición gráfica de la onda ABR real vs. la onda teórica del arquetipo sugerido para validación visual.
+
 ---
 
 ### ⚠️ PARCIALMENTE FACTIBLES (Requieren extensión menor del modelo)

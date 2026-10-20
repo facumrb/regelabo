@@ -1,0 +1,28 @@
+meta {
+  name: 11. Login (otro usuario)
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{base_url}}/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{email_sim_beto}}",
+    "password": "clave-larga-1"
+  }
+}
+
+script:post-response {
+  const cookies = [].concat(res.getHeader("set-cookie") || []);
+  const sesion = cookies.find(function (c) { return String(c).startsWith("sesion="); });
+  bru.setVar("token_sim_beto", sesion ? String(sesion).split(";")[0].slice("sesion=".length) : "");
+}
+
+tests {
+  test("responde 200", function () { expect(res.getStatus()).to.equal(200); });
+}

@@ -1,0 +1,33 @@
+meta {
+  name: 1. Registro (dueña)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/auth/registro
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{email_ana}}",
+    "password": "clave-larga-1",
+    "nombre": "Usuario de Bruno",
+    "tipo_perfil": "estudiante",
+    "acepta_aviso": true
+  }
+}
+
+script:pre-request {
+  bru.setVar("email_ana", "bruno-ana-" + Date.now() + "@example.com");
+}
+
+tests {
+  test("responde 201", function () { expect(res.getStatus()).to.equal(201); });
+}
+
+docs {
+  Crea la usuaria dueña de los casos. Esta carpeta no depende de las otras: crea sus propios usuarios.
+}

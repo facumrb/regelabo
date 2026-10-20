@@ -1,0 +1,36 @@
+meta {
+  name: Bloqueo de cuenta (10 fallos)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{email}}",
+    "password": "otra-clave-larga"
+  }
+}
+
+tests {
+  test("401 (credenciales), 429 cuenta_bloqueada o 429 demasiados_pedidos", function () {
+    expect(res.getStatus()).to.be.oneOf([401, 429]);
+    if (res.getStatus() === 429) { expect(res.getBody().detail.codigo).to.be.oneOf(["cuenta_bloqueada", "demasiados_pedidos"]); }
+  });
+}
+
+docs {
+  Usa el email creado por el flujo feliz (`{{email}}`): correr antes `1-flujo-feliz`.
+
+  1. Enviá esta request **5 veces** (401 cada una) y **esperá un minuto** (límite de 5 por minuto por IP).
+  2. Enviala **5 veces más**: el 10.º fallo bloquea la cuenta.
+  3. Enviá `1-flujo-feliz/2. Login` aunque la contraseña sea correcta: responde **429 `cuenta_bloqueada`**.
+
+  Para desbloquear sin esperar 15 minutos:
+  `update usuario set bloqueado_hasta = null, intentos_fallidos = 0 where email like 'bruno-%';`
+}

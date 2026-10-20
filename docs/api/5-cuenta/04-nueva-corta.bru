@@ -1,0 +1,27 @@
+meta {
+  name: 4. Nueva demasiado corta
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/auth/contrasena
+  body: json
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token_cuenta}}
+}
+
+body:json {
+  {
+    "actual": "clave-vieja-1",
+    "nueva": "corta"
+  }
+}
+
+tests {
+  test("responde 400", function () { expect(res.getStatus()).to.equal(400); });
+  test("código contrasena_invalida", function () { expect(res.getBody().detail.codigo).to.equal("contrasena_invalida"); });
+}

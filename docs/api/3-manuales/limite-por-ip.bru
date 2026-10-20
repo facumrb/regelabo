@@ -1,0 +1,30 @@
+meta {
+  name: Límite por IP (6 veces seguidas)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "bruno-limite@example.com",
+    "password": "otra-clave-larga"
+  }
+}
+
+tests {
+  test("401 (credenciales) o 429 (límite alcanzado)", function () { expect(res.getStatus()).to.be.oneOf([401, 429]); });
+  test("si es 429, el código es demasiados_pedidos", function () {
+    if (res.getStatus() === 429) { expect(res.getBody().detail.codigo).to.equal("demasiados_pedidos"); }
+  });
+}
+
+docs {
+  Enviá esta request **6 veces en menos de un minuto** (Ctrl+Enter repetido). Las primeras 5 responden 401; la 6.ª, **429 `demasiados_pedidos`**.
+  El límite es de 5 por minuto por IP y por endpoint; se libera al minuto.
+}

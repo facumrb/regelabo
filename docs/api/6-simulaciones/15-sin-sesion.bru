@@ -1,0 +1,20 @@
+meta {
+  name: 15. Pedir sin sesión
+  type: http
+  seq: 15
+}
+
+post {
+  url: {{base_url}}/simulaciones
+  body: json
+  auth: none
+}
+
+body:json {
+  {}
+}
+
+tests {
+  test("responde 401", function () { expect(res.getStatus()).to.equal(401); });
+  test("código no_autenticado", function () { expect(res.getBody().detail.codigo).to.equal("no_autenticado"); });
+}

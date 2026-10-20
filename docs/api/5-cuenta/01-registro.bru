@@ -1,0 +1,33 @@
+meta {
+  name: 1. Registro
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/auth/registro
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{email_cuenta}}",
+    "password": "clave-vieja-1",
+    "nombre": "Usuario de Bruno",
+    "tipo_perfil": "estudiante",
+    "acepta_aviso": true
+  }
+}
+
+script:pre-request {
+  bru.setVar("email_cuenta", "bruno-cuenta-" + Date.now() + "@example.com");
+}
+
+tests {
+  test("responde 201", function () { expect(res.getStatus()).to.equal(201); });
+}
+
+docs {
+  Esta carpeta crea su propio usuario. Usa 1 registro y 3 logins: correrla aparte, pasado un minuto de las otras.
+}

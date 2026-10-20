@@ -1,0 +1,30 @@
+meta {
+  name: 6. Cambiar contraseña
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{base_url}}/auth/contrasena
+  body: json
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token_cuenta}}
+}
+
+body:json {
+  {
+    "actual": "clave-vieja-1",
+    "nueva": "clave-nueva-1"
+  }
+}
+
+tests {
+  test("responde 204", function () { expect(res.getStatus()).to.equal(204); });
+}
+
+docs {
+  Guarda el hash de la nueva y cierra las demás sesiones del usuario. La actual sigue (request 7). Que las otras se cierran lo prueba pytest (`test_cambio_contrasena.py`): con dos sesiones del mismo usuario, Bruno mandaría la cookie de la última.
+}

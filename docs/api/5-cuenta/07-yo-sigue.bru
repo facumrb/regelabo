@@ -1,0 +1,19 @@
+meta {
+  name: 7. La sesión actual sigue
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{base_url}}/auth/yo
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token_cuenta}}
+}
+
+tests {
+  test("responde 200", function () { expect(res.getStatus()).to.equal(200); });
+}

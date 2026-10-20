@@ -1,0 +1,20 @@
+meta {
+  name: Yo con un token inventado
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{base_url}}/auth/yo
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: sesion=un-token-que-nunca-existio
+}
+
+tests {
+  test("401 Unauthorized", function () { expect(res.getStatus()).to.equal(401); });
+  test("código no_autenticado", function () { expect(res.getBody().detail.codigo).to.equal("no_autenticado"); });
+}

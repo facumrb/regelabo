@@ -1,0 +1,33 @@
+meta {
+  name: 1. Registro (dueña)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/auth/registro
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{email_sim_ana}}",
+    "password": "clave-larga-1",
+    "nombre": "Usuario de Bruno",
+    "tipo_perfil": "estudiante",
+    "acepta_aviso": true
+  }
+}
+
+script:pre-request {
+  bru.setVar("email_sim_ana", "bruno-sim-ana-" + Date.now() + "@example.com");
+}
+
+tests {
+  test("responde 201", function () { expect(res.getStatus()).to.equal(201); });
+}
+
+docs {
+  Esta carpeta crea sus propios usuarios (2 registros y 2 logins: correrla aparte). Pedir una simulación solo la deja en cola: si hay un worker corriendo (`npm run dev`), la ejecuta de verdad (~75 s).
+}

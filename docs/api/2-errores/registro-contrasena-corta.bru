@@ -1,0 +1,30 @@
+meta {
+  name: Registro con contraseña corta
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/auth/registro
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "bruno-rechazado@example.com",
+    "password": "corta",
+    "nombre": "Rechazado",
+    "tipo_perfil": "estudiante",
+    "acepta_aviso": true
+  }
+}
+
+tests {
+  test("400 Bad Request", function () { expect(res.getStatus()).to.equal(400); });
+  test("código contrasena_invalida", function () { expect(res.getBody().detail.codigo).to.equal("contrasena_invalida"); });
+}
+
+docs {
+  La contraseña debe tener entre 8 y 128 caracteres.
+}

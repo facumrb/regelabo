@@ -1,0 +1,24 @@
+meta {
+  name: 12. RN4: ver una simulación ajena
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{base_url}}/simulaciones/{{simulacion_id}}
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token_sim_beto}}
+}
+
+tests {
+  test("responde 404", function () { expect(res.getStatus()).to.equal(404); });
+  test("código simulacion_no_encontrada", function () { expect(res.getBody().detail.codigo).to.equal("simulacion_no_encontrada"); });
+}
+
+docs {
+  RN4: una simulación ajena responde 404, igual que una inexistente.
+}

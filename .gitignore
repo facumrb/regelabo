@@ -69,3 +69,11 @@ Thumbs.db
 *.npz
 *.png
 
+
+# Perfiles de audición generados en runtime desde audiogramas
+backend/**/data/Poles/Custom_*/
+
+# Grafo de conocimiento generado con graphify
+graphify-out/
+
+/docs/guias/Convenciones/

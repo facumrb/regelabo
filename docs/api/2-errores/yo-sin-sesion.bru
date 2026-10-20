@@ -1,0 +1,20 @@
+meta {
+  name: Yo sin sesión
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{base_url}}/auth/yo
+  body: none
+  auth: none
+}
+
+tests {
+  test("401 Unauthorized", function () { expect(res.getStatus()).to.equal(401); });
+  test("código no_autenticado", function () { expect(res.getBody().detail.codigo).to.equal("no_autenticado"); });
+}
+
+docs {
+  No manda ninguna cookie. Va después del logout del flujo feliz, así Bruno no tiene una cookie guardada para enviar.
+}
