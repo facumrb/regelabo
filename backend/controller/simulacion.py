@@ -15,7 +15,7 @@ from backend.controller.modelos import (
     SpectrumData,
 )
 from backend.datos import perfiles
-from backend.simulacion import motor
+from backend.services import motor
 
 
 class SimulationService:

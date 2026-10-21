@@ -22,7 +22,7 @@ from backend.controller.modelos import (
 from backend.controller.simulacion import SimulationService
 from backend.datos import casos, perfiles, simulaciones, usuarios
 from backend.datos.conexion import transaccion
-from backend.simulacion.motor import SEMILLA, VERSION_MODELO
+from backend.services.motor import SEMILLA, VERSION_MODELO
 
 logger = logging.getLogger(__name__)
 
