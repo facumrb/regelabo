@@ -225,7 +225,7 @@ No hay tests automáticos del frontend: sus páginas se verifican con la tabla d
 | Tamaño de página por defecto y máximo | `listar` en `backend/views/casos.py` y `backend/views/simulaciones.py` (servidor), y `casosApi.listar` / `simulacionesApi.listar` en `frontend/src/services/` |
 | Cupos de simulaciones, tope de la cola, minutos para dar por interrumpida una simulación | `backend/configuracion.py` (`CUPO_SIMULTANEAS`, `CUPO_POR_HORA`, `TOPE_COLA`, `SIMULACION_MINUTOS_MAX`) |
 | Rangos válidos de los parámetros (RN3) | `RANGOS` en `backend/controller/simulaciones.py` |
-| Versión del modelo (invalida la caché) y semilla | `VERSION_MODELO` y `SEMILLA` en `backend/simulacion/motor.py` |
+| Versión del modelo (invalida la caché) y semilla | `VERSION_MODELO` y `SEMILLA` en `backend/services/motor.py` |
 | Cada cuánto se consulta el estado de una simulación | `INTERVALO_CONSULTA_MS` en `frontend/src/services/simulaciones.ts` |
 | Pantallas de casos | `frontend/src/pages/casos/` |
 

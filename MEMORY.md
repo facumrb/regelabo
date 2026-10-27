@@ -21,6 +21,7 @@ Memoria del proyecto entre sesiones, para cualquier agente o persona del equipo.
 - Autenticación: [004](docs/decisiones/004-autenticacion-propia.md) propia con argon2 · [013](docs/decisiones/013-sesion-en-el-servidor.md) sesión en servidor · [015](docs/decisiones/015-interfaz-de-autenticacion.md) pantallas · [018](docs/decisiones/018-cambio-de-contrasena.md) cambio de contraseña.
 - Simulación: [005](docs/decisiones/005-cola-de-simulaciones.md) cola en tabla sin Celery · [006](docs/decisiones/006-cache-de-resultados.md) caché por huella · [020](docs/decisiones/020-cola-de-simulaciones-en-detalle.md) detalle de cola y worker · [019](docs/decisiones/019-endpoints-del-prototipo-con-sesion.md) prototipo con sesión.
 - Dominio: [007](docs/decisiones/007-arquetipos-y-similitud.md) ~12 arquetipos y Pearson · [008](docs/decisiones/008-caso-sin-datos-personales.md) caso sin datos personales · [009](docs/decisiones/009-roles-cupos-y-limites.md) roles, cupos y límites.
+- Estados internos: [023](docs/decisiones/023-estados-internos.md) 7 figuras del paper del piloto; el núcleo guarda solo los canales graficados (con `d` completo, ~6 GB de pico). Glosario en `CONTEXT.md`, cambios en `CHANGELOG.md`.
 - Resto: [011](docs/decisiones/011-infraestructura.md) DigitalOcean + Caddy · [012](docs/decisiones/012-frontend.md) React TS · [014](docs/decisiones/014-convenciones-de-la-api.md) convenciones de la API · [016](docs/decisiones/016-coleccion-de-bruno.md) Bruno.
 - No re-litigar estas decisiones: se cambian con una decisión nueva en `docs/decisiones/`.
 
@@ -30,8 +31,12 @@ Memoria del proyecto entre sesiones, para cualquier agente o persona del equipo.
 - Al preparar staged, usar rutas explícitas y dejar afuera `.claude/settings.json` (hook local de graphify).
 - Pedir permiso antes de copiar archivos del repo oficial de Verhulst (licencia UGent sin resolver).
 - Nunca usar la palabra "diagnóstico" en la UI (RN9).
+- `backend/simulacion/` se renombró a `backend/services/`: las rutas a `verhulst/` armadas a mano (`datos/perfiles.py`, `.flake8`) no las detectan los imports; al mover carpetas, buscar también strings de rutas.
+- Correr el modelo siempre con tope de memoria (`systemd-run --user --scope -p MemoryMax=3G ...`): una corrida con `storeflag` `d` dejó sin RAM una máquina de 16 GB.
+- No agregar `Co-Authored-By: Claude` en commits ni PRs: hizo aparecer a Claude como contribuyente en GitHub.
 
 ## Próximos pasos
+- Estados internos (decisión 023): plan en 5 etapas (núcleo → datos → API → frontend → docs), pendiente de confirmación. `validacionPlanAnalisis/` está en `.gitignore` pero sigue versionada: falta `git rm -r --cached`.
 - Paso 6: CI con GitHub Actions (Flake8 + pytest) y `CONTRIBUTING.md`.
 - Paso 8: antes de crear las issues, conectar GitHub a la sesión del agente.
 - Abiertos: licencia de Verhulst (bloquea `OHC_ind`), `proposal.md` desactualizado, ventanas de latencia y amplitud de las ondas, perfiles `Custom_*` compartidos.

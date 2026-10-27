@@ -7,11 +7,11 @@ El checklist de la cátedra exige 3 capas con nombres de carpeta fijos (`views`,
 
 ## Decisión
 Una sola aplicación FastAPI dividida en capas:
-`app.py` → `backend/views/` (HTTP) → `backend/controller/` (negocio) → `backend/datos/` (persistencia) y `backend/simulacion/` (modelo Verhulst). El frontend es React y está separado.
+`app.py` → `backend/views/` (HTTP) → `backend/controller/` (negocio) → `backend/datos/` (persistencia) y `backend/services/` (modelo Verhulst). El frontend es React y está separado.
 
 ## Alternativas descartadas
 - **Microservicios:** más contenedores, redes y despliegues que mantener, sin beneficio para el TPI; además no se ven como "3 capas" en la corrección.
 
 ## Consecuencias
 - Las dependencias van en un solo sentido; la capa de presentación nunca importa `datos/`.
-- El código del modelo Verhulst se usa solo a través de `simulacion/motor.py`.
+- El código del modelo Verhulst se usa solo a través de `services/motor.py`.

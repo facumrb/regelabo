@@ -16,7 +16,7 @@ import numpy as np
 
 POLES_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "simulacion", "verhulst", "data", "Poles",
+    "services", "verhulst", "data", "Poles",
 )
 ARCHIVO_POLOS = "StartingPoles.dat"
 ARCHIVO_CURVA = "profile.txt"

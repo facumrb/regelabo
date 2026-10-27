@@ -77,3 +77,6 @@ backend/**/data/Poles/Custom_*/
 graphify-out/
 
 /docs/guias/Convenciones/
+
+# Validación estadística del estudio piloto (complementa el paper; uso local)
+validacionPlanAnalisis/
