@@ -8,10 +8,11 @@ Memoria del proyecto entre sesiones, para cualquier agente o persona del equipo.
 - Casos de uso y requerimientos: [docs/specs/](docs/specs/README.md). Cómo probar: [docs/guia-de-pruebas.md](docs/guia-de-pruebas.md).
 - Mapa del código: `graphify-out/` (`graphify query "<pregunta>"` antes de buscar en archivos).
 - Enunciado y checklists del TPI: `/mnt/datos/Electivas-Soporte/practica-2024/TPI` (fuera del repo).
+- Visión de largo plazo (producto, no TPI): `docs/Vision/`. Fricción con regelabo y opciones A/B/C: `reports/Fricción entre regelabo y Visión.md` (notas en `research_notes/`).
 
 ## Estado actual
 - TPI de Soporte (UTN FRRO), grupo de 3, entrega a fin de 2026. Valentino arma el sprint 0; después cada integrante toma un módulo copiando Casos.
-- Sprint 0 en `feature/setup-entorno`: pasos 1–5 hechos (capas, base, auth, Casos, frontend TS, cola + worker + caché + historial). Último commit `8ec683b`.
+- Sprint 0 (mergeado a `main` en el PR #4): pasos 1–5 hechos (capas, base, auth, Casos, frontend TS, cola + worker + caché + historial). Último commit `ed5f207`.
 - Pendientes del sprint 0: paso 6 (CI + `CONTRIBUTING.md`), paso 7 (documentación final), paso 8 (issues y tag `semana-01`).
 - `AGENTS.md` es la única fuente de instrucciones; `CLAUDE.md` solo lo importa (`@AGENTS.md`).
 
@@ -40,3 +41,4 @@ Memoria del proyecto entre sesiones, para cualquier agente o persona del equipo.
 - Paso 6: CI con GitHub Actions (Flake8 + pytest) y `CONTRIBUTING.md`.
 - Paso 8: antes de crear las issues, conectar GitHub a la sesión del agente.
 - Abiertos: licencia de Verhulst (bloquea `OHC_ind`), `proposal.md` desactualizado, ventanas de latencia y amplitud de las ondas, perfiles `Custom_*` compartidos.
+- Sin decidir (ver el informe de fricción): el repo público con licencia MIT contiene código de Verhulst bajo la licencia UGent, cuya sección 2 prohíbe distribuir sin permiso escrito (urgente; responde UGent o un abogado, no la cátedra; opciones de contención y borrador del mail en `reports/Contención licencia Verhulst.md`; el fork público `giani1233/regelaboForked` también tiene una copia del modelo); relación TPI–Visión (A: ajustar la Visión, B: redirigir regelabo, C: separarlos); qué hacer con `backend/services/` (resto sin versionar con `Poles.mat` y `tridiag.dll`).
