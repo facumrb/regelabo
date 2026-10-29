@@ -33,6 +33,7 @@ Cada paso queda funcionando antes del siguiente. Al terminar, cada compañero so
 | 6 | Integración continua con GitHub Actions (Flake8 + pytest) y `CONTRIBUTING.md` con las reglas de capas. | Pendiente | — |
 | 7 | Actualizar la documentación: `CLAUDE.md`, `PROYECTO.md` (template del TPI), `docs/arquitectura.md`, el diagrama de dominio y `docs/decisiones/`. | Parcial: `CLAUDE.md` y `docs/decisiones/` al día. | — |
 | 8 | Conectar GitHub a la sesión de Claude, crear las issues de los 3 módulos y el tag `semana-01`. | Pendiente | — |
+| 9 | Estados internos del modelo (decisión 023), rama `feat/estados-internos`: núcleo con solo los canales graficados, tabla `estados_internos`, `GET /api/simulaciones/{id}/estados-internos` y panel con las 7 figuras. Agregado el 2026-10-27. | Hecho, sin commitear. Revisión por fonoaudiología pendiente (no bloquea). | — |
 
 ---
 
@@ -69,6 +70,7 @@ El [Plan de Mitigación de Cuellos de Botella](specs/Plan%20de%20Mitigación%20d
 - **Licencia de Verhulst (UGent):** el repo es público y contiene el código del modelo; la licencia prohíbe redistribuirlo sin autorización escrita. Hasta resolverlo con la cátedra, no se traen los `.mat` de `OHC_ind`, lo que bloquea el perfil propio del módulo de casos y audiogramas.
 - **`proposal.md` desactualizado:** su sección 4 habla de Celery, Supabase Auth y Storage. Hay que alinearlo con las decisiones.
 - **Latencias y amplitudes de las ondas I, III y V**: definir con fonoaudiología las ventanas de búsqueda y el criterio de amplitud (decisión 020). Las necesita la comparación con arquetipos.
+- **Revisión del panel de estados internos por fonoaudiología** (nomenclatura y legibilidad de las 7 figuras): pendiente por falta de disponibilidad; no bloquea el merge (decisión 023).
 - **Perfiles `Custom_*` compartidos entre usuarios** (se pisan por nombre y `/profiles` los muestra a todos): se resuelve en el módulo de audiogramas, ligándolos a un caso (decisión 019).
 
 ---

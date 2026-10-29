@@ -84,7 +84,7 @@ Abrí el **Panel de pruebas** (barra inferior, solo en desarrollo) y la pestaña
 
 ### Simulaciones
 
-Hace falta el worker (lo levanta `npm run dev`). Una simulación tarda ~75 s.
+Hace falta el worker (lo levanta `npm run dev`). Una simulación tarda ~80 s.
 
 | # | Qué hacer | Qué deberías ver |
 |---|---|---|
@@ -98,6 +98,8 @@ Hace falta el worker (lo levanta `npm run dev`). Una simulación tarda ~75 s.
 | T8 | Pedir una simulación con el **worker apagado** (Ctrl+C solo del worker, o `npm run dev:backend` y `npm run dev:frontend` por separado) | Queda "En cola" y no avanza. Al levantar el worker (`npm run dev:worker`), la toma. |
 | T9 | **Worker caído a mitad**: matalo mientras ejecuta, vencé la simulación con SQL (sección 5) y reiniciá el worker | Pasa a **Error** ("La simulación se interrumpió. Podés volver a pedirla.") y libera el cupo. |
 | T10 | **RN4**: copiar la dirección de una simulación (`/simulaciones/<id>`), entrar con otro usuario y pegarla | "Simulación no encontrada" → **404**, igual que con un id inventado. |
+| T11 | **Estados internos** (decisión 023): al terminar una simulación, abrir el panel *Estados internos* debajo de los gráficos (también en el detalle del historial) | Recién al abrirlo pide `GET /api/simulaciones/{id}/estados-internos` (~4,6 MB). Muestra las 7 figuras; cada una declara frecuencia solicitada y característica efectiva, muestreo, ventana y unidades. Los selectores cambian el canal de las figuras 2 y 7 (1 o 4 kHz) y de la 3 a la 6 (500 Hz a 8 kHz). |
+| T12 | Abrir el panel en una simulación hecha **antes** de esta versión del modelo | "Esta simulación no tiene estados internos…" → **404** `estados_internos_no_disponibles`. |
 
 ### Casos
 
@@ -186,8 +188,9 @@ pnpm --dir frontend run build
 | `test_autenticacion_reglas.py` | Largo de contraseña, `requiere_admin`, que el hash no salga al serializar. Sin base de datos. |
 | `test_autenticacion_api.py` | Registro y sus errores, hash argon2 en la base, cookie `httpOnly`, token no guardado en claro, login con la misma respuesta exista o no el email, bloqueo a los 10 fallos y desbloqueo, logout que invalida el token, sesión vencida, dos ventanas independientes, límite de 5 por minuto, creación y promoción de admin. |
 | `test_cambio_contrasena.py` | Cambio exitoso (la vieja deja de servir), cierra las demás sesiones y conserva la actual, actual incorrecta suma fallos y bloquea, el cambio reinicia los fallos, nueva corta o repetida, sin sesión, reseteo por comando (desbloquea y cierra todas las sesiones). |
-| `test_endpoints_protegidos.py` | `/health` público; `/profiles`, `/simulaciones` y `/audiogram/*` dan 401 sin sesión; nombre de perfil inválido, 422. |
-| `test_simulaciones.py` | Con el motor reemplazado por uno falso: RN3 (rangos, sin fibras, perfil inexistente), pedir deja en cola, el worker la ejecuta y la deja completada, orden de llegada, error del motor (mensaje genérico, libera el cupo), **RN10** (pedido idéntico reutilizado, sin cupo, la huella depende del contenido del perfil), **RN5a/b/c** (cupos por tipo, por hora, tope del sistema), **RN4**, caso opcional y filtro, paginación por cursor, y recuperación de las interrumpidas. |
+| `test_endpoints_protegidos.py` | `/health` público; `/profiles`, `/simulaciones` (también `/estados-internos`) y `/audiogram/*` dan 401 sin sesión; nombre de perfil inválido, 422. |
+| `test_simulaciones.py` | Con el motor reemplazado por uno falso: RN3 (rangos, sin fibras, perfil inexistente), pedir deja en cola, el worker la ejecuta y la deja completada, orden de llegada, error del motor (mensaje genérico, libera el cupo), **RN10** (pedido idéntico reutilizado, sin cupo, la huella depende del contenido del perfil), **RN5a/b/c** (cupos por tipo, por hora, tope del sistema), **RN4**, caso opcional y filtro, paginación por cursor, recuperación de las interrumpidas y **estados internos** (se guardan aparte, no se duplican con RN10, endpoint propio con RN4). |
+| `test_estados_internos.py` | Marca `lento`, fuera del `pytest` normal: corre el modelo real y verifica que w1/w3/w5 no cambian al guardar estados internos. `systemd-run --user --scope -p MemoryMax=3G -p MemorySwapMax=0 uv run pytest -m lento`. |
 | `test_casos_api.py` | Crear, ver, editar (PUT reemplaza todo) y borrar (lógico) casos; validación de alias, edad, sexo y notas; orden y paginación por cursor (25 casos de a 10, sin repetir ni saltear); **RN4** (otro usuario recibe 404 al ver, editar o borrar, igual que con un id inexistente); sin sesión, 401. |
 
 No hay tests automáticos del frontend: sus páginas se verifican con la tabla de la sección 3.

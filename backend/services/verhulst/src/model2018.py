@@ -86,7 +86,8 @@ class ModelOutput:
 def _solve_one_cochlea(model_data, fs, sectionsNo, probes, storeflag,
                       sheraPo_val, subject, IrrPct, non_linear_type,
                       DECIMATION, numH, numM, numL,
-                      outdir='./', on_stage_complete=None):
+                      outdir='./', on_stage_complete=None,
+                      frecuencias_internas=None, graficar=True):
     """
         Procesa un canal completo de la simulación auditiva.
         
@@ -110,8 +111,17 @@ def _solve_one_cochlea(model_data, fs, sectionsNo, probes, storeflag,
         non_linearity_type=non_linear_type
     )
 
+    # Con frecuencias_internas, 'd' guarda solo esos canales y el polo de Shera cada 1 ms:
+    # los internos completos llevan el pico de RAM a ~6 GB (regelabo, decisión 023).
+    canales = None
+    paso_internos = 1
+    if 'd' in storeflag and frecuencias_internas is not None:
+        canales = [int(np.argmin(np.abs(coch.cf - f))) for f in frecuencias_internas]
+        paso_internos = int(round(fs * 1e-3))
+    internos = canales if canales is not None else True
+
     # Resolver mecánica coclear (ondas viajeras en la membrana basilar)
-    coch.solve(store_internals=('d' in storeflag))
+    coch.solve(store_internals=('d' in storeflag), paso_internos=paso_internos)
 
     # Crear estructura de salida
     output = ModelOutput()
@@ -120,6 +130,8 @@ def _solve_one_cochlea(model_data, fs, sectionsNo, probes, storeflag,
     output.fs_ihc = fs
     output.fs_an = fs // DECIMATION
     output.fs_abr = fs // DECIMATION
+    output.canales_internos = canales
+    output.paso_internos = paso_internos
 
     # Almacenar velocidad BM si fue solicitada
     if 'v' in storeflag:
@@ -136,7 +148,8 @@ def _solve_one_cochlea(model_data, fs, sectionsNo, probes, storeflag,
 
     # save partial output for this stage so an external watcher can plot
     try:
-        save_partial_output(channel_idx, 'cochlea', output, outdir)
+        if graficar:
+            save_partial_output(channel_idx, 'cochlea', output, outdir)
     except Exception:
         pass
 
@@ -150,11 +163,13 @@ def _solve_one_cochlea(model_data, fs, sectionsNo, probes, storeflag,
         magic_constant = 0.118
         if 'd' in storeflag:
             Vm, mt_out, Imet_out, Ikf_out, Iks_out = ihc.inner_hair_cell_potential(
-                coch.Vsolution * magic_constant, fs, store_internals=True)
+                coch.Vsolution * magic_constant, fs, store_internals=internos)
             output.mt_ihc = mt_out
             output.Imet = Imet_out
             output.Ikf = Ikf_out
             output.Iks = Iks_out
+            if canales is not None:
+                output.vm_internos = Vm[:, canales]
         else:
             Vm = ihc.inner_hair_cell_potential(coch.Vsolution * magic_constant, fs)
 
@@ -165,7 +180,8 @@ def _solve_one_cochlea(model_data, fs, sectionsNo, probes, storeflag,
             on_stage_complete(channel_idx, 'ihc', output)
 
         try:
-            save_partial_output(channel_idx, 'ihc', output, outdir)
+            if graficar:
+                save_partial_output(channel_idx, 'ihc', output, outdir)
         except Exception:
             pass
 
@@ -185,7 +201,7 @@ def _solve_one_cochlea(model_data, fs, sectionsNo, probes, storeflag,
             if 'h' in storeflag or 'b' in storeflag:
                 if 'd' in storeflag:
                     anfH_raw, qt_H, wt_H, avail_H = anf.auditory_nerve_fiber(
-                        Vm_resampled, Fs_res, 2, store_internals=True)
+                        Vm_resampled, Fs_res, 2, store_internals=internos)
                     anfH = anfH_raw * Fs_res
                     output.qt_H = qt_H
                     output.wt_H = wt_H
@@ -199,7 +215,7 @@ def _solve_one_cochlea(model_data, fs, sectionsNo, probes, storeflag,
             if 'm' in storeflag or 'b' in storeflag or 'w' in storeflag or 'd' in storeflag:
                 if 'd' in storeflag:
                     anfM_raw, qt_M, wt_M, avail_M = anf.auditory_nerve_fiber(
-                        Vm_resampled, Fs_res, 1, store_internals=True)
+                        Vm_resampled, Fs_res, 1, store_internals=internos)
                     anfM = anfM_raw * Fs_res
                     output.qt_M = qt_M
                     output.wt_M = wt_M
@@ -213,7 +229,7 @@ def _solve_one_cochlea(model_data, fs, sectionsNo, probes, storeflag,
             if 'l' in storeflag or 'b' in storeflag or 'w' in storeflag or 'd' in storeflag:
                 if 'd' in storeflag:
                     anfL_raw, qt_L, wt_L, avail_L = anf.auditory_nerve_fiber(
-                        Vm_resampled, Fs_res, 0, store_internals=True)
+                        Vm_resampled, Fs_res, 0, store_internals=internos)
                     anfL = anfL_raw * Fs_res
                     output.qt_L = qt_L
                     output.wt_L = wt_L
@@ -227,7 +243,8 @@ def _solve_one_cochlea(model_data, fs, sectionsNo, probes, storeflag,
                 on_stage_complete(channel_idx, 'an_fibers', output)
 
             try:
-                save_partial_output(channel_idx, 'an_fibers', output, outdir)
+                if graficar:
+                    save_partial_output(channel_idx, 'an_fibers', output, outdir)
             except Exception:
                 pass
 
@@ -239,10 +256,11 @@ def _solve_one_cochlea(model_data, fs, sectionsNo, probes, storeflag,
                     cn, anSummed, cn_exc, cn_inh = nuclei.cochlearNuclei(
                         anfH, anfM, anfL, numH, numM, numL, Fs_res, store_internals=True)
                     ic, ic_exc, ic_inh = nuclei.inferiorColliculus(cn, Fs_res, store_internals=True)
-                    output.cn_exc = cn_exc
-                    output.cn_inh = cn_inh
-                    output.ic_exc = ic_exc
-                    output.ic_inh = ic_inh
+                    sel = slice(None) if canales is None else canales
+                    output.cn_exc = cn_exc[:, sel]
+                    output.cn_inh = cn_inh[:, sel]
+                    output.ic_exc = ic_exc[:, sel]
+                    output.ic_inh = ic_inh[:, sel]
                 else:
                     cn, anSummed = nuclei.cochlearNuclei(
                         anfH, anfM, anfL, numH, numM, numL, Fs_res)
@@ -257,7 +275,8 @@ def _solve_one_cochlea(model_data, fs, sectionsNo, probes, storeflag,
                     on_stage_complete(channel_idx, 'brainstem', output)
 
                 try:
-                    save_partial_output(channel_idx, 'brainstem', output, outdir)
+                    if graficar:
+                        save_partial_output(channel_idx, 'brainstem', output, outdir)
                 except Exception:
                     pass
 
@@ -275,7 +294,8 @@ def _solve_one_cochlea(model_data, fs, sectionsNo, probes, storeflag,
                         on_stage_complete(channel_idx, 'abr', output)
 
                     try:
-                        save_partial_output(channel_idx, 'abr', output, outdir)
+                        if graficar:
+                            save_partial_output(channel_idx, 'abr', output, outdir)
                     except Exception:
                         pass
 
@@ -297,7 +317,9 @@ def model2018(
     nL: Union[int, np.ndarray] = 3,
     clean: int = 1,
     data_folder: str = './',
-    on_stage_complete: Optional[callable] = None) -> List[ModelOutput]:
+    on_stage_complete: Optional[callable] = None,
+    frecuencias_internas: Optional[List[float]] = None,
+    graficar: bool = True) -> List[ModelOutput]:
     """
     Computational model of the auditory periphery (Verhulst, Altoe, Vasilkov, 2018).
     
@@ -348,6 +370,12 @@ def model2018(
         where stage_name is one of: 'cochlea', 'ihc', 'an_fibers', 'brainstem', 'abr'.
         The callback receives the partial ModelOutput object at that point.
         NOTE: only works in sequential mode (single channel). Ignored with multiprocessing.
+    frecuencias_internas : list of float, optional
+        Con 'd', guarda los estados internos solo en los canales con CF más cercana
+        a estas frecuencias (Hz) y el polo de Shera cada 1 ms (regelabo, decisión 023).
+        Sin este parámetro, 'd' guarda todos los canales y muestras (~6 GB de pico).
+    graficar : bool, optional
+        False desactiva el PlotOrchestrator y los .npz parciales (uso en el worker).
         
     Returns:
     --------
@@ -440,7 +468,8 @@ def model2018(
         _solve_one_cochlea, fs=fs, sectionsNo=sectionsNo, probes=probes,
         storeflag=storeflag, sheraPo_val=sheraPo_val, subject=subject,
         IrrPct=IrrPct, non_linear_type=non_linear_type, DECIMATION=DECIMATION,
-        numH=numH, numM=numM, numL=numL, outdir=data_folder
+        numH=numH, numM=numM, numL=numL, outdir=data_folder,
+        frecuencias_internas=frecuencias_internas, graficar=graficar
     )
     
     # ---- Ejecución paralela o secuencial ----
@@ -453,29 +482,35 @@ def model2018(
             storeflag=storeflag, sheraPo_val=sheraPo_val, subject=subject,
             IrrPct=IrrPct, non_linear_type=non_linear_type, DECIMATION=DECIMATION,
             numH=numH, numM=numM, numL=numL, outdir=data_folder,
-            on_stage_complete=on_stage_complete
+            on_stage_complete=on_stage_complete,
+            frecuencias_internas=frecuencias_internas, graficar=graficar
         )
         # Start orchestrator even for single-channel runs so plots appear
         # while the simulation progresses and the partial outputs are saved.
-        orchestrator = PlotOrchestrator(data_folder)
-        orchestrator.start()
-        try:
+        if not graficar:
             results = [_solve_with_cb(cochlear_list[0])]
-        finally:
+        else:
+            orchestrator = PlotOrchestrator(data_folder)
+            orchestrator.start()
             try:
-                orchestrator.stop()
-            except Exception:
-                pass
+                results = [_solve_with_cb(cochlear_list[0])]
+            finally:
+                try:
+                    orchestrator.stop()
+                except Exception:
+                    pass
     else:
         # Start a plot orchestrator in the parent process to generate
         # visualizations as soon as workers write partial outputs.
-        orchestrator = PlotOrchestrator(data_folder)
-        orchestrator.start()
+        orchestrator = PlotOrchestrator(data_folder) if graficar else None
+        if orchestrator:
+            orchestrator.start()
         with mp.Pool(mp.cpu_count(), maxtasksperchild=1) as p:
             results = p.map(_solve_channel, cochlear_list)
         # stop the watcher after workers finish
         try:
-            orchestrator.stop()
+            if orchestrator:
+                orchestrator.stop()
         except Exception:
             pass
     

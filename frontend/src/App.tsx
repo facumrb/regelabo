@@ -3,6 +3,7 @@ import Header from './components/Header'
 import SimulationControls from './components/SimulationControls'
 import ResultsSummary from './components/ResultsSummary'
 import PlotsPanel from './components/PlotsPanel'
+import PanelEstadosInternos from './components/PanelEstadosInternos'
 import AudiogramManager from './components/AudiogramManager'
 import PerfilSimulado from './components/PerfilSimulado'
 import { Link, Route, Routes } from 'react-router-dom'
@@ -51,6 +52,7 @@ export default function App() {
   const [casos, setCasos] = useState<Caso[]>([])
   const [casoId, setCasoId] = useState('') // '' = sin caso
   const [simulacion, setSimulacion] = useState<Simulacion | null>(null) // la que se está esperando
+  const [simulacionDelResultado, setSimulacionDelResultado] = useState<string | null>(null)
   const montado = useRef(true)
   const [error, setError] = useState<string | null>(null)
   const [successToast, setSuccessToast] = useState<string | null>(null)
@@ -137,6 +139,7 @@ export default function App() {
       }
       if (actual.estado === 'completada' && actual.resultado) {
         setResult(actual.resultado)
+        setSimulacionDelResultado(actual.id)
         setPerfilDelResultado(perfilPedido)
       } else {
         setError(actual.mensaje_error ?? 'La simulación no se pudo completar.')
@@ -278,6 +281,7 @@ export default function App() {
                     {result && perfilDelResultado && <PerfilSimulado perfil={perfilDelResultado} />}
                     <ResultsSummary result={result} />
                     <PlotsPanel result={result} />
+                    {result && simulacionDelResultado && <PanelEstadosInternos simulacionId={simulacionDelResultado} />}
                   </div>
 
                 </div>

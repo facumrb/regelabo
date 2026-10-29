@@ -12,8 +12,10 @@ from sqlalchemy.dialects.postgresql import insert  # ON CONFLICT: solo PostgreSQ
 from sqlalchemy.orm import Session
 
 from backend.controller.modelos import (
-    ABRWavesData, HarmonicPeak, ParametrosSimulacion, SimulationResponse, Simulacion, SpectrumData,
+    ABRWavesData, EstadosInternos, HarmonicPeak, ParametrosSimulacion, SimulationResponse, Simulacion,
+    SpectrumData,
 )
+from backend.datos.tablas import EstadosInternos as EstadosInternosFila
 from backend.datos.tablas import ResultadoSimulacion as ResultadoFila
 from backend.datos.tablas import Simulacion as SimulacionFila
 
@@ -69,7 +71,11 @@ def guardar_resultado(tx: Session, huella: str, resp: SimulationResponse) -> UUI
             metricas={}, duracion_s=resp.execution_time_seconds,
         ).on_conflict_do_nothing(index_elements=["huella"]).returning(ResultadoFila.id)
     )
-    return resultado_id or buscar_resultado_id(tx, huella)
+    if resultado_id is None:
+        return buscar_resultado_id(tx, huella)
+    if resp.estados_internos is not None:
+        tx.add(EstadosInternosFila(resultado_id=resultado_id, datos=resp.estados_internos.model_dump()))
+    return resultado_id
 
 
 def crear(tx: Session, usuario_id: UUID, caso_id: Optional[UUID], parametros: ParametrosSimulacion,
@@ -121,6 +127,16 @@ def buscar(tx: Session, simulacion_id: UUID, usuario_id: UUID) -> Optional[Simul
     fila = tx.scalars(select(SimulacionFila).where(
         SimulacionFila.id == simulacion_id, SimulacionFila.usuario_id == usuario_id)).first()
     return _a_negocio(tx, fila, con_detalle=True) if fila else None
+
+
+def buscar_estados_internos(tx: Session, simulacion_id: UUID, usuario_id: UUID) -> Optional[EstadosInternos]:
+    """Los estados internos del resultado de una simulación del usuario; None si no es suya o no los tiene."""
+    datos = tx.scalar(
+        select(EstadosInternosFila.datos)
+        .join(SimulacionFila, SimulacionFila.resultado_id == EstadosInternosFila.resultado_id)
+        .where(SimulacionFila.id == simulacion_id, SimulacionFila.usuario_id == usuario_id)
+    )
+    return EstadosInternos(**datos) if datos else None
 
 
 def tomar_siguiente(tx: Session, ahora: datetime) -> Optional[Simulacion]:

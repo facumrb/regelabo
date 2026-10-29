@@ -212,9 +212,11 @@ def auditory_nerve_fiber(Vm,fs,spont,store_internals=False):
     kin=sqrt(1/(1+exp(-(Vm-vh)/ss)))
     solution=zeros_like(Vm)
     if store_internals:
-        qt_sol=zeros_like(Vm)
-        wt_sol=zeros_like(Vm)
-        avail_sol=zeros_like(Vm)
+        # store_internals: True guarda todos los canales; una lista, solo esos (regelabo, decisión 023)
+        canales=slice(None) if store_internals is True else store_internals
+        qt_sol=zeros_like(Vm[:,canales])
+        wt_sol=zeros_like(Vm[:,canales])
+        avail_sol=zeros_like(Vm[:,canales])
     for i in range(len(kin[:,0])):
         # Filtrado paso bajo de la activación de Ca²⁺ (constante tCa):
         # Modela la inercia de apertura/cierre de los canales iónicos de calcio.
@@ -254,9 +256,9 @@ def auditory_nerve_fiber(Vm,fs,spont,store_internals=False):
         # Almacenamiento de la tasa de disparo instantánea:
         solution[i,:]=firing
         if store_internals:
-            qt_sol[i,:]=qt
-            wt_sol[i,:]=wt
-            avail_sol[i,:]=available
+            qt_sol[i,:]=qt[...,canales]
+            wt_sol[i,:]=wt[...,canales]
+            avail_sol[i,:]=available[...,canales]
     if store_internals:
         return solution,qt_sol,wt_sol,avail_sol
     return solution

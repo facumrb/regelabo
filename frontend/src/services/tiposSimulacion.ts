@@ -99,3 +99,34 @@ export interface PaginaDeSimulaciones {
   /** Se pasa como `despuesDe` para pedir la página siguiente; null si no hay más. */
   siguiente: string | null
 }
+
+// ---- Estados internos (decisión 023), reflejan los modelos de backend/controller/modelos.py ----
+// Las series son matrices [muestra][canal]; `canales` indica qué entradas de `EstadosInternos.canales` usa.
+type Serie = number[][]
+
+export interface CanalInterno {
+  frecuencia_solicitada_hz: number
+  /** Frecuencia característica del canal coclear más cercano: la que realmente se grafica */
+  frecuencia_caracteristica_hz: number
+}
+
+export interface EstadosFibra {
+  q: Serie
+  w: Serie
+  a: Serie
+}
+
+/** Datos de las siete figuras de estados internos de una simulación (se piden aparte del detalle). */
+export interface EstadosInternos {
+  canales: CanalInterno[]
+  polo_shera: { fs_hz: number; frecuencia_caracteristica_hz: number[]; valores: Serie }
+  ihc: {
+    fs_hz: number; ventana_ms: number[]; canales: number[]
+    imet_na: Serie; ikf_na: Serie; iks_na: Serie; vm_mv: Serie
+  }
+  vesiculas: { fs_hz: number; ventana_ms: number[]; hsr: EstadosFibra; msr: EstadosFibra; lsr: EstadosFibra }
+  cn_ic: {
+    fs_hz: number; ventana_ms: number[]; canales: number[]
+    cn_exc: Serie; cn_inh: Serie; ic_exc: Serie; ic_inh: Serie
+  }
+}

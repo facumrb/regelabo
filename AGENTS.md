@@ -27,6 +27,7 @@ npm run dev                          # backend :8000 + frontend :5173 + worker d
 uv run fastapi dev app.py            # Swagger en http://localhost:8000/api/docs
 uv run flake8                        # estilo PEP8 (config en .flake8)
 uv run pytest                        # tests en backend/tests/ (necesitan `docker compose up -d db`; usan la base regelabo_test, que se crea sola)
+systemd-run --user --scope -p MemoryMax=3G -p MemorySwapMax=0 uv run pytest -m lento   # corren el modelo completo (~3 min)
 
 # Base de datos (desarrollo): copiar .env.example a .env antes
 docker compose up -d db              # PostgreSQL 17 local
@@ -47,7 +48,7 @@ cd frontend && pnpm run dev          # también: pnpm run build / typecheck / pr
 cd backend/services/verhulst/src/c_lib && ./build.sh   # build.bat en Windows
 ```
 
-Para verificar el backend: `GET /api/health` (`c_solver_available` debe ser `true`) y una simulación desde la pantalla (con el worker corriendo: `POST /api/simulaciones` solo la deja en cola). Una simulación tarda ~75 s y usa ~1,1 GB de RAM en un solo núcleo.
+Para verificar el backend: `GET /api/health` (`c_solver_available` debe ser `true`) y una simulación desde la pantalla (con el worker corriendo: `POST /api/simulaciones` solo la deja en cola). Una simulación tarda ~80 s y usa ~1,1 GB de RAM en un solo núcleo. **Correr el modelo siempre con tope de memoria** (`systemd-run --user --scope -p MemoryMax=3G -p MemorySwapMax=0 ...`): con `storeflag` `d` sin `frecuencias_internas` el pico llega a ~6 GB y deja sin RAM la máquina (decisión 023).
 
 ## Arquitectura
 
@@ -60,7 +61,7 @@ views/ (HTTP) → controller/ (negocio) → datos/ (persistencia)
 
 - **`backend/views/`**: routers FastAPI, todos bajo `/api`. Solo reciben el pedido, llaman al controller y traducen errores a HTTP: `ErrorDeNegocio` → `{"detail": {"codigo", "mensaje"}}` con el estado de `views/errores.py` (los endpoints del prototipo todavía usan `ValueError` → 400). `views/dependencias.py` tiene `usuario_actual` y `requiere_admin` para proteger rutas (todas piden sesión salvo `/health`, `/api/`, el registro y el login); `views/limites.py`, el límite de pedidos por IP (slowapi). No importan nada de `datos/` ni de `services/`.
 - **`backend/controller/`**: lógica de negocio. `modelos.py` tiene los objetos de negocio (Pydantic) que también usan las views como `response_model`; `errores.py`, `ErrorDeNegocio`; `autenticacion.py`, registro, login con bloqueo y sesiones. Nunca accede al disco ni al modelo directamente.
-- **`backend/datos/`**: todo acceso a persistencia. `tablas.py` define las 10 tablas (SQLAlchemy, internas a la capa: las funciones devuelven objetos de negocio del controller); `conexion.py` lee `DATABASE_URL` y ofrece `transaccion()`, que el controller usa para agrupar operaciones (ej. verificar cupo + encolar) pasando la sesión a las funciones de datos (`casos.py` es el ejemplo a copiar: filtra siempre por dueño y excluye los borrados, y pagina por cursor); `perfiles.py` lee y escribe los perfiles de polos en `services/verhulst/data/Poles/<perfil>/StartingPoles.dat`.
+- **`backend/datos/`**: todo acceso a persistencia. `tablas.py` define las 11 tablas (SQLAlchemy, internas a la capa: las funciones devuelven objetos de negocio del controller); `conexion.py` lee `DATABASE_URL` y ofrece `transaccion()`, que el controller usa para agrupar operaciones (ej. verificar cupo + encolar) pasando la sesión a las funciones de datos (`casos.py` es el ejemplo a copiar: filtra siempre por dueño y excluye los borrados, y pagina por cursor); `perfiles.py` lee y escribe los perfiles de polos en `services/verhulst/data/Poles/<perfil>/StartingPoles.dat`.
 - **`backend/configuracion.py`**: parámetros leídos de variables de entorno (`.env` en desarrollo): `DATABASE_URL`, duración de sesión, intentos máximos, bloqueo y `COOKIE_SECURE` (por defecto `true`; el `.env` de desarrollo lo pone en `false`).
 - **`backend/comandos/`**: scripts de administración, fuera de las 3 capas; solo llaman al controller.
 - **`worker.py`** (raíz): proceso que ejecuta las simulaciones en cola (`uv run python worker.py`, o junto con `npm run dev`); no se recarga solo. Pedir una simulación (`controller/simulaciones.py`) nunca ejecuta el modelo: la deja en cola, o completada si ya existe un resultado con la misma huella (RN10). Cupos y tope de cola en `configuracion.py`; ver decisión 020.

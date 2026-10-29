@@ -9,7 +9,7 @@ de NumPy y tipos de Python, sin depender de los módulos internos del modelo.
 import os
 import sys
 import tempfile
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
 
@@ -30,17 +30,23 @@ DURACION_ESTIMULO_S = 0.4
 SEMILLA = 1
 # Entra en la huella de la caché (RN10). Cambiarla si se modifica el código del modelo: invalida los
 # resultados guardados, que dejarían de corresponder a lo que calcula el modelo.
-VERSION_MODELO = "verhulst2018-1"
+VERSION_MODELO = "verhulst2018-2"
+
+# Estados internos (decisión 023): canales de las figuras de vesículas y, de esos, los de IHC y CN/IC
+FRECUENCIAS_INTERNAS_HZ = [500, 1000, 4000, 8000]
+FRECUENCIAS_VENTANA_HZ = [1000, 4000]
+VENTANA_CORTA_S = 0.05
 
 
 @dataclass
 class SalidaModelo:
-    """Ondas ABR crudas (en voltios) que devuelve el modelo."""
+    """Ondas ABR crudas (en voltios) y estados internos que devuelve el modelo."""
 
     fs: float
     w1: np.ndarray
     w3: np.ndarray
     w5: np.ndarray
+    estados_internos: dict = field(default_factory=dict)
 
 
 def solver_c_disponible() -> bool:
@@ -82,7 +88,8 @@ def ejecutar_modelo(
                 FS_ESTIMULO,
                 fc='abr',
                 irregularities=1,
-                storeflag='evihmlbw',
+                # 'b' es necesario: sin 'h' ni 'b' el modelo no calcula las fibras HSR
+                storeflag='bwd',
                 subject=SEMILLA,
                 sheraPo=polos,
                 IrrPct=0.05,
@@ -92,6 +99,8 @@ def ejecutar_modelo(
                 nL=n_l,
                 clean=1,
                 data_folder='./',
+                frecuencias_internas=FRECUENCIAS_INTERNAS_HZ,
+                graficar=False,
             )
         finally:
             os.chdir(carpeta_original)
@@ -102,4 +111,62 @@ def ejecutar_modelo(
         w1=salida.w1.flatten(),
         w3=salida.w3.flatten(),
         w5=salida.w5.flatten(),
+        estados_internos=_estados_internos(salida),
     )
+
+
+def _estados_internos(salida) -> dict:
+    """Arma los datos de las siete figuras de estados internos, con sus unidades y su muestreo.
+
+    Las magnitudes vienen del modelo; acá solo se eligen canales y ventanas y se convierten unidades.
+    """
+    def serie(arreglo, columnas, n, escala=1.0):
+        return (arreglo[:n, columnas] * escala).astype(np.float32)
+
+    canales = [
+        {"frecuencia_solicitada_hz": f, "frecuencia_caracteristica_hz": float(salida.cf[i])}
+        for f, i in zip(FRECUENCIAS_INTERNAS_HZ, salida.canales_internos)
+    ]
+    cortas = [FRECUENCIAS_INTERNAS_HZ.index(f) for f in FRECUENCIAS_VENTANA_HZ]
+    n_ihc = int(VENTANA_CORTA_S * salida.fs_ihc)
+    n_tronco = int(VENTANA_CORTA_S * salida.fs_an)
+    n_an = salida.qt_H.shape[0]
+    fibras = {
+        tipo: {
+            "q": serie(getattr(salida, f"qt_{t}"), slice(None), n_an),
+            "w": serie(getattr(salida, f"wt_{t}"), slice(None), n_an),
+            "a": serie(getattr(salida, f"avail_{t}"), slice(None), n_an),
+        }
+        for tipo, t in (("hsr", "H"), ("msr", "M"), ("lsr", "L"))
+    }
+    return {
+        "canales": canales,
+        "polo_shera": {
+            "fs_hz": salida.fs_bm / salida.paso_internos,
+            "frecuencia_caracteristica_hz": salida.cf.astype(np.float32),
+            "valores": salida.sheraPt.astype(np.float32),
+        },
+        "ihc": {
+            "fs_hz": float(salida.fs_ihc),
+            "ventana_ms": [0, VENTANA_CORTA_S * 1e3],
+            "canales": cortas,
+            "imet_na": serie(salida.Imet, cortas, n_ihc, 1e9),
+            "ikf_na": serie(salida.Ikf, cortas, n_ihc, 1e9),
+            "iks_na": serie(salida.Iks, cortas, n_ihc, 1e9),
+            "vm_mv": serie(salida.vm_internos, cortas, n_ihc, 1e3),
+        },
+        "vesiculas": {
+            "fs_hz": float(salida.fs_an),
+            "ventana_ms": [0, n_an / salida.fs_an * 1e3],
+            **fibras,
+        },
+        "cn_ic": {
+            "fs_hz": float(salida.fs_an),
+            "ventana_ms": [0, VENTANA_CORTA_S * 1e3],
+            "canales": cortas,
+            "cn_exc": serie(salida.cn_exc, cortas, n_tronco),
+            "cn_inh": serie(salida.cn_inh, cortas, n_tronco),
+            "ic_exc": serie(salida.ic_exc, cortas, n_tronco),
+            "ic_inh": serie(salida.ic_inh, cortas, n_tronco),
+        },
+    }

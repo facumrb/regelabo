@@ -1,0 +1,31 @@
+meta {
+  name: 16. Estados internos de la simulación
+  type: http
+  seq: 16
+}
+
+get {
+  url: {{base_url}}/simulaciones/{{simulacion_id}}/estados-internos
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token_sim_ana}}
+}
+
+tests {
+  test("200 con las figuras, o 404 si todavía no terminó", function () {
+    if (res.getStatus() === 200) {
+      expect(res.getBody().canales).to.have.lengthOf(4);
+      expect(res.getBody().ihc.ventana_ms).to.deep.equal([0, 50]);
+    } else {
+      expect(res.getStatus()).to.equal(404);
+      expect(res.getBody().detail.codigo).to.equal("estados_internos_no_disponibles");
+    }
+  });
+}
+
+docs {
+  Decisión 023: los datos de las siete figuras (~4,6 MB) se piden aparte del detalle. Sin worker, la simulación sigue en cola y responde 404 con `estados_internos_no_disponibles`; con el worker corriendo, pasados ~80 s, responde 200. RN4 (ajena → 404) lo prueba pytest.
+}

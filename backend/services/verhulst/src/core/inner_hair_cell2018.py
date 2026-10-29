@@ -182,10 +182,12 @@ def inner_hair_cell_potential(mu,fs, store_internals=False):
     # deflexiones negativas (opuestas) los cierran.
     # ---- Array para variables internas (visualizaciones detalladas) ----
     if store_internals:
-        mt_sol=zeros_like(mu,dtype=float)
-        Imet_sol=zeros_like(mu,dtype=float)
-        Ikf_sol=zeros_like(mu,dtype=float)
-        Iks_sol=zeros_like(mu,dtype=float)
+        # store_internals: True guarda todos los canales; una lista, solo esos (regelabo, decisión 023)
+        canales=slice(None) if store_internals is True else store_internals
+        mt_sol=zeros_like(mu[:,canales],dtype=float)
+        Imet_sol=zeros_like(mu[:,canales],dtype=float)
+        Ikf_sol=zeros_like(mu[:,canales],dtype=float)
+        Iks_sol=zeros_like(mu[:,canales],dtype=float)
     mtIn=1/(1+exp((x0-mu)/s0)*(1+exp((x0-mu)/s1)));
     # Variables de activación de K⁺ inicializadas con los valores de reposo.
     mkf1=1/(1+exp(-(Vm-xk)/sk));
@@ -244,10 +246,10 @@ def inner_hair_cell_potential(mu,fs, store_internals=False):
         # Almacenamiento del potencial de membrana para esta muestra temporal:
         Vsol[i,:]=Vm
         if store_internals:
-            mt_sol[i,:]=mt
-            Imet_sol[i,:]=Imet
-            Ikf_sol[i,:]=Ikf
-            Iks_sol[i,:]=Iks
+            mt_sol[i,:]=mt[...,canales]
+            Imet_sol[i,:]=Imet[...,canales]
+            Ikf_sol[i,:]=Ikf[...,canales]
+            Iks_sol[i,:]=Iks[...,canales]
     # print(Vsol)
     if store_internals:
         return Vsol, mt_sol, Imet_sol, Ikf_sol, Iks_sol

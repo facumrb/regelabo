@@ -9,6 +9,7 @@ import numpy as np
 
 from backend.controller.modelos import (
     ABRWavesData,
+    EstadosInternos,
     HarmonicPeak,
     ParametrosSimulacion,
     SimulationResponse,
@@ -129,5 +130,19 @@ class SimulationService:
                 "nH": req.nH,
                 "nM": req.nM,
                 "nL": req.nL
-            }
+            },
+            estados_internos=EstadosInternos(**_a_listas(output.estados_internos)),
         )
+
+
+def _a_listas(valor, cifras: int = 5):
+    """Convierte los arreglos de NumPy a listas con `cifras` cifras significativas (achica el JSON)."""
+    if isinstance(valor, dict):
+        return {clave: _a_listas(v, cifras) for clave, v in valor.items()}
+    if isinstance(valor, list):
+        return [_a_listas(v, cifras) for v in valor]
+    if isinstance(valor, np.ndarray) and valor.ndim == 1:
+        return [float(f"{x:.{cifras}g}") for x in valor]
+    if isinstance(valor, np.ndarray):
+        return [_a_listas(fila, cifras) for fila in valor]
+    return valor
