@@ -50,6 +50,8 @@ export interface PerfilAuditivo {
   nombre: string
   etiqueta: string
   forma: 'plana' | 'descendente' | 'combinada' | 'personalizada'
+  /** RN2, según la curva pedida */
+  patron: 'plano' | 'caida_en_agudos'
   grado: 'normal' | 'leve' | 'moderada' | 'severa'
   pta: number
   curva_pedida: PuntoAudiograma[]

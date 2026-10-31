@@ -28,10 +28,11 @@ FRECUENCIAS_PTA = [500, 1000, 2000, 4000]
 RECORTE_AVISO_DB = 5  # Q19: más de un paso de audiometría
 PREFIJO_PERSONALIZADO = "Custom_"
 
-# Repiten los polos de otro perfil de la lista (dif. < 6 %): se ocultan para no confundir.
-# "Normal" tiene polos de audición normal (como Flat00), pero su profile.txt dice otra cosa.
-DUPLICADOS = {"Normal", "Slope00", "Flat00_Slope00", "Slope05_5"} | {
-    f"Flat00_Slope{n:02d}" for n in range(5, 40, 5)
+# Los que ofrece el selector (decisión 026): del caso normal al techo del modelo, en pasos de ~10 dB.
+# Los demás no se borran: siguen sirviendo a las simulaciones viejas y se recrean cargando su audiograma.
+# Fuera quedan también los duplicados (Normal, Slope00, Flat00_SlopeXX…), que repiten polos de otro perfil.
+CATALOGO = {
+    "Flat00", "Flat15", "Flat25", "Flat35", "Slope15", "Slope25", "Slope35", "Slope35_5", "Flat30_Slope35",
 }
 
 # Distinto de "perfil_inexistente" (400, RN3 al pedir una simulación): acá es un recurso que no está
@@ -87,6 +88,17 @@ def pta(puntos: List[AudiogramPoint]) -> float:
                           for f in FRECUENCIAS_PTA]))
 
 
+def patron(puntos: List[AudiogramPoint]) -> str:
+    """RN2: con caída en agudos si los agudos (>= 3 kHz) pierden >= 15 dB más que los graves (<= 1 kHz)."""
+    frecuencias = np.array([p.frequency for p in puntos])
+    perdidas = np.array([p.hearing_loss_db for p in puntos])
+    graves, agudos = frecuencias <= 1000, frecuencias >= 3000
+    valor_pta = pta(puntos)
+    media_graves = np.mean(perdidas[graves]) if np.any(graves) else valor_pta
+    media_agudos = np.mean(perdidas[agudos]) if np.any(agudos) else valor_pta
+    return "caida_en_agudos" if media_agudos - media_graves >= 15.0 else "plano"
+
+
 def grado(valor_pta: float) -> str:
     if valor_pta <= 20:
         return "normal"
@@ -99,25 +111,39 @@ def grado(valor_pta: float) -> str:
 
 # ---- Catálogo ----
 
-def _etiqueta_base(nombre: str) -> Tuple[str, str]:
-    """(forma, descripción) a partir del nombre de la carpeta (convención del README de Verhulst)."""
+def _con_grado(grado_rn2: str, configuracion: str) -> str:
+    """Nombre clínico del perfil (decisión 026): el grado de RN2 y la configuración de la curva."""
+    if grado_rn2 == "normal":
+        return "Normal con caída en agudos" if "caída" in configuracion else "Audición normal"
+    return f"Hipoacusia {grado_rn2} {configuracion}"
+
+
+def _etiqueta_base(nombre: str, grado_rn2: str) -> Tuple[str, str]:
+    """(forma, etiqueta) a partir del nombre de la carpeta (convención del README de Verhulst).
+    Terminología provisoria hasta la revisión de fonoaudiología (decisión 026)."""
     if m := re.fullmatch(r"Flat(\d+)", nombre):
         db = int(m[1])
-        return "plana", "Sin pérdida (0 dB HL)" if db == 0 else f"Plana · {db} dB HL en todas las frecuencias"
+        if db == 0:
+            return "plana", "Audición normal · 0 dB HL en todas las frecuencias"
+        detalle = f"plana en {db} dB HL" if grado_rn2 == "normal" else f"{db} dB HL"
+        return "plana", f"{_con_grado(grado_rn2, 'plana')} · {detalle}"
     if m := re.fullmatch(r"Slope(\d+)(?:_(\d+))?", nombre):
-        texto = f"Descendente desde 1 kHz · {int(m[1])} dB HL a 8 kHz"
-        return "descendente", texto + (f", graves en {int(m[2])} dB HL" if m[2] else "")
+        hasta = int(m[1])
+        detalle = (f"de {int(m[2])} dB HL en graves a {hasta} dB HL en 8 kHz" if m[2]
+                   else f"hasta {hasta} dB HL en 8 kHz")
+        return "descendente", f"{_con_grado(grado_rn2, 'con caída en agudos')} · {detalle}"
     if m := re.fullmatch(r"Flat(\d+)_Slope(\d+)", nombre):
-        return "combinada", f"Plana {int(m[1])} dB HL + descendente hasta {int(m[2])} dB HL a 8 kHz"
+        return "combinada", (f"{_con_grado(grado_rn2, 'plana con caída en agudos')} · "
+                             f"{int(m[1])} dB HL, hasta {int(m[2])} en 8 kHz")
     return "plana", nombre
 
 
-def _armar(nombre: str, forma: str, descripcion: str, pedida: List[AudiogramPoint]) -> PerfilAuditivo:
+def _armar(nombre: str, forma: str, etiqueta: str, pedida: List[AudiogramPoint]) -> PerfilAuditivo:
     simulada = curva_simulada(pedida)
     valor_pta = round(pta(pedida), 1)
     return PerfilAuditivo(
-        nombre=nombre, forma=forma, grado=grado(valor_pta), pta=valor_pta,
-        etiqueta=f"{descripcion} · {grado(valor_pta)} (PTA {valor_pta:g})",
+        nombre=nombre, forma=forma, grado=grado(valor_pta), patron=patron(pedida), pta=valor_pta,
+        etiqueta=etiqueta,
         curva_pedida=pedida, curva_simulada=simulada,
         frecuencias_recortadas=[p.frequency for p, s in zip(pedida, simulada)
                                 if p.hearing_loss_db - s.hearing_loss_db > RECORTE_AVISO_DB],
@@ -130,7 +156,7 @@ def _perfil_base(nombre: str) -> Optional[PerfilAuditivo]:
         return None
     pedida = [AudiogramPoint(frequency=f, hearing_loss_db=round(float(curva[1][_seccion(f)]), 1))
               for f in FRECUENCIAS_AUDIOMETRIA]
-    return _armar(nombre, *_etiqueta_base(nombre), pedida)
+    return _armar(nombre, *_etiqueta_base(nombre, grado(pta(pedida))), pedida)
 
 
 def _perfil_personalizado(nombre: str) -> Optional[PerfilAuditivo]:
@@ -142,10 +168,9 @@ def _perfil_personalizado(nombre: str) -> Optional[PerfilAuditivo]:
 
 
 def listar() -> List[PerfilAuditivo]:
-    """Los perfiles base, sin duplicados.
+    """Los perfiles del catálogo (decisión 026).
     Los personalizados no se listan: los vería cualquier usuario (RN4)."""
-    nombres = [n for n in perfiles.listar_perfiles()
-               if not n.startswith(PREFIJO_PERSONALIZADO) and n not in DUPLICADOS]
+    nombres = [n for n in perfiles.listar_perfiles() if n in CATALOGO]
     orden = {"plana": 0, "descendente": 1, "combinada": 2}
     lista = [p for p in map(_perfil_base, nombres) if p is not None]
     return sorted(lista, key=lambda p: (orden[p.forma], p.pta, p.nombre))

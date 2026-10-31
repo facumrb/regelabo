@@ -63,21 +63,29 @@ def test_un_recorte_de_hasta_5_db_no_avisa():
     assert perfil.frecuencias_recortadas == []
 
 
-def test_el_catalogo_no_tiene_duplicados_ni_personalizados():
+def test_el_catalogo_tiene_solo_los_9_perfiles_elegidos():
     lista = perfiles.listar()
     nombres = [p.nombre for p in lista]
-    assert "Flat00" in nombres and not set(nombres) & perfiles.DUPLICADOS
+    assert set(nombres) == perfiles.CATALOGO
     assert not any(n.startswith(perfiles.PREFIJO_PERSONALIZADO) for n in nombres)
     curvas = [tuple(p.hearing_loss_db for p in perfil.curva_pedida) for perfil in lista]
     assert len(curvas) == len(set(curvas))
 
 
-def test_etiquetas_legibles_con_el_grado_de_rn2():
+def test_etiquetas_clinicas_con_el_grado_de_rn2():
     por_nombre = {p.nombre: p for p in perfiles.listar()}
-    assert por_nombre["Flat00"].etiqueta.startswith("Sin pérdida")
-    assert por_nombre["Flat25"].etiqueta == "Plana · 25 dB HL en todas las frecuencias · leve (PTA 25)"
+    assert por_nombre["Flat00"].etiqueta.startswith("Audición normal")
+    assert por_nombre["Flat15"].etiqueta == "Audición normal · plana en 15 dB HL"
+    assert por_nombre["Flat25"].etiqueta == "Hipoacusia leve plana · 25 dB HL"
     descendente = por_nombre["Slope35_5"]
-    assert descendente.forma == "descendente" and "graves en 5 dB HL" in descendente.etiqueta
+    assert descendente.forma == "descendente"
+    assert descendente.etiqueta == "Normal con caída en agudos · de 5 dB HL en graves a 35 dB HL en 8 kHz"
+    assert por_nombre["Flat30_Slope35"].etiqueta.startswith("Hipoacusia leve plana con caída en agudos")
+
+
+def test_un_perfil_fuera_del_catalogo_sigue_disponible_con_su_etiqueta():
+    perfil = perfiles.ver("Slope20_5")  # lo usan simulaciones viejas
+    assert perfil.etiqueta == "Normal con caída en agudos · de 5 dB HL en graves a 20 dB HL en 8 kHz"
 
 
 @pytest.fixture
@@ -105,3 +113,10 @@ def test_un_perfil_que_no_existe_da_404(cliente, registro_valido):
     assert cliente.get("/api/profiles/Flat20").json()["nombre"] == "Flat20"
     respuesta = cliente.get("/api/profiles/NoExiste")
     assert respuesta.status_code == 404 and respuesta.json()["detail"]["codigo"] == "perfil_no_encontrado"
+
+
+def test_el_personalizado_se_clasifica_con_rn2(carpeta_temporal):
+    perfil = perfiles.crear_personalizado("Caída", _puntos([(250, 10), (1000, 10), (4000, 40), (8000, 50)]))
+    assert perfil.patron == "caida_en_agudos" and perfil.grado == "normal"  # PTA 17,5: normal
+    plano = perfiles.crear_personalizado("Plano", _puntos([(250, 30), (1000, 30), (4000, 35), (8000, 35)]))
+    assert plano.patron == "plano" and plano.grado == "leve"
