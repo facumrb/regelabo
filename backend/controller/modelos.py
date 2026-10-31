@@ -136,6 +136,69 @@ class HarmonicPeak(BaseModel):
     amplitude_uv: float
 
 
+# ---- Estados internos (decisión 023) ----
+# Las series son matrices [muestra][canal]; `canales` indica qué entradas de `EstadosInternos.canales` usa.
+
+class CanalInterno(BaseModel):
+    """Canal coclear graficado: la frecuencia pedida y la característica del canal más cercano."""
+    frecuencia_solicitada_hz: float
+    frecuencia_caracteristica_hz: float
+
+
+class PoloShera(BaseModel):
+    """Figura 1: polo de Shera (control de ganancia OHC) por tiempo y frecuencia característica."""
+    fs_hz: float
+    frecuencia_caracteristica_hz: List[float]
+    valores: List[List[float]] = Field(description="[muestra][canal], adimensional")
+
+
+class CorrientesIHC(BaseModel):
+    """Figura 2: corrientes (nA) y potencial de membrana (mV) de la IHC."""
+    fs_hz: float
+    ventana_ms: List[float]
+    canales: List[int]
+    imet_na: List[List[float]]
+    ikf_na: List[List[float]]
+    iks_na: List[List[float]]
+    vm_mv: List[List[float]]
+
+
+class EstadosFibra(BaseModel):
+    """Vesículas disponibles q(t), reserva w(t) y fracción fuera del período refractario A(t)."""
+    q: List[List[float]]
+    w: List[List[float]]
+    a: List[List[float]]
+
+
+class Vesiculas(BaseModel):
+    """Figuras 3 a 6: estados sinápticos por tipo de fibra, en los cuatro canales."""
+    fs_hz: float
+    ventana_ms: List[float]
+    hsr: EstadosFibra
+    msr: EstadosFibra
+    lsr: EstadosFibra
+
+
+class TroncoCNIC(BaseModel):
+    """Figura 7: componentes excitatoria e inhibitoria (spikes/s) de CN e IC; la neta es su resta."""
+    fs_hz: float
+    ventana_ms: List[float]
+    canales: List[int]
+    cn_exc: List[List[float]]
+    cn_inh: List[List[float]]
+    ic_exc: List[List[float]]
+    ic_inh: List[List[float]]
+
+
+class EstadosInternos(BaseModel):
+    """Datos de las siete figuras de estados internos de una simulación."""
+    canales: List[CanalInterno]
+    polo_shera: PoloShera
+    ihc: CorrientesIHC
+    vesiculas: Vesiculas
+    cn_ic: TroncoCNIC
+
+
 class SimulationResponse(BaseModel):
     """Resultados calculados de la simulación biológica."""
     status: str = "success"
@@ -145,6 +208,8 @@ class SimulationResponse(BaseModel):
     fft_spectrum: SpectrumData
     abr_waves: ABRWavesData
     parameters_used: Dict[str, object]
+    # Pesan varios MB: no viajan con el resultado, se guardan aparte y tienen su propio endpoint
+    estados_internos: Optional[EstadosInternos] = Field(default=None, exclude=True)
 
 
 class AudiogramPoint(BaseModel):

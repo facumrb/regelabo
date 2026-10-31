@@ -107,6 +107,20 @@ class ResultadoSimulacion(ConIdYFecha, Base):
     duracion_s: Mapped[float]
 
 
+class EstadosInternos(ConIdYFecha, Base):
+    """Datos de las siete figuras de estados internos de un resultado (decisión 023).
+
+    Tabla aparte (varios MB por resultado) para que el detalle y el historial no los carguen.
+    """
+
+    __tablename__ = "estados_internos"
+
+    resultado_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("resultado_simulacion.id", ondelete="CASCADE"), unique=True
+    )
+    datos: Mapped[dict[str, Any]]
+
+
 class Simulacion(ConIdYFecha, Base):
     __tablename__ = "simulacion"
 

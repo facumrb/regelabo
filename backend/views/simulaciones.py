@@ -9,7 +9,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, status
 
 from backend.controller import simulaciones
-from backend.controller.modelos import PaginaDeSimulaciones, Simulacion, SimulacionInput, Usuario
+from backend.controller.modelos import (
+    EstadosInternos, PaginaDeSimulaciones, Simulacion, SimulacionInput, Usuario,
+)
 from backend.views.dependencias import usuario_actual
 
 router = APIRouter(prefix="/simulaciones", tags=["Simulaciones"])
@@ -30,3 +32,9 @@ def listar(limite: int = Query(20, ge=1, le=100), despues_de: Optional[UUID] = N
 @router.get("/{simulacion_id}", response_model=Simulacion)
 def ver(simulacion_id: UUID, usuario: Usuario = Depends(usuario_actual)) -> Simulacion:
     return simulaciones.ver(usuario, simulacion_id)
+
+
+@router.get("/{simulacion_id}/estados-internos", response_model=EstadosInternos)
+def ver_estados_internos(simulacion_id: UUID, usuario: Usuario = Depends(usuario_actual)) -> EstadosInternos:
+    """Datos de las siete figuras de estados internos (varios MB): se piden aparte del detalle."""
+    return simulaciones.ver_estados_internos(usuario, simulacion_id)

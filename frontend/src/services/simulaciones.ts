@@ -1,6 +1,7 @@
 import { apiClient } from './api'
 import type {
   EstadoSimulacion,
+  EstadosInternos,
   PaginaDeSimulaciones,
   ParametrosSimulacion,
   Simulacion,
@@ -15,6 +16,9 @@ export const simulacionesApi = {
       params: { limite, despues_de: despuesDe ?? undefined, caso_id: casoId ?? undefined },
     })).data,
   ver: async (id: string) => (await apiClient.get<Simulacion>(`/simulaciones/${id}`)).data,
+  /** Pesan varios MB: pedirlos solo cuando se abre el panel. */
+  estadosInternos: async (id: string) =>
+    (await apiClient.get<EstadosInternos>(`/simulaciones/${id}/estados-internos`)).data,
 }
 
 /** Cada cuántos milisegundos se consulta el estado de una simulación pendiente. */

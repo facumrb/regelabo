@@ -29,3 +29,6 @@ package = false
 [tool.pytest.ini_options]
 testpaths = ["backend/tests"]
 pythonpath = ["."]
+# Los tests "lento" corren el modelo completo (~80 s y ~1,1 GB cada uno): `uv run pytest -m lento`
+markers = ["lento: corre el modelo de Verhulst completo"]
+addopts = "-m 'not lento'"

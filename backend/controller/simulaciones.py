@@ -17,7 +17,7 @@ from backend.configuracion import (
 )
 from backend.controller.errores import ErrorDeNegocio
 from backend.controller.modelos import (
-    PaginaDeSimulaciones, ParametrosSimulacion, Simulacion, SimulacionInput, Usuario,
+    EstadosInternos, PaginaDeSimulaciones, ParametrosSimulacion, Simulacion, SimulacionInput, Usuario,
 )
 from backend.controller.simulacion import SimulationService
 from backend.datos import casos, perfiles, simulaciones, usuarios
@@ -38,6 +38,11 @@ RANGOS = {
 }
 
 _NO_ENCONTRADA = ErrorDeNegocio("simulacion_no_encontrada", "La simulación no existe.")
+# En cola, con error o de una versión del modelo anterior a la decisión 023
+_SIN_ESTADOS_INTERNOS = ErrorDeNegocio(
+    "estados_internos_no_disponibles",
+    "Esta simulación no tiene estados internos: todavía no terminó o se hizo con una versión anterior "
+    "del modelo.")
 
 
 def _ahora() -> datetime:
@@ -116,6 +121,15 @@ def ver(usuario: Usuario, simulacion_id: UUID) -> Simulacion:
     if simulacion is None:
         raise _NO_ENCONTRADA
     return simulacion
+
+
+def ver_estados_internos(usuario: Usuario, simulacion_id: UUID) -> EstadosInternos:
+    with transaccion() as tx:
+        estados = simulaciones.buscar_estados_internos(tx, simulacion_id, usuario.id)
+        existe = estados is not None or simulaciones.buscar(tx, simulacion_id, usuario.id) is not None
+    if estados is None:
+        raise _SIN_ESTADOS_INTERNOS if existe else _NO_ENCONTRADA
+    return estados
 
 
 # ---- Lo que usa el worker ----

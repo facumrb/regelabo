@@ -31,3 +31,4 @@
 - Se invalida la caché de resultados anteriores.
 - Fig. 3 reutiliza los 4 canales de las Figs. 4–6, con un selector de canal. Las ventanas de 50 ms de las Figs. 2 y 7 van de 0 a 50 ms desde el inicio del estímulo.
 - El test de equivalencia se marca `@pytest.mark.lento` (queda fuera del `pytest` normal) y se corre con `systemd-run --user --scope -p MemoryMax=3G`, que es también el tope para cualquier medición del modelo.
+- La nomenclatura y la legibilidad del panel no las revisó todavía un fonoaudiólogo (no hubo disponibilidad al cerrar la rama, 2026-10-29). Esa revisión queda pendiente y no bloquea el merge: el panel no altera el compuesto EFR/ABR y se puede corregir después.

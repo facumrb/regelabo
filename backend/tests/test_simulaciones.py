@@ -23,6 +23,16 @@ RESPUESTA_FALSA = SimulationResponse.model_validate({
     "abr_waves": {"time_ms": [0.0, 0.5], "w1": [0.0, 0.1], "w3": [0.0, 0.1], "w5": [0.0, 0.1],
                   "efr_wave": [0.0, 0.3]},
     "parameters_used": {},
+    "estados_internos": {
+        "canales": [{"frecuencia_solicitada_hz": 1000, "frecuencia_caracteristica_hz": 996.0}],
+        "polo_shera": {"fs_hz": 1000, "frecuencia_caracteristica_hz": [996.0], "valores": [[0.06]]},
+        "ihc": {"fs_hz": 1e5, "ventana_ms": [0, 50], "canales": [0], "imet_na": [[1.0]], "ikf_na": [[2.0]],
+                "iks_na": [[3.0]], "vm_mv": [[-55.0]]},
+        "vesiculas": {"fs_hz": 2e4, "ventana_ms": [0, 400],
+                      **{f: {"q": [[4.0]], "w": [[14.0]], "a": [[0.9]]} for f in ("hsr", "msr", "lsr")}},
+        "cn_ic": {"fs_hz": 2e4, "ventana_ms": [0, 50], "canales": [0], "cn_exc": [[5.0]], "cn_inh": [[1.0]],
+                  "ic_exc": [[4.0]], "ic_inh": [[2.0]]},
+    },
 })
 
 
@@ -142,6 +152,51 @@ def test_un_error_del_motor_deja_la_simulacion_en_error_y_libera_el_cupo(ana, mo
     assert cuerpo["estado"] == "error" and cuerpo["resultado"] is None
     assert "secreta" not in cuerpo["mensaje_error"]  # el detalle interno no llega al usuario
     assert _pedir(ana, nH=5).status_code == 202  # el cupo (1 para estudiantes) quedó libre
+
+
+def _estados_internos_guardados():
+    with engine.connect() as conexion:
+        return conexion.execute(text("SELECT datos FROM estados_internos")).scalars().all()
+
+
+def test_el_worker_guarda_los_estados_internos_aparte(ana, motor_falso):
+    simulacion_id = _pedir(ana).json()["id"]
+    simulaciones.procesar_siguiente()
+    [datos] = _estados_internos_guardados()
+    assert datos["ihc"]["imet_na"] == [[1.0]] and datos["canales"][0]["frecuencia_caracteristica_hz"] == 996.0
+    # Pesan varios MB: el detalle no los trae (tienen su propio endpoint)
+    assert "estados_internos" not in ana.get(f"/api/simulaciones/{simulacion_id}").json()["resultado"]
+
+
+def test_rn10_un_resultado_reutilizado_no_duplica_los_estados_internos(ana, beto, motor_falso):
+    _pedir(ana)
+    simulaciones.procesar_siguiente()
+    _pedir(beto)
+    assert len(_estados_internos_guardados()) == 1
+
+
+def test_los_estados_internos_se_piden_aparte(ana, motor_falso):
+    simulacion_id = _pedir(ana).json()["id"]
+    simulaciones.procesar_siguiente()
+    respuesta = ana.get(f"/api/simulaciones/{simulacion_id}/estados-internos")
+    assert respuesta.status_code == 200
+    cuerpo = respuesta.json()
+    assert cuerpo["vesiculas"]["hsr"]["w"] == [[14.0]] and cuerpo["ihc"]["ventana_ms"] == [0, 50]
+
+
+def test_sin_terminar_no_hay_estados_internos(ana, motor_falso):
+    simulacion_id = _pedir(ana).json()["id"]
+    respuesta = ana.get(f"/api/simulaciones/{simulacion_id}/estados-internos")
+    assert respuesta.status_code == 404
+    assert respuesta.json()["detail"]["codigo"] == "estados_internos_no_disponibles"
+
+
+def test_rn4_los_estados_internos_ajenos_no_existen(ana, beto, motor_falso):
+    simulacion_id = _pedir(ana).json()["id"]
+    simulaciones.procesar_siguiente()
+    respuesta = beto.get(f"/api/simulaciones/{simulacion_id}/estados-internos")
+    assert respuesta.status_code == 404
+    assert respuesta.json()["detail"]["codigo"] == "simulacion_no_encontrada"
 
 
 # ---- RN10: caché por huella ----

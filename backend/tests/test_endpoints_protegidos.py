@@ -22,6 +22,7 @@ def test_health_es_publico(cliente):
     ("post", "/api/simulaciones", {}),
     ("get", "/api/simulaciones", None),
     ("get", "/api/simulaciones/00000000-0000-7000-8000-000000000000", None),
+    ("get", "/api/simulaciones/00000000-0000-7000-8000-000000000000/estados-internos", None),
     ("post", "/api/audiogram/manual", {"points": PUNTOS}),
 ])
 def test_sin_sesion_da_401(cliente, metodo, ruta, cuerpo):

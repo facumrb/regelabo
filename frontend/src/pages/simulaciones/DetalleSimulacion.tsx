@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import PerfilSimulado from '../../components/PerfilSimulado'
+import PanelEstadosInternos from '../../components/PanelEstadosInternos'
 import PlotsPanel from '../../components/PlotsPanel'
 import ResultsSummary from '../../components/ResultsSummary'
 import { Aviso, Tarjeta } from '../../components/ui'
@@ -100,6 +101,7 @@ export default function DetalleSimulacion() {
           {perfil && <PerfilSimulado perfil={perfil} />}
           <ResultsSummary result={simulacion.resultado} />
           <PlotsPanel result={simulacion.resultado} />
+          <PanelEstadosInternos simulacionId={simulacion.id} />
         </>
       )}
     </div>

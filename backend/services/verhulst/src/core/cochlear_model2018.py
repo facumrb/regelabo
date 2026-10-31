@@ -702,7 +702,8 @@ class cochlea_model ():
     # Al finalizar, filtra la emisión otoacústica con el mismo filtro
     # del oído medio para obtener la presión en el canal auditivo externo.
     # ================================================================
-    def solve(self, store_internals=False):
+    def solve(self, store_internals=False, paso_internos=1):
+        # paso_internos: guarda el polo de Shera cada N muestras (regelabo, decisión 023)
         n = self.n + 1
         tstart = time.time()
         if not(self.is_init):
@@ -717,7 +718,7 @@ class cochlea_model ():
         # Emisión otoacústica: presión en la sección 0 (base coclear/estribo)
         self.oto_emission = np.zeros(length + 2)
         if store_internals:
-            self.SheraPsolution = np.zeros([length + 2, len(self.probe_points)])
+            self.SheraPsolution = np.zeros([-(-(length + 2) // paso_internos), len(self.probe_points)])
         self.time_axis = np.linspace(0, time_length, length)
         # Integrador Runge-Kutta adaptativo de 5° orden (Dormand-Prince):
         # Resuelve la ODE del sistema coclear con tolerancias que balancean
@@ -762,23 +763,23 @@ class cochlea_model ():
             if(self.probe_freq=='all'):
                 self.Vsolution[j, :] = self.V1[1:n]
                 self.Ysolution[j, :] = self.Y1[1:n]
-                if store_internals:
-                    self.SheraPsolution[j, :] = self.SheraP[1:n]
+                if store_internals and j % paso_internos == 0:
+                    self.SheraPsolution[j // paso_internos, :] = self.SheraP[1:n]
             elif(self.probe_freq=='half'):
                 self.Vsolution[j, :] = self.V1[range(1,n,2)]
                 self.Ysolution[j, :] = self.Y1[range(1,n,2)]
-                if store_internals:
-                    self.SheraPsolution[j, :] = self.SheraP[range(1,n,2)]
+                if store_internals and j % paso_internos == 0:
+                    self.SheraPsolution[j // paso_internos, :] = self.SheraP[range(1,n,2)]
             elif(self.probe_freq=='abr'):
                 self.Vsolution[j, :] = self.V1[range(110,911,2)]
                 self.Ysolution[j, :] = self.Y1[range(110,911,2)]
-                if store_internals:
-                    self.SheraPsolution[j, :] = self.SheraP[range(110,911,2)]
+                if store_internals and j % paso_internos == 0:
+                    self.SheraPsolution[j // paso_internos, :] = self.SheraP[range(110,911,2)]
             else:
                 self.Vsolution[j, :] = self.V1[self.probe_points]
                 self.Ysolution[j, :] = self.Y1[self.probe_points]
-                if store_internals:
-                    self.SheraPsolution[j, :] = self.SheraP[self.probe_points]
+                if store_internals and j % paso_internos == 0:
+                    self.SheraPsolution[j // paso_internos, :] = self.SheraP[self.probe_points]
             # La presión en la sección 0 (Qsol[0]) es la emisión otoacústica
             # antes de ser filtrada por el oído medio.
             self.oto_emission[j] = self.Qsol[0]
