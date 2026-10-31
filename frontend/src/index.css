@@ -2,35 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Paleta turquesa con vino secundario (decisión 024). Todos los pares de texto superan 4,5:1 en los dos temas. */
+:root, [data-tema="claro"] {
+  --bg: #f3f8f7; --panel: #ffffff; --tinta: #132624; --tenue: #5f7472; --linea: #dbe8e6;
+  --acento: #0f766e; --acento-tinta: #ffffff; --acento-suave: #ddf3ef; --c2: #9f1239; --c3: #5b6b69;
+  /* Series de los gráficos: orden fijo, validado para daltonismo (skill dataviz) */
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #6250d6;
+  color-scheme: light;
+}
+[data-tema="oscuro"] {
+  --bg: #0f1716; --panel: #152120; --tinta: #e6f2f0; --tenue: #8fa5a2; --linea: #24403b;
+  --acento: #2dd4bf; --acento-tinta: #04201c; --acento-suave: #133a35; --c2: #fb7185; --c3: #9aaba8;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #9085e9;
+  color-scheme: dark;
+}
+
 @layer base {
   body {
-    background-color: #0b0f19;
-    color: #f1f5f9;
+    background-color: var(--bg);
+    color: var(--tinta);
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--acento);
+    outline-offset: 2px;
   }
   
   code, pre {
     font-family: 'JetBrains Mono', monospace;
   }
-}
-
-/* Fondo con cuadrícula científica sutil */
-.scientific-grid {
-  background-size: 32px 32px;
-  background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-}
-
-/* Efectos de brillo glassmorphism */
-.glass-panel {
-  background: rgba(17, 24, 39, 0.75);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.glass-panel:hover {
-  border-color: rgba(56, 189, 248, 0.25);
 }
 
 /* Scrollbar estilizada */
@@ -40,14 +41,25 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #0b0f19;
+  background: var(--bg);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1f2937;
+  background: var(--linea);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #374151;
+  background: var(--tenue);
 }
+
+/* FilePond con los colores del tema (decisión 024) */
+.filepond--root { font-family: inherit; margin-bottom: 0; }
+/* Aparición suave de pantallas y avisos (decisión 024); nada si el sistema pide reducir animaciones */
+@keyframes aparecer { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.aparecer { animation: aparecer 0.4s ease-out both; }
+@media (prefers-reduced-motion: reduce) { .aparecer { animation: none; } }
+
+.filepond--panel-root { background-color: var(--acento-suave); border: 1.5px dashed var(--linea); }
+.filepond--drop-label { color: var(--tinta); min-height: 7rem; }
+.filepond--label-action { text-decoration-color: var(--acento); color: var(--acento); }

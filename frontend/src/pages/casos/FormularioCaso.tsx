@@ -38,7 +38,7 @@ export default function FormularioCaso({ inicial = VACIO, alGuardar, alCancelar 
         <input className={entrada} type="text" value={alias} placeholder="Caso 1 – Trauma leve"
           onChange={(e) => setAlias(e.target.value)} />
       </Campo>
-      <p className="text-[11px] text-slate-400 -mt-2">
+      <p className="text-sm text-tenue -mt-2">
         No uses nombres, DNI ni otros datos que identifiquen a una persona real.
       </p>
       <div className="grid grid-cols-2 gap-4">
@@ -58,7 +58,7 @@ export default function FormularioCaso({ inicial = VACIO, alGuardar, alCancelar 
         <textarea className={entrada} rows={4} value={notas} onChange={(e) => setNotas(e.target.value)} />
       </Campo>
       {error && <Aviso tipo="error">{error}</Aviso>}
-      <div className="flex justify-end space-x-2">
+      <div className="flex justify-end gap-2">
         <button type="button" onClick={alCancelar} className={botonSecundario}>Cancelar</button>
         <button type="submit" disabled={enviando} className={botonPrimario}>
           {enviando ? 'Guardando…' : 'Guardar'}

@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
-import { Aviso, Campo, Tarjeta } from '../components/ui'
+import { Aviso, Campo, Centrada } from '../components/ui'
 import { botonPrimario, entrada } from '../components/estilos'
 import { useSesion } from '../context/SesionContext'
 import { mensajeDeError, type TipoPerfil } from '../services/auth'
@@ -40,7 +40,8 @@ export default function Registro() {
   }
 
   return (
-    <Tarjeta titulo="Crear cuenta">
+    <Centrada titulo="Crear cuenta" bajada="Con un email y una contraseña alcanza."
+      pie={<>¿Ya tenés cuenta? <Link to="/login" className="text-acento font-medium hover:underline">Iniciá sesión</Link></>}>
       {/* noValidate: el navegador no valida nada, así todo llega al servidor y se pueden verificar sus reglas */}
       <form onSubmit={enviar} noValidate className="space-y-4">
         <Campo etiqueta="Email">
@@ -62,8 +63,8 @@ export default function Registro() {
             ))}
           </select>
         </Campo>
-        <label className="flex items-start space-x-2 text-xs text-slate-300">
-          <input type="checkbox" className="mt-0.5" checked={aceptaAviso}
+        <label className="flex items-start gap-3 text-sm text-tinta cursor-pointer">
+          <input type="checkbox" className="mt-0.5 w-5 h-5 shrink-0 accent-acento" checked={aceptaAviso}
             onChange={(e) => setAceptaAviso(e.target.checked)} />
           <span>
             Entiendo que esta herramienta es de estudio y experimentación, no es de uso profesional, y que
@@ -75,9 +76,6 @@ export default function Registro() {
           {enviando ? 'Creando cuenta…' : 'Registrarse'}
         </button>
       </form>
-      <p className="text-xs text-slate-400 text-center">
-        ¿Ya tenés cuenta? <Link to="/login" className="text-cyan-400 hover:underline">Iniciá sesión</Link>
-      </p>
-    </Tarjeta>
+    </Centrada>
   )
 }

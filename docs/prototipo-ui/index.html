@@ -1,0 +1,710 @@
+<!doctype html>
+<html lang="es" data-tema="claro" data-paleta="a">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>regelabo · prototipo de interfaz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+/* Paleta A: grafito + teal profundo · Paleta B: crema + violeta */
+:root, [data-paleta="a"][data-tema="claro"]{
+  --bg:#f5f4f0; --panel:#ffffff; --tinta:#1a1f1e; --tenue:#6b7370; --linea:#e4e2dc;
+  --acento:#0f766e; --acento-tinta:#ffffff; --acento-suave:#e1f0ee; --c2:#c2410c; --c3:#475569;
+}
+[data-paleta="a"][data-tema="oscuro"]{
+  --bg:#101413; --panel:#171c1b; --tinta:#e8ecea; --tenue:#8a9692; --linea:#26302e;
+  --acento:#2dd4bf; --acento-tinta:#062a26; --acento-suave:#143632; --c2:#fb923c; --c3:#94a3b8;
+}
+[data-paleta="b"][data-tema="claro"]{
+  --bg:#faf6ef; --panel:#fffdf9; --tinta:#241f2e; --tenue:#7a7385; --linea:#ebe4d8;
+  --acento:#5b3fd1; --acento-tinta:#ffffff; --acento-suave:#ece8fb; --c2:#d9467a; --c3:#6b7280;
+}
+[data-paleta="b"][data-tema="oscuro"]{
+  --bg:#14121a; --panel:#1c1924; --tinta:#ece9f3; --tenue:#9a93a8; --linea:#2d2838;
+  --acento:#a594ff; --acento-tinta:#1a1233; --acento-suave:#2a2447; --c2:#ff7ab0; --c3:#a1a1b5;
+}
+
+/* C: grafito + ámbar */
+[data-paleta="c"][data-tema="claro"]{--bg:#f6f4ef;--panel:#fff;--tinta:#1f1c17;--tenue:#746e62;--linea:#e6e1d6;--acento:#b45309;--acento-tinta:#fff;--acento-suave:#fbecd9;--c2:#0f766e;--c3:#57534e}
+[data-paleta="c"][data-tema="oscuro"]{--bg:#14120e;--panel:#1c1a15;--tinta:#efeae0;--tenue:#9a9384;--linea:#2c2920;--acento:#f59e0b;--acento-tinta:#2a1800;--acento-suave:#3a2a0f;--c2:#2dd4bf;--c3:#a8a29e}
+/* D: salvia / verde bosque */
+[data-paleta="d"][data-tema="claro"]{--bg:#f3f5f0;--panel:#fff;--tinta:#18221b;--tenue:#667369;--linea:#dfe5dc;--acento:#2f6b3f;--acento-tinta:#fff;--acento-suave:#e2eee3;--c2:#c2410c;--c3:#52605a}
+[data-paleta="d"][data-tema="oscuro"]{--bg:#0f1511;--panel:#161d18;--tinta:#e6ede7;--tenue:#8a998d;--linea:#25302a;--acento:#7fcf8e;--acento-tinta:#0a2110;--acento-suave:#1b3322;--c2:#fb923c;--c3:#9aa8a0}
+/* E: vino */
+[data-paleta="e"][data-tema="claro"]{--bg:#f8f4f2;--panel:#fff;--tinta:#261a1d;--tenue:#7b6b70;--linea:#eadfde;--acento:#9f1239;--acento-tinta:#fff;--acento-suave:#f9e3e8;--c2:#0f766e;--c3:#6b5b60}
+[data-paleta="e"][data-tema="oscuro"]{--bg:#161014;--panel:#1e171b;--tinta:#f1e8ea;--tenue:#a0909a;--linea:#31262b;--acento:#fb7185;--acento-tinta:#2d0710;--acento-suave:#3b1a23;--c2:#2dd4bf;--c3:#a89aa1}
+.proto select{width:auto;padding:3px 8px;font-size:12px;background:transparent;color:inherit;border:1px solid rgba(127,127,127,.5)}
+.proto select option{color:#111}
+*{box-sizing:border-box;margin:0}
+body{font:15px/1.55 Inter,system-ui,sans-serif;background:var(--bg);color:var(--tinta);-webkit-font-smoothing:antialiased}
+.mono{font-family:'JetBrains Mono',monospace}
+a{color:inherit;text-decoration:none}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--acento);outline-offset:2px}
+
+/* barra superior */
+header.top{display:flex;align-items:center;gap:32px;padding:0 32px;height:60px;border-bottom:1px solid var(--linea);background:var(--bg);position:sticky;top:0;z-index:5}
+.marca{display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:-.01em;cursor:pointer}
+.marca svg{color:var(--acento)}
+nav.links{display:flex;gap:4px;flex:1}
+nav.links button{background:none;border:0;padding:8px 12px;border-radius:8px;color:var(--tenue);cursor:pointer}
+nav.links button:hover{color:var(--tinta)}
+nav.links button.on{color:var(--tinta);background:var(--acento-suave)}
+.der{display:flex;align-items:center;gap:12px;color:var(--tenue);font-size:14px}
+.icono{background:none;border:1px solid var(--linea);border-radius:8px;width:36px;height:36px;cursor:pointer;color:var(--tenue);display:grid;place-items:center}
+.icono:hover{color:var(--tinta)}
+
+main{max-width:1180px;margin:0 auto;padding:48px 32px 100px}
+.pantalla{display:none}.pantalla.on{display:block}
+h1{font-size:28px;font-weight:600;letter-spacing:-.02em;line-height:1.2}
+h2{font-size:17px;font-weight:600;letter-spacing:-.01em}
+.sub{color:var(--tenue);margin-top:6px}
+.etiqueta{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--tenue);font-weight:500}
+.cab{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:32px}
+
+/* botones y campos */
+.btn{border:1px solid var(--linea);background:var(--panel);padding:9px 16px;border-radius:9px;cursor:pointer;font-weight:500;transition:.15s}
+.btn:hover{border-color:var(--tenue)}
+.btn.prim{background:var(--acento);color:var(--acento-tinta);border-color:var(--acento)}
+.btn.prim:hover{filter:brightness(1.08)}
+.btn.grande{padding:13px 24px;font-size:16px;border-radius:10px}
+.btn.txt{border-color:transparent;background:none;color:var(--tenue)}
+label{display:block;font-size:13px;color:var(--tenue);margin-bottom:6px}
+input,select{width:100%;padding:10px 12px;border:1px solid var(--linea);border-radius:9px;background:var(--panel)}
+input:focus,select:focus{outline:2px solid var(--acento);outline-offset:-1px;border-color:transparent}
+.campo{margin-bottom:18px}
+.panel{background:var(--panel);border:1px solid var(--linea);border-radius:14px;padding:28px}
+.sep{height:1px;background:var(--linea);margin:24px 0}
+
+/* bienvenida */
+.hero{padding:72px 0 56px;max-width:720px}
+.hero h1{font-size:52px;line-height:1.05;letter-spacing:-.035em}
+.hero p{font-size:19px;color:var(--tenue);margin:22px 0 32px;max-width:560px}
+.hero .acc{display:flex;gap:12px}
+.tres{display:grid;grid-template-columns:repeat(3,1fr);gap:48px;border-top:1px solid var(--linea);padding-top:32px;margin-top:40px}
+.tres b{display:block;margin-bottom:6px}.tres span{color:var(--tenue);font-size:14px}
+.onda{color:var(--acento);margin-top:48px}
+
+/* login */
+.centro{max-width:400px;margin:40px auto}
+.centro .panel{margin-top:28px}
+.pie{text-align:center;color:var(--tenue);font-size:14px;margin-top:20px}.pie a{color:var(--acento);cursor:pointer}
+
+/* simulación */
+.dos{display:grid;grid-template-columns:340px 1fr;gap:40px;align-items:start}
+.freqs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.freqs div label{margin-bottom:4px;font-size:12px}
+.pasos{display:flex;gap:8px;color:var(--tenue);font-size:13px;margin-bottom:22px}
+.pasos b{color:var(--tinta);font-weight:600}
+.resumen{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--linea);border-radius:14px;background:var(--panel);margin-bottom:24px}
+.resumen div{padding:20px 24px}.resumen div+div{border-left:1px solid var(--linea)}
+.resumen .n{font-size:30px;font-weight:600;letter-spacing:-.02em;margin-top:4px}
+.resumen small{color:var(--tenue);font-size:13px}
+.tabs{display:flex;gap:24px;border-bottom:1px solid var(--linea);margin-bottom:16px}
+.tabs button{background:none;border:0;padding:10px 0;color:var(--tenue);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;font-weight:500}
+.tabs button.on{color:var(--tinta);border-color:var(--acento)}
+.grafico{height:340px}
+.vacio{border:1px dashed var(--linea);border-radius:14px;padding:48px;text-align:center;color:var(--tenue)}
+
+/* tablas / listas */
+.tabla{width:100%;border-collapse:collapse}
+.tabla th{text-align:left;font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--tenue);padding:0 12px 12px}
+.tabla td{padding:16px 12px;border-top:1px solid var(--linea)}
+.tabla tr.fila{cursor:pointer}.tabla tr.fila:hover td{background:var(--acento-suave)}
+.estado{display:inline-flex;align-items:center;gap:8px;font-size:13px}
+.estado::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--tenue)}
+.estado.ok::before{background:var(--acento)}.estado.cola::before{background:var(--c2)}
+.busca{display:flex;gap:12px;margin-bottom:20px}.busca input{max-width:320px}
+
+/* detalle */
+.meta{display:flex;gap:32px;flex-wrap:wrap;margin:20px 0 32px;color:var(--tenue);font-size:14px}
+.meta b{display:block;color:var(--tinta);font-weight:500}
+details{border-top:1px solid var(--linea);padding:18px 0}
+details:last-of-type{border-bottom:1px solid var(--linea)}
+summary{cursor:pointer;font-weight:500;list-style:none;display:flex;justify-content:space-between}
+summary::after{content:"+";color:var(--tenue)}details[open] summary::after{content:"–"}
+details .cuerpo{padding-top:16px;color:var(--tenue);font-size:14px}
+.kv{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}.kv b{display:block;color:var(--tinta);font-weight:500}
+
+
+/* sliders con número editable */
+.sl{margin-bottom:16px}
+.sl .t{display:flex;justify-content:space-between;font-size:13px;color:var(--tenue);margin-bottom:4px}
+.sl .c{display:grid;grid-template-columns:1fr 92px;gap:14px;align-items:center}
+.sl input[type=range]{padding:0;border:0;background:none;accent-color:var(--acento);height:24px;cursor:pointer}
+.sl .n{position:relative}.sl .n input{padding-right:42px;text-align:right}
+.sl .n span{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--tenue);pointer-events:none}
+.paso{margin-bottom:28px}.paso>.etiqueta{display:block;margin-bottom:14px}
+.enlace{color:var(--acento);cursor:pointer;font-size:14px;background:none;border:0;padding:0}
+.enlace:hover{text-decoration:underline}
+.pedido{background:var(--acento-suave);border-radius:12px;padding:16px 18px;font-size:14px;margin-bottom:16px}
+.pedido b{font-weight:500}.pedido div{display:flex;justify-content:space-between;padding:2px 0}.pedido span{color:var(--tenue)}
+.leyenda{display:flex;gap:18px;font-size:13px;color:var(--tenue);margin-bottom:8px}
+.leyenda i{display:inline-block;width:18px;height:0;border-top:2px solid var(--acento);vertical-align:middle;margin-right:6px}
+.leyenda i.d{border-top-style:dashed;border-color:var(--c2)}
+.zona{border:1.5px dashed var(--linea);border-radius:12px;padding:32px;text-align:center;color:var(--tenue);cursor:pointer}
+.zona:hover{border-color:var(--acento)}
+.dos.aud{grid-template-columns:420px 1fr}
+.mini{width:100%;border-collapse:collapse;font-size:13px;margin-top:16px}
+.mini td,.mini th{padding:6px 8px;border-top:1px solid var(--linea);text-align:right}.mini th{color:var(--tenue);font-weight:500}.mini td:first-child,.mini th:first-child{text-align:left}
+
+
+.dos.sim{grid-template-columns:540px 1fr;gap:48px}
+.par{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.perfil-fila{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}
+.btn.chico{padding:10px 12px;white-space:nowrap}
+.umb{display:grid;grid-template-columns:1fr 1fr;gap:4px 28px}
+.umb .sl{margin-bottom:10px}
+.pedido{display:grid;grid-template-columns:1fr 1fr;gap:4px 24px}
+.pedido div{flex-direction:column;padding:4px 0}
+.paso{margin-bottom:22px}
+.proto-t{background:none;border:0;color:inherit;cursor:pointer;opacity:.7;padding:4px 8px}
+
+
+.pasos3{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;margin:8px 0 40px;padding:20px 0;border-top:1px solid var(--linea);border-bottom:1px solid var(--linea)}
+.pasos3 .n{font-family:'JetBrains Mono',monospace;color:var(--acento);font-size:13px}
+.pasos3 b{display:block;margin:2px 0}.pasos3 span{color:var(--tenue);font-size:14px}
+.acciones{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:16px;margin-bottom:48px}
+.tarjeta{display:flex;flex-direction:column;gap:14px;padding:22px;border:1px solid var(--linea);border-radius:14px;background:var(--panel);cursor:pointer;text-align:left;transition:.15s;min-height:150px}
+.tarjeta:hover{border-color:var(--acento)}
+.tarjeta svg{color:var(--acento)}
+.tarjeta b{font-size:16px;font-weight:600;display:block}.tarjeta span{color:var(--tenue);font-size:14px;line-height:1.4}
+.tarjeta.prim{background:var(--acento);border-color:var(--acento);color:var(--acento-tinta)}
+.tarjeta.prim svg,.tarjeta.prim span{color:var(--acento-tinta)}.tarjeta.prim span{opacity:.85}
+.tarjeta.prim:hover{filter:brightness(1.08)}
+.bloque{margin-bottom:36px}.bloque>.etiqueta{display:block;margin-bottom:12px}
+.item{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px 20px;border:1px solid var(--linea);border-radius:12px;background:var(--panel);margin-bottom:8px}
+.item small{color:var(--tenue);display:block}
+@media(max-width:860px){.pasos3{grid-template-columns:1fr;gap:16px}.acciones{grid-template-columns:1fr 1fr}}
+
+
+.menu{position:relative}
+.usr{display:flex;align-items:center;gap:10px;background:none;border:1px solid var(--linea);border-radius:999px;padding:4px 12px 4px 4px;cursor:pointer;color:var(--tinta);font-size:14px}
+.usr:hover{border-color:var(--tenue)}
+.av{width:28px;height:28px;border-radius:50%;background:var(--acento);color:var(--acento-tinta);display:grid;place-items:center;font-weight:600;font-size:13px}
+.usr svg{color:var(--tenue);transition:transform .15s}.usr[aria-expanded=true] svg{transform:rotate(180deg)}
+.desp{position:absolute;right:0;top:calc(100% + 8px);min-width:240px;background:var(--panel);border:1px solid var(--linea);border-radius:12px;padding:6px;box-shadow:0 12px 32px rgba(0,0,0,.14);z-index:20}
+.desp[hidden]{display:none}
+.desp .cab-m{padding:10px 12px 12px;border-bottom:1px solid var(--linea);margin-bottom:6px}
+.desp .cab-m b{display:block;color:var(--tinta);font-weight:500}.desp .cab-m span{font-size:13px;color:var(--tenue)}
+.desp button{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:0;padding:9px 12px;border-radius:8px;cursor:pointer;color:var(--tinta);font-size:14px}
+.desp button:hover,.desp button:focus-visible{background:var(--acento-suave)}
+.desp button svg{color:var(--tenue);flex:none}
+.desp button em{margin-left:auto;font-style:normal;color:var(--tenue);font-size:13px}
+.desp hr{border:0;border-top:1px solid var(--linea);margin:6px 0}
+
+/* barra del prototipo (no forma parte del diseño) */
+.proto{position:fixed;bottom:0;left:0;right:0;background:var(--tinta);color:var(--bg);padding:6px 16px;display:flex;gap:6px;align-items:center;font-size:12px;z-index:9;flex-wrap:wrap;justify-content:center}
+.proto.cerrada>:not(.proto-t){display:none}
+.proto button{background:none;border:0;color:inherit;opacity:.65;padding:5px 9px;border-radius:7px;cursor:pointer}
+.proto button.on,.proto button:hover{opacity:1;background:rgba(127,127,127,.3)}
+.proto i{width:1px;height:18px;background:currentColor;opacity:.3;margin:0 4px}
+
+@media(max-width:860px){
+  header.top{padding:0 16px;gap:12px;overflow-x:auto}.der span{display:none}
+  main{padding:28px 16px 140px}.dos{grid-template-columns:1fr}.tres{grid-template-columns:1fr;gap:20px}
+  .hero h1{font-size:36px}.kv{grid-template-columns:1fr 1fr}.resumen{grid-template-columns:1fr}
+  .resumen div+div{border-left:0;border-top:1px solid var(--linea)}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ===== Responsive: móvil y tablet ===== */
+[hidden]{display:none!important}
+.ni,.sh{display:none}
+.tabla td::before{content:none}
+@media(max-width:1100px){
+  main{padding-left:24px;padding-right:24px}
+  .dos.sim{grid-template-columns:440px 1fr;gap:32px}
+  .dos.aud{grid-template-columns:380px 1fr}
+}
+@media(max-width:860px){
+  :root{--alto-top:56px;--alto-tab:64px}
+  header.top{height:var(--alto-top);padding:0 16px;gap:8px;overflow:visible}
+  /* barra inferior de pestañas */
+  nav.links{position:fixed;left:0;right:0;bottom:0;z-index:8;height:calc(var(--alto-tab) + env(safe-area-inset-bottom));padding:0 8px env(safe-area-inset-bottom);
+    background:var(--panel);border-top:1px solid var(--linea);display:grid;grid-template-columns:repeat(4,1fr);gap:0;flex:none}
+  nav.links[hidden]{display:none}
+  nav.links button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:12px;border-radius:0;background:none;padding:6px 0;min-height:48px}
+  nav.links button.on{background:none;color:var(--acento)}
+  .ni{display:block}
+  /* contenido */
+  main{padding:20px 16px calc(var(--alto-tab) + 72px + env(safe-area-inset-bottom))}
+  h1{font-size:24px}
+  .cab{margin-bottom:22px}
+  .dos,.dos.sim,.dos.aud{grid-template-columns:1fr;gap:20px}
+  .dos.sim>div:last-child{display:contents}
+  #previa{order:-1;position:sticky;top:var(--alto-top);z-index:4;background:var(--bg);margin:0 -16px;padding:10px 16px 8px;border-bottom:1px solid var(--linea)}
+  #previa .cab{margin-bottom:4px}#previa .cab h2{font-size:15px}#previa .sub{font-size:12px}
+  #previa .leyenda{margin-bottom:0;font-size:12px}
+  #g0{height:190px!important}
+  #conRes{order:-1}
+  .grafico{height:280px}
+  .resumen{grid-template-columns:repeat(3,1fr)}
+  .resumen div{padding:14px 12px}.resumen div+div{border-left:1px solid var(--linea);border-top:0}
+  .resumen .n{font-size:19px}.resumen small{font-size:11px}.resumen .etiqueta{font-size:10px;letter-spacing:.04em}
+  .acciones{grid-template-columns:1fr 1fr;gap:12px;margin-bottom:36px}
+  .tarjeta.prim{grid-column:1/-1;min-height:0}.tarjeta{min-height:128px;padding:18px}
+  .pasos3{grid-template-columns:1fr;gap:14px;padding:16px 0;margin-bottom:28px}
+  .pasos3>div{display:grid;grid-template-columns:28px 1fr;column-gap:8px}.pasos3 .n{grid-row:1/3}
+  .kv{grid-template-columns:1fr 1fr}
+  .hero{padding:32px 0 24px}.hero h1{font-size:36px}.hero p{font-size:17px}
+  .tres{grid-template-columns:1fr;gap:18px}
+  .centro{margin:12px auto}
+  .item{flex-direction:column;align-items:flex-start}
+  /* objetivos táctiles de al menos 44 px */
+  .btn,input,select,.usr,.icono,summary{min-height:44px}
+  input,select{font-size:16px}
+  .sl input[type=range]{height:36px}
+  .tabs button{padding:12px 0}
+  details summary{padding:4px 0}
+  .perfil-fila .btn{min-height:44px}
+  /* menú de usuario: solo la inicial */
+  .usr .nm{display:none}.usr{padding:3px 8px 3px 3px;gap:6px}
+  .desp{position:fixed;left:12px;right:12px;top:calc(var(--alto-top) + 6px);min-width:0}
+  .desp button{min-height:48px}
+  /* barra del prototipo: botón flotante sobre las pestañas */
+  .proto{left:auto;right:10px;bottom:calc(var(--alto-tab) + 10px + env(safe-area-inset-bottom));border-radius:12px;max-width:calc(100vw - 20px);justify-content:flex-start;box-shadow:0 8px 30px rgba(0,0,0,.25)}
+}
+@media(max-width:600px){
+  /* tablas como tarjetas */
+  .tabla thead{display:none}
+  .tabla,.tabla tbody{display:block}
+  .tabla tr{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:14px 4px;border-top:1px solid var(--linea)}
+  .tabla td{display:block;padding:0;border:0;font-size:14px;color:var(--tenue)}
+  .tabla td:first-child{grid-column:1/-1;font-size:16px;color:var(--tinta)}
+  .tabla td::before{content:attr(data-l) ": ";color:var(--tenue)}
+  .tabla td:first-child::before,.tabla td[data-l='']::before{content:none}
+  .tabla tr.fila:hover td{background:none}
+  .tabla td:last-child{grid-column:1/-1;text-align:left!important;margin-top:6px}
+  .cab{flex-direction:column;align-items:stretch}
+  .cab .btn.prim{width:100%}
+  .par{grid-template-columns:1fr}
+  .umb{grid-template-columns:1fr}
+  .perfil-fila{grid-template-columns:1fr auto}
+  .busca input{max-width:none}
+  .mini{font-size:12px}.mini td,.mini th{padding:6px 4px}
+  .meta{gap:16px 24px}
+  .hero .acc{flex-direction:column}.hero .acc .btn{width:100%}
+  .pedido{grid-template-columns:1fr 1fr}
+}
+@media(max-width:480px){
+  .lg{display:none}.sh{display:inline}
+  header.top .btn{padding:8px 12px}
+}
+@media(max-width:400px){.mt{display:none}}
+</style>
+</head>
+<body>
+
+<header class="top" id="barra">
+  <div class="marca" tabindex="0" role="link" onclick="ir(conSesion.has(actual)?'inicio':'bienvenida')">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12h2l2-6 3 12 3-9 2 6 2-3h4"/></svg>
+    <span class="mt">regelabo</span>
+  </div>
+  <nav class="links" id="nav" hidden>
+    <button data-p="inicio" class="on"><svg class="ni" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/></svg><span>Inicio</span></button>
+    <button data-p="simular"><svg class="ni" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="7 4 20 12 7 20 7 4"/></svg><span>Simular</span></button>
+    <button data-p="casos"><svg class="ni" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M18 14a6 6 0 0 1 3.5 5.5"/></svg><span>Casos</span></button>
+    <button data-p="historial"><svg class="ni" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/></svg><span>Historial</span></button>
+  </nav>
+  <div class="der" style="margin-left:auto">
+    <div class="menu" id="menuUsr" hidden>
+      <button class="usr" id="btnUsr" aria-haspopup="menu" aria-expanded="false" aria-controls="desp"><span class="av">M</span><span class="nm">Micaela</span> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      <div class="desp" id="desp" role="menu" hidden>
+        <div class="cab-m"><b>Micaela</b><span>micaela@ejemplo.com</span></div>
+        <button role="menuitem" onclick="ir('cuenta')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Cuenta</button>
+        <button role="menuitem" onclick="ir('config')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Configuración <small style="margin-left:auto;font-size:11px;color:var(--acento)">nueva</small></button>
+        <button role="menuitem" id="miTema" onclick="alternarTema()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>Tema <em id="temaTxt">Claro</em></button>
+        <hr>
+        <button role="menuitem" onclick="salir()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>Salir</button>
+      </div>
+    </div>
+    <span id="auth" style="display:flex;gap:8px"><button class="btn txt" onclick="ir('login')"><span class="lg">Iniciar sesión</span><span class="sh">Entrar</span></button><button class="btn prim" onclick="ir('registro')">Crear cuenta</button></span>
+    <button class="icono" id="tema" aria-label="Cambiar entre tema claro y oscuro" title="Claro / oscuro">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+  </div>
+</header>
+
+<main>
+
+<!-- 0. Inicio (con sesión): explica y centraliza -->
+<section class="pantalla" id="inicio">
+  <div class="cab"><div><h1>Hola, Micaela</h1><p class="sub">Simulá cómo responde la cóclea de un paciente a partir de su audiograma.</p></div></div>
+  <div class="pasos3">
+    <div><span class="n">01</span><b>Cargá un caso</b><span>Un paciente y su audiograma.</span></div>
+    <div><span class="n">02</span><b>Simulá</b><span>El modelo corre en segundo plano, unos 80 segundos.</span></div>
+    <div><span class="n">03</span><b>Interpretá</b><span>EFR, ABR y espectro, más los estados internos.</span></div>
+  </div>
+  <div class="acciones">
+    <button class="tarjeta prim" onclick="ir('simular')"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 4 20 12 6 20 6 4"/></svg><div><b>Nueva simulación</b><span>Elegí un caso y un perfil y corré el modelo.</span></div></button>
+    <button class="tarjeta" onclick="abrirAud('inicio')"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M5 20h14"/></svg><div><b>Cargar audiograma</b><span>Subí un CSV o ingresá los umbrales.</span></div></button>
+    <button class="tarjeta" onclick="ir('casos')"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M18 14a6 6 0 0 1 3.5 5.5"/></svg><div><b>Mis casos</b><span>Pacientes y audiogramas guardados.</span></div></button>
+    <button class="tarjeta" onclick="ir('historial')"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/></svg><div><b>Historial</b><span>Todas tus simulaciones y sus resultados.</span></div></button>
+  </div>
+  <div class="bloque"><span class="etiqueta">Continuá donde dejaste</span>
+    <div class="item"><div><b>Paciente 014</b><small>4 kHz · 70 dB SPL · hoy, 10:42</small></div><div style="display:flex;gap:20px;align-items:center"><span class="estado ok">Completada</span><button class="btn" onclick="ir('detalle')">Ver resultado</button></div></div>
+  </div>
+  <div class="bloque"><span class="etiqueta">En cola</span>
+    <div class="item"><div><b>Paciente 014</b><small>4 kHz · 80 dB SPL · hoy, 10:51</small></div><span class="estado cola">En cola</span></div>
+  </div>
+</section>
+
+<!-- 1. Bienvenida -->
+<section class="pantalla on" id="bienvenida">
+  <div class="hero">
+    <span class="etiqueta">Laboratorio virtual auditivo</span>
+    <h1 style="margin-top:14px">Del audiograma a la respuesta del nervio auditivo.</h1>
+    <p>Cargá el audiograma de un paciente, simulá cómo responde su cóclea con el modelo de Verhulst et al. (2018) y mirá el resultado en EFR, ABR y espectro.</p>
+    <div class="acc">
+      <button class="btn prim grande" onclick="ir('registro')">Crear cuenta</button>
+      <button class="btn grande txt" onclick="ir('login')">Ya tengo cuenta</button>
+    </div>
+  </div>
+  <svg class="onda" width="100%" height="60" viewBox="0 0 800 60" preserveAspectRatio="none" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M0 30h120l14-22 18 44 16-34 12 24 12-12h90l14-20 18 40 16-30 12 22 12-10h120l14-22 18 44 16-34 12 24 12-12h90"/></svg>
+  <div class="tres">
+    <div><b>1 · Cargá un caso</b><span>Datos del paciente y su audiograma.</span></div>
+    <div><b>2 · Simulá</b><span>El modelo corre en segundo plano, unos 80 segundos.</span></div>
+    <div><b>3 · Interpretá</b><span>EFR, ABR y FFT, y los estados internos de la cóclea.</span></div>
+  </div>
+</section>
+
+<!-- 2. Login / registro -->
+<section class="pantalla" id="login">
+  <div class="centro">
+    <h1>Iniciar sesión</h1><p class="sub">Entrá para ver tus casos y simulaciones.</p>
+    <div class="panel">
+      <div class="campo"><label for="l1">Correo</label><input id="l1" type="email" value="micaela@ejemplo.com"></div>
+      <div class="campo"><label for="l2">Contraseña</label><input id="l2" type="password" value="contraseña"></div>
+      <button class="btn prim" style="width:100%" onclick="entrar()">Entrar</button>
+    </div>
+    <p class="pie">¿No tenés cuenta? <a onclick="ir('registro')">Crear una</a></p>
+  </div>
+</section>
+
+<section class="pantalla" id="registro">
+  <div class="centro">
+    <h1>Crear cuenta</h1><p class="sub">Solo necesitás un correo y una contraseña.</p>
+    <div class="panel">
+      <div class="campo"><label for="r1">Correo</label><input id="r1" type="email" placeholder="nombre@ejemplo.com"></div>
+      <div class="campo"><label for="r2">Contraseña</label><input id="r2" type="password"><small style="color:var(--tenue);font-size:12px">Mínimo 8 caracteres.</small></div>
+      <button class="btn prim" style="width:100%" onclick="entrar()">Crear cuenta</button>
+    </div>
+    <p class="pie">¿Ya tenés cuenta? <a onclick="ir('login')">Iniciar sesión</a></p>
+  </div>
+</section>
+
+<!-- 3. Simulación -->
+<section class="pantalla" id="simular">
+  <div class="cab"><div><h1>Nueva simulación</h1><p class="sub">Todo lo que se va a simular, en una sola pantalla.</p></div></div>
+  <div class="dos sim">
+    <div>
+      <div class="paso">
+        <span class="etiqueta">1 · Caso y perfil</span>
+        <div class="par">
+          <div class="campo" style="margin:0"><label for="caso">Caso (opcional)</label>
+            <select id="caso"><option value="">Sin caso</option><option>Paciente 014</option><option>Paciente 009</option><option>Control normoyente</option></select></div>
+          <div class="perfil-fila"><div class="campo" style="margin:0"><label for="perfil">Perfil auditivo</label>
+            <select id="perfil">
+              <optgroup label="Normal"><option value="Flat00">Sin pérdida (0 dB HL)</option></optgroup>
+              <optgroup label="Pendiente"><option value="pend_leve" selected>Pendiente leve a moderada</option><option value="pend_sev">Pendiente severa</option></optgroup>
+              <optgroup label="Plana"><option value="plano_mod">Plana moderada</option></optgroup>
+              <option value="custom">Audiograma cargado: Paciente 014</option>
+            </select></div>
+            <button class="btn chico" onclick="abrirAud('simular')" title="Cargar un audiograma nuevo" aria-label="Cargar un audiograma nuevo">+ Nuevo</button></div>
+        </div>
+      </div>
+
+      <div class="paso">
+        <span class="etiqueta">2 · Estímulo</span>
+        <div class="par">
+          <div class="sl" data-id="nivel" data-l="Nivel" data-min="0" data-max="100" data-v="70" data-u="dB SPL"></div>
+          <div class="sl" data-id="frec" data-l="Frecuencia" data-min="250" data-max="8000" data-v="4000" data-u="Hz" data-step="50"></div>
+        </div>
+        <details style="padding:12px 0 0;border:0"><summary>Parámetros avanzados</summary><div class="cuerpo"><div class="par">
+          <div class="sl" data-id="mod" data-l="Modulación" data-min="40" data-max="400" data-v="120" data-u="Hz"></div>
+          <div class="sl" data-id="prof" data-l="Profundidad" data-min="0" data-max="100" data-v="100" data-u="%"></div>
+        </div></div></details>
+      </div>
+
+      <div class="paso">
+        <span class="etiqueta">3 · Umbrales del audiograma (dB HL)</span>
+        <div class="umb" id="umbrales"></div>
+      </div>
+
+      <div class="pedido" id="pedido"></div>
+      <button class="btn prim grande" style="width:100%" onclick="simular()">Simular</button>
+    </div>
+
+    <div>
+      <div id="previa">
+        <div class="cab" style="margin-bottom:12px"><div><h2>Vista previa del audiograma</h2><p class="sub" id="clasif" style="font-size:14px"></p></div></div>
+        <div class="leyenda"><span><i></i>Curva pedida</span><span><i class="d"></i>Curva que simula el modelo</span></div>
+        <div class="grafico" id="g0" style="height:360px"></div>
+      </div>
+      <div id="conRes" hidden>
+        <div class="cab" style="margin-bottom:16px"><h2>Resultados</h2><button class="btn txt" onclick="volverPrevia()">← Volver a la vista previa</button></div>
+        <div class="resumen">
+          <div><span class="etiqueta">Amplitud EFR</span><div class="n mono">0,42 µV</div><small>a 120 Hz</small></div>
+          <div><span class="etiqueta">Onda V (ABR)</span><div class="n mono">6,8 ms</div><small>latencia</small></div>
+          <div><span class="etiqueta">Pico FFT</span><div class="n mono">120 Hz</div><small>SNR 14 dB</small></div>
+        </div>
+        <div class="tabs" data-g="g1"><button class="on" data-t="efr">EFR</button><button data-t="abr">ABR</button><button data-t="fft">FFT</button></div>
+        <div class="grafico" id="g1"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. Casos -->
+<section class="pantalla" id="casos">
+  <div class="cab"><div><h1>Casos</h1><p class="sub">Pacientes y audiogramas que cargaste.</p></div><button class="btn prim" onclick="ir('simular')">Nuevo caso</button></div>
+  <div class="busca"><input placeholder="Buscar por nombre o código" aria-label="Buscar casos"></div>
+  <table class="tabla">
+    <thead><tr><th>Caso</th><th>Perfil</th><th>PTA</th><th>Simulaciones</th><th>Actualizado</th><th></th></tr></thead>
+    <tbody>
+      <tr class="fila" onclick="ir('simular')"><td><b>Paciente 014</b></td><td>Pendiente</td><td class="mono">31 dB</td><td>3</td><td>hoy</td><td style="text-align:right"><button class="enlace" onclick="event.stopPropagation();abrirAud('casos')">Cargar audiograma</button></td></tr>
+      <tr class="fila" onclick="ir('simular')"><td><b>Paciente 009</b></td><td>Plano</td><td class="mono">48 dB</td><td>1</td><td>ayer</td><td style="text-align:right"><button class="enlace" onclick="event.stopPropagation();abrirAud('casos')">Cargar audiograma</button></td></tr>
+      <tr class="fila" onclick="ir('simular')"><td><b>Control normoyente</b></td><td>Normal</td><td class="mono">8 dB</td><td>5</td><td>hace 4 días</td><td style="text-align:right"><button class="enlace" onclick="event.stopPropagation();abrirAud('casos')">Cargar audiograma</button></td></tr>
+      <tr class="fila" onclick="ir('simular')"><td><b>Paciente 003</b></td><td>Pendiente</td><td class="mono">42 dB</td><td>0</td><td>hace 1 semana</td><td style="text-align:right"><button class="enlace" onclick="event.stopPropagation();abrirAud('casos')">Cargar audiograma</button></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 5. Historial -->
+<section class="pantalla" id="historial">
+  <div class="cab"><div><h1>Historial</h1><p class="sub">Todas tus simulaciones.</p></div></div>
+  <table class="tabla">
+    <thead><tr><th>Caso</th><th>Estado</th><th>Parámetros</th><th>Fecha</th></tr></thead>
+    <tbody>
+      <tr class="fila" onclick="ir('detalle')"><td><b>Paciente 014</b></td><td><span class="estado ok">Completada</span></td><td class="mono">4 kHz · 70 dB</td><td>hoy, 10:42</td></tr>
+      <tr class="fila" onclick="ir('detalle')"><td><b>Paciente 014</b></td><td><span class="estado cola">En cola</span></td><td class="mono">4 kHz · 80 dB</td><td>hoy, 10:51</td></tr>
+      <tr class="fila" onclick="ir('detalle')"><td><b>Paciente 009</b></td><td><span class="estado ok">Completada</span></td><td class="mono">2 kHz · 70 dB</td><td>ayer</td><td style="text-align:right"><button class="enlace" onclick="event.stopPropagation();abrirAud('casos')">Cargar audiograma</button></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 6. Detalle -->
+<section class="pantalla" id="detalle">
+  <a class="sub" style="cursor:pointer;font-size:14px" onclick="ir('historial')">← Historial</a>
+  <div class="cab" style="margin-top:16px;margin-bottom:0"><div><h1>Paciente 014</h1></div><span class="estado ok">Completada</span></div>
+  <div class="meta">
+    <div><b>Hoy, 10:42</b>Fecha</div><div><b>82 s</b>Duración</div><div><b class="mono">4 kHz · 70 dB</b>Estímulo</div><div><b>Pendiente</b>Perfil</div>
+  </div>
+  <div class="resumen">
+    <div><span class="etiqueta">Amplitud EFR</span><div class="n mono">0,42 µV</div></div>
+    <div><span class="etiqueta">Onda V (ABR)</span><div class="n mono">6,8 ms</div></div>
+    <div><span class="etiqueta">Pico FFT</span><div class="n mono">120 Hz</div></div>
+  </div>
+  <div class="tabs" data-g="g2"><button class="on" data-t="efr">EFR</button><button data-t="abr">ABR</button><button data-t="fft">FFT</button></div>
+  <div class="grafico" id="g2" style="margin-bottom:32px"></div>
+  <details><summary>Parámetros de la simulación</summary><div class="cuerpo"><div class="kv">
+    <div><b class="mono">4000 Hz</b>Frecuencia</div><div><b class="mono">70 dB SPL</b>Nivel</div><div><b class="mono">120 Hz</b>Modulación</div><div><b class="mono">semilla 1</b>Determinista</div></div></div></details>
+  <details><summary>Estados internos de la cóclea</summary><div class="cuerpo">
+    <div class="tabs" data-g="g3"><button class="on" data-t="ihc">Potencial de la IHC</button><button data-t="ves">Vesículas</button></div>
+    <div class="grafico" id="g3" style="height:280px"></div></div></details>
+  <details><summary>Audiograma usado</summary><div class="cuerpo"><div class="grafico" id="g4" style="height:260px"></div></div></details>
+</section>
+
+<!-- 8. Carga de audiograma (sin link en el navbar: se llega desde Simular) -->
+<section class="pantalla" id="audiograma">
+  <button class="enlace" onclick="ir(origen)">← Volver</button>
+  <div class="cab" style="margin-top:12px"><div><h1>Cargar audiograma</h1><p class="sub">Elegí cómo ingresar los umbrales. Al guardar, queda disponible en el combo de perfiles.</p></div></div>
+  <div class="dos aud">
+    <div>
+      <div class="campo"><label for="nomaud">Nombre</label><input id="nomaud" value="Paciente 014"></div>
+      <div class="tabs" id="tabsAud"><button class="on" data-m="csv">Subir CSV</button><button data-m="manual">A mano</button><button data-m="base">Desde un perfil</button></div>
+      <div id="m-csv"><div class="zona" onclick="cargarCSV()"><b style="color:var(--tinta);display:block;margin-bottom:4px">Arrastrá tu CSV o hacé clic</b>Columnas: frecuencia (Hz) y umbral (dB HL)</div></div>
+      <div id="m-manual" hidden><div id="umbralesAud"></div></div>
+      <div id="m-base" hidden><div class="campo"><label for="perfAud">Perfil base</label>
+        <select id="perfAud"><option value="Flat00">Sin pérdida (0 dB HL)</option><option value="pend_leve">Pendiente leve a moderada</option><option value="pend_sev">Pendiente severa</option><option value="plano_mod">Plana moderada</option></select></div></div>
+      <button class="btn prim grande" style="width:100%;margin-top:24px" onclick="ir(origen)">Guardar audiograma</button>
+    </div>
+    <div>
+      <h2 style="margin-bottom:4px">Vista previa</h2>
+      <p class="sub" id="clasifAud" style="font-size:14px;margin:0 0 12px"></p>
+      <div class="grafico" id="g5" style="height:300px"></div>
+      <table class="mini" id="tablaAud"></table>
+    </div>
+  </div>
+</section>
+
+<!-- 9. Configuración (nueva, contenido por definir) -->
+<section class="pantalla" id="config">
+  <div class="centro" style="margin:0">
+    <h1>Configuración</h1><p class="sub">Preferencias de la plataforma.</p>
+    <div class="vacio" style="margin-top:28px">Pantalla nueva, contenido por definir.</div>
+  </div>
+</section>
+
+<!-- 7. Cuenta -->
+<section class="pantalla" id="cuenta">
+  <div class="centro" style="margin:0">
+    <h1>Cuenta</h1><p class="sub">micaela@ejemplo.com</p>
+    <div class="panel">
+      <h2 style="margin-bottom:18px">Cambiar contraseña</h2>
+      <div class="campo"><label for="c1">Contraseña actual</label><input id="c1" type="password"></div>
+      <div class="campo"><label for="c2">Contraseña nueva</label><input id="c2" type="password"></div>
+      <button class="btn prim">Guardar</button>
+    </div>
+    <button class="btn txt" style="margin-top:20px" onclick="salir()">Cerrar sesión</button>
+  </div>
+</section>
+
+</main>
+
+<div class="proto" role="toolbar" aria-label="Controles del prototipo">
+  <button class="proto-t" onclick="this.parentNode.classList.toggle('cerrada')" aria-label="Mostrar u ocultar controles del prototipo">Prototipo ▾</button>
+  <button data-ir="bienvenida">Bienvenida</button><button data-ir="login">Login</button><button data-ir="registro">Registro</button><i></i>
+  <button data-ir="inicio">Inicio</button><button data-ir="simular">Simular</button><button data-ir="casos">Casos</button><button data-ir="historial">Historial</button><button data-ir="detalle">Detalle</button><button data-ir="audiograma">Audiograma</button><button data-ir="cuenta">Cuenta</button><i></i>
+  <label for="selPal" style="margin:0;color:inherit;opacity:.7">Paleta</label>
+  <select id="selPal"><option value="a">A · grafito + teal</option><option value="b">B · crema + violeta</option><option value="c">C · grafito + ámbar</option><option value="d">D · salvia + verde bosque</option><option value="e">E · vino</option></select>
+</div>
+
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const H=document.documentElement;
+const css=v=>getComputedStyle(H).getPropertyValue(v).trim();
+const conSesion=new Set(['config','inicio','simular','casos','historial','detalle','cuenta','audiograma']);
+let actual='bienvenida',origen='simular';
+function abrirAud(o){origen=o;ir('audiograma')}
+
+function ir(p){
+  actual=p;
+  $$('.pantalla').forEach(s=>s.classList.toggle('on',s.id===p));
+  const ses=conSesion.has(p);
+  $('#nav').hidden=!ses; $('#menuUsr').hidden=!ses; $('#tema').hidden=ses; cerrarMenu(); $('#auth').hidden=ses; $('#auth').style.display=ses?'none':'flex';
+  $$('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.p===(p==='detalle'?'historial':p==='audiograma'?origen:p)));
+  $$('[data-ir]').forEach(b=>b.classList.toggle('on',b.dataset.ir===p));
+  window.scrollTo(0,0); dibujar();
+}
+const entrar=()=>ir('inicio'), salir=()=>ir('bienvenida');
+function simular(){ $('#previa').hidden=true; $('#conRes').hidden=false; dibujar(); }
+function volverPrevia(){ $('#previa').hidden=false; $('#conRes').hidden=true; dibujar(); }
+
+$$('#nav button').forEach(b=>b.onclick=()=>ir(b.dataset.p));
+$$('[data-ir]').forEach(b=>b.onclick=()=>ir(b.dataset.ir));
+$('#selPal').onchange=e=>{H.dataset.paleta=e.target.value;dibujar()};
+function alternarTema(){H.dataset.tema=H.dataset.tema==='claro'?'oscuro':'claro';$('#temaTxt').textContent=H.dataset.tema==='claro'?'Claro':'Oscuro';dibujar()}
+$('#tema').onclick=alternarTema;
+function cerrarMenu(volver){$('#desp').hidden=true;$('#btnUsr').setAttribute('aria-expanded','false');if(volver)$('#btnUsr').focus()}
+$('#btnUsr').onclick=e=>{e.stopPropagation();const a=$('#desp').hidden;$('#desp').hidden=!a;$('#btnUsr').setAttribute('aria-expanded',a);if(a)$('#desp button').focus()};
+document.addEventListener('click',e=>{if(!e.target.closest('#menuUsr'))cerrarMenu()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#desp').hidden)cerrarMenu(true)});
+$('#desp').addEventListener('keydown',e=>{const b=[...$$('#desp button')],i=b.indexOf(document.activeElement);if(e.key==='ArrowDown'){e.preventDefault();b[(i+1)%b.length].focus()}if(e.key==='ArrowUp'){e.preventDefault();b[(i-1+b.length)%b.length].focus()}});
+$$('.tabs').forEach(t=>t.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  t.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); dibujar();
+}));
+
+/* datos de ejemplo inventados (no son salida del modelo) */
+const lin=(a,b,n)=>Array.from({length:n},(_,i)=>a+(b-a)*i/(n-1));
+const datos={
+  efr:()=>{const x=lin(0,50,400);return{x,y:x.map(t=>0.4*Math.sin(2*Math.PI*0.12*t)*(0.6+0.4*Math.sin(t/9))+0.05*Math.sin(t*3.1)),ex:'Tiempo (ms)',ey:'Amplitud (µV)'}},
+  abr:()=>{const x=lin(0,12,300);const p=(m,s,h)=>t=>h*Math.exp(-((t-m)**2)/(2*s*s));const f=[p(1.8,.18,.25),p(3,.2,.12),p(4.1,.22,.2),p(5.2,.25,.15),p(6.8,.3,.45)];return{x,y:x.map(t=>f.reduce((a,g)=>a+g(t),0)-.1),ex:'Latencia (ms)',ey:'Amplitud (µV)'}},
+  fft:()=>{const x=lin(0,1000,300);return{x,y:x.map(f=>.02+.5*Math.exp(-((f-120)**2)/18)+.2*Math.exp(-((f-240)**2)/20)+.08*Math.exp(-((f-360)**2)/20)),ex:'Frecuencia (Hz)',ey:'Magnitud (µV)'}},
+  ihc:()=>{const x=lin(0,50,400);return{x,y:x.map(t=>-40+8*Math.sin(2*Math.PI*0.12*t)+3*Math.sin(t/4)),ex:'Tiempo (ms)',ey:'Potencial (mV)'}},
+  ves:()=>{const x=lin(0,50,400);return{x,y:x.map(t=>.6-.25*Math.exp(-t/6)+.05*Math.sin(2*Math.PI*0.12*t)),ex:'Tiempo (ms)',ey:'Vesículas disponibles'}}
+};
+function trazo(id,clave){
+  const el=document.getElementById(id); if(!el||el.offsetParent===null)return;
+  const d=datos[clave]();
+  const tinta=css('--tinta'),tenue=css('--tenue'),linea=css('--linea');
+  const ejes=t=>({title:{text:t,font:{size:12,color:tenue}},gridcolor:linea,zerolinecolor:linea,linecolor:linea,tickfont:{color:tenue,size:11}});
+  Plotly.react(el,[{x:d.x,y:d.y,type:'scatter',mode:'lines',line:{color:css('--acento'),width:2},fill:clave==='fft'?'tozeroy':'none',fillcolor:css('--acento-suave')}],
+    {margin:{l:ML(),r:8,t:8,b:44},paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{family:'Inter',color:tinta},xaxis:ejes(d.ex),yaxis:ejes(d.ey),showlegend:false},
+    {displayModeBar:false,responsive:true});
+}
+function audio(){
+  const el=$('#g4'); if(!el||el.offsetParent===null)return;
+  const f=['250','500','1k','2k','4k','8k'],v=[10,15,20,35,55,65],tenue=css('--tenue'),linea=css('--linea');
+  Plotly.react(el,[{x:f,y:v,type:'scatter',mode:'lines+markers',line:{color:css('--c2'),width:2},marker:{size:8,color:css('--c2')}}],
+    {margin:{l:ML(),r:8,t:8,b:44},paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{family:'Inter',color:css('--tinta')},
+     xaxis:{title:{text:'Frecuencia (Hz)',font:{size:12,color:tenue}},gridcolor:linea,tickfont:{color:tenue,size:11}},
+     yaxis:{title:{text:'Umbral (dB HL)',font:{size:12,color:tenue}},autorange:'reversed',gridcolor:linea,tickfont:{color:tenue,size:11}},showlegend:false},{displayModeBar:false,responsive:true});
+}
+function dibujar(){
+  for(const g of ['g1','g2','g3']){const t=document.querySelector(`.tabs[data-g="${g}"] .on`); if(t)trazo(g,t.dataset.t)}
+  audio();
+  if(typeof curva==='function'&&$('#g0')){trazoAud('g0',curva('a'),true);trazoAud('g5',curva('b'),false)}
+}
+$$('details').forEach(d=>d.addEventListener('toggle',()=>setTimeout(dibujar,0)));
+window.addEventListener('resize',dibujar);
+
+/* ---- sliders sincronizados con campo numérico ---- */
+const ML=()=>innerWidth<600?46:56;
+const FREQ=['250','500','1k','2k','4k','8k'];
+const PERFILES={Flat00:[0,0,0,0,0,0],pend_leve:[10,15,20,35,55,65],pend_sev:[25,35,50,65,80,90],plano_mod:[45,45,45,45,50,50],custom:[10,15,20,35,55,65]};
+const NOMBRES={Flat00:'Sin pérdida',pend_leve:'Pendiente leve a moderada',pend_sev:'Pendiente severa',plano_mod:'Plana moderada',custom:'Audiograma cargado'};
+function montar(el,cb){
+  const {id,l,min,max,v,u,step=1}=el.dataset;
+  el.innerHTML=`<div class="t"><label for="${id}-n" style="margin:0">${l}</label></div><div class="c"><input type="range" id="${id}-r" min="${min}" max="${max}" step="${step}" value="${v}" aria-label="${l}"><div class="n"><input type="number" inputmode="numeric" id="${id}-n" min="${min}" max="${max}" step="${step}" value="${v}"><span>${u}</span></div></div>`;
+  const r=el.querySelector('[type=range]'),n=el.querySelector('[type=number]');
+  r.oninput=()=>{n.value=r.value;cb()};
+  n.oninput=()=>{const x=Math.min(+max,Math.max(+min,+n.value));if(n.value!=='')r.value=x;cb()};
+  n.onblur=()=>{n.value=r.value};
+}
+const val=id=>+document.getElementById(id+'-r').value;
+function poner(id,x){document.getElementById(id+'-r').value=x;document.getElementById(id+'-n').value=x}
+function genUmbrales(host,pref,cb){
+  host.innerHTML=FREQ.map((f,i)=>{const hz=f.endsWith('k')?f.slice(0,-1)+' kHz':f+' Hz';return `<div class="sl" data-id="${pref}${i}" data-l="${hz}" data-min="0" data-max="120" data-v="0" data-u="dB HL"></div>`}).join('');
+  host.querySelectorAll('.sl').forEach(e=>montar(e,cb));
+}
+const curva=pref=>FREQ.map((_,i)=>val(pref+i));
+const pta=v=>Math.round((v[1]+v[2]+v[3]+v[4])/4);
+const clasif=v=>{const p=pta(v),g=p<=25?'normal':p<=40?'leve':p<=55?'moderada':p<=70?'moderada-severa':'severa';const forma=(v[5]-v[0])>=25?'pendiente':'plana';return `Clasificación: ${forma} · pérdida ${g} (PTA ${p} dB)`};
+const simulada=v=>v.map(x=>Math.round(x/10)*10); // inventado: el modelo usa curvas discretas
+
+function trazoAud(id,v,dos){
+  const el=document.getElementById(id); if(!el||el.offsetParent===null)return;
+  const tenue=css('--tenue'),linea=css('--linea');
+  const tr=[{x:FREQ,y:v,type:'scatter',mode:'lines+markers',name:'Pedida',line:{color:css('--acento'),width:2.5},marker:{size:8,color:css('--acento')}}];
+  if(dos)tr.push({x:FREQ,y:simulada(v),type:'scatter',mode:'lines',name:'Simulada',line:{color:css('--c2'),width:2,dash:'dash'}});
+  Plotly.react(el,tr,{margin:{l:ML(),r:8,t:8,b:44},paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{family:'Inter',color:css('--tinta')},
+    xaxis:{title:{text:'Frecuencia (Hz)',font:{size:12,color:tenue}},gridcolor:linea,tickfont:{color:tenue,size:11}},
+    yaxis:{title:{text:'Umbral (dB HL)',font:{size:12,color:tenue}},autorange:'reversed',range:[100,-10],gridcolor:linea,tickfont:{color:tenue,size:11}},showlegend:false},{displayModeBar:false,responsive:true});
+}
+
+/* ---- Simular ---- */
+function actualizarSim(){
+  const v=curva('a');
+  $('#clasif').textContent=clasif(v);
+  const sel=$('#perfil'),caso=$('#caso').value||'Sin caso';
+  $('#pedido').innerHTML=`<div><span>Caso</span><b>${caso}</b></div><div><span>Perfil</span><b>${NOMBRES[sel.value]}</b></div><div><span>Estímulo</span><b class="mono">${val('frec')} Hz · ${val('nivel')} dB SPL</b></div><div><span>Tiempo estimado</span><b>~80 s</b></div>`;
+  dibujar();
+}
+$('#perfil').onchange=e=>{PERFILES[e.target.value].forEach((x,i)=>poner('a'+i,x));actualizarSim()};
+$('#caso').onchange=actualizarSim;
+
+/* ---- Audiograma ---- */
+function actualizarAud(){
+  const v=curva('b');
+  $('#clasifAud').textContent=clasif(v);
+  $('#tablaAud').innerHTML='<tr><th>Frecuencia</th>'+FREQ.map(f=>`<th>${f}</th>`).join('')+'</tr><tr><td>Umbral (dB HL)</td>'+v.map(x=>`<td class="mono">${x}</td>`).join('')+'</tr>';
+  dibujar();
+}
+function setAud(v){v.forEach((x,i)=>poner('b'+i,x));actualizarAud()}
+function cargarCSV(){setAud([15,20,25,40,60,70])} // simula un CSV leído
+$$('#tabsAud button').forEach(b=>b.onclick=()=>{
+  $$('#tabsAud button').forEach(x=>x.classList.toggle('on',x===b));
+  ['csv','manual','base'].forEach(m=>document.getElementById('m-'+m).hidden=m!==b.dataset.m);
+  dibujar();
+});
+$('#perfAud').onchange=e=>setAud(PERFILES[e.target.value]);
+
+$$('#simular .sl').forEach(e=>montar(e,actualizarSim));
+genUmbrales($('#umbrales'),'a',actualizarSim);
+genUmbrales($('#umbralesAud'),'b',actualizarAud);
+PERFILES.pend_leve.forEach((x,i)=>{poner('a'+i,x);poner('b'+i,x)});
+actualizarSim();actualizarAud();
+$$('.tabla').forEach(t=>{const h=[...t.querySelectorAll('th')].map(x=>x.textContent);t.querySelectorAll('tbody tr').forEach(r=>[...r.children].forEach((c,i)=>c.dataset.l=h[i]||''))});
+{const q=new URLSearchParams(location.search),h=location.hash.slice(1);
+ if(q.get('paleta')){H.dataset.paleta=q.get('paleta');$('#selPal').value=q.get('paleta')}
+ if(q.get('tema')){H.dataset.tema=q.get('tema');$('#temaTxt').textContent=q.get('tema')==='claro'?'Claro':'Oscuro'}
+ if(q.has('sin-barra'))$('.proto').hidden=true;
+ else if(matchMedia('(max-width:860px)').matches)$('.proto').classList.add('cerrada');
+ ir(document.getElementById(h)&&h!=='undefined'?h:'bienvenida')}
+</script>
+</body>
+</html>

@@ -4,23 +4,20 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
-  darkMode: 'class',
+  darkMode: ['selector', '[data-tema="oscuro"]'],
   theme: {
     extend: {
+      fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'], mono: ['"JetBrains Mono"', 'monospace'] },
       colors: {
-        brand: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-        },
-        dark: {
-          900: '#0b0f19',
-          800: '#111827',
-          700: '#1f2937',
-          600: '#374151',
-        }
+        // Paleta E (decisión 024): los valores cambian con el tema en index.css
+        fondo: 'var(--bg)',
+        panel: 'var(--panel)',
+        tinta: 'var(--tinta)',
+        tenue: 'var(--tenue)',
+        linea: 'var(--linea)',
+        acento: { DEFAULT: 'var(--acento)', tinta: 'var(--acento-tinta)', suave: 'var(--acento-suave)' },
+        c2: 'var(--c2)',
+        c3: 'var(--c3)',
       }
     },
   },

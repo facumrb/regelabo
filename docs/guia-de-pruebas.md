@@ -53,7 +53,7 @@ Puntos clave:
 
 ## 3. Probar desde la interfaz
 
-Abrí el **Panel de pruebas** (barra inferior, solo en desarrollo) y la pestaña **Red** de DevTools. En cada paso fijate en tres lugares: la pantalla, el panel y, cuando se indica, la base de datos (sección 5).
+Abrí el **Panel de pruebas** (barra inferior, solo en desarrollo y para administradores: iniciá sesión con un admin) y la pestaña **Red** de DevTools. En cada paso fijate en tres lugares: la pantalla, el panel y, cuando se indica, la base de datos (sección 5).
 
 | # | Qué hacer | Qué deberías ver |
 |---|---|---|
@@ -88,11 +88,11 @@ Hace falta el worker (lo levanta `npm run dev`). Una simulación tarda ~80 s.
 
 | # | Qué hacer | Qué deberías ver |
 |---|---|---|
-| T1 | En el simulador, **Ejecutar Simulación Biológica** | El botón dice "En cola (lugar 1)…" y enseguida "Simulando modelo biológico… (Ns)". A los ~75 s aparecen el EFR y los gráficos. En la base, el estado pasó de `en_cola` a `ejecutando` y a `completada`. |
+| T1 | En el simulador, **Ejecutar Simulación Biológica** | El botón dice "En cola (lugar 1)…" y enseguida "Simulando modelo biológico… (Ns)". A los ~75 s dice "✓ Simulación lista" y pasa solo al detalle con el EFR y los gráficos. En la base, el estado pasó de `en_cola` a `ejecutando` y a `completada`. |
 | T2 | **Repetir** exactamente los mismos parámetros | El resultado aparece **al instante**, sin pasar por la cola. En el historial figura como "Resultado reutilizado" (RN10). |
 | T3 | Cambiar un parámetro (por ejemplo, el nivel) y simular | Es una simulación nueva: pasa por la cola. |
 | T4 | **Cupo (RN5a)**: como estudiante, lanzar una simulación y, **desde otra pestaña**, otra distinta | "Ya tenés el máximo de simulaciones en curso…" → **429** `cupo_agotado`. Al terminar la primera, se puede volver a pedir. (Un investigador o fonoaudiólogo admite 3.) |
-| T5 | **Salir de la página mientras corre**: ir a *Ver historial de simulaciones* | La simulación figura "Ejecutando". Abrila: la página se actualiza sola y muestra los gráficos al terminar. |
+| T5 | **Salir de la página mientras corre**: ir a *Historial* en la barra | La barra muestra "Simulando… N s" y no te mueve de pantalla. Al terminar, cambia a "✓ Resultado listo" y aparece un aviso abajo con *Ver resultado*. Si recargás mientras corre, el indicador vuelve a aparecer. |
 | T6 | **Historial** (`/simulaciones`) | Lista de la más nueva a la más vieja, con estado, parámetros y fecha; clic en una abre su detalle. Con más de 20, aparece **Cargar más** (igual que *Mis casos*). |
 | T7 | Elegir un **caso** en el selector antes de simular, y luego filtrar el historial por ese caso | La simulación queda ligada al caso; el filtro "Todos los casos" / un caso la muestra u oculta. Es opcional: se puede simular sin caso. |
 | T8 | Pedir una simulación con el **worker apagado** (Ctrl+C solo del worker, o `npm run dev:backend` y `npm run dev:frontend` por separado) | Queda "En cola" y no avanza. Al levantar el worker (`npm run dev:worker`), la toma. |
@@ -100,6 +100,19 @@ Hace falta el worker (lo levanta `npm run dev`). Una simulación tarda ~80 s.
 | T10 | **RN4**: copiar la dirección de una simulación (`/simulaciones/<id>`), entrar con otro usuario y pegarla | "Simulación no encontrada" → **404**, igual que con un id inventado. |
 | T11 | **Estados internos** (decisión 023): al terminar una simulación, abrir el panel *Estados internos* debajo de los gráficos (también en el detalle del historial) | Recién al abrirlo pide `GET /api/simulaciones/{id}/estados-internos` (~4,6 MB). Muestra las 7 figuras; cada una declara frecuencia solicitada y característica efectiva, muestreo, ventana y unidades. Los selectores cambian el canal de las figuras 2 y 7 (1 o 4 kHz) y de la 3 a la 6 (500 Hz a 8 kHz). |
 | T12 | Abrir el panel en una simulación hecha **antes** de esta versión del modelo | "Esta simulación no tiene estados internos…" → **404** `estados_internos_no_disponibles`. |
+
+### Navegación y audiograma
+
+| # | Qué hacer | Qué deberías ver |
+|---|---|---|
+| N1 | En Simular (`/simular`), **Cargar audiograma** junto al selector de perfil | Abre `/simular/audiograma`; en la barra sigue marcada *Simular*. **Volver** (o el botón atrás del navegador) regresa al formulario. |
+| N2 | En el audiograma, procesar uno y tocar **Usar perfil** | Vuelve a `/simular` con ese perfil elegido y el aviso "Perfil … listo para simular". |
+| N3 | En Inicio, la tarjeta **Cargar audiograma** y los pasos 01, 02 y 03 | Llevan a `/simular/audiograma`, `/simular` y `/simulaciones`. Con **Volver**, se regresa a Inicio. |
+| N4 | En cualquier pantalla, apretar **Tab** una vez | Aparece "Saltar al contenido"; con Enter, el foco pasa al contenido principal. |
+| N5 | Entrar como estudiante, sin sesión y como admin | El chip del backend y Swagger aparecen **solo para el admin**. |
+| N7 | En el detalle, **Nueva simulación con estos parámetros** y **Nueva simulación** | La primera abre Simular con esos datos (caso incluido); la segunda, con los valores iniciales. |
+| N8 | En Simular, cambiar **Tipo de caso** y después **Perfil auditivo** | 4 tipos (Audición normal, Hipoacusia plana, Caída en agudos, Plana + caída en agudos); al cambiar de tipo se elige su perfil de menor pérdida y cambia la vista previa. Con un perfil cargado desde un audiograma aparece "Desde tu audiograma". En Inicio y el detalle se ve la etiqueta, y el historial la separa en *Tipo de caso* y *Perfil auditivo*; el detalle agrega "Perfil del modelo: …". |
+| N6 | Con un resultado en pantalla, en cualquier gráfico: arrastrar para ampliar, **Restablecer vista** y **Descargar imagen** | Vuelve a la vista inicial y baja un PNG. No aparece la barra de íconos de Plotly. |
 
 ### Casos
 

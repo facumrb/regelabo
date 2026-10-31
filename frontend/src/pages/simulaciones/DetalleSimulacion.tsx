@@ -1,16 +1,18 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import type { EstadoNuevaSimulacion } from '../../App'
 import PerfilSimulado from '../../components/PerfilSimulado'
 import PanelEstadosInternos from '../../components/PanelEstadosInternos'
 import PlotsPanel from '../../components/PlotsPanel'
 import ResultsSummary from '../../components/ResultsSummary'
-import { Aviso, Tarjeta } from '../../components/ui'
-import { botonSecundario } from '../../components/estilos'
+import { Aviso, Encabezado, EstadoChip, Tarjeta, Volver } from '../../components/ui'
+import { botonPrimario, botonSecundario, botonTexto } from '../../components/estilos'
+import { useSimulacionesEnCurso } from '../../context/SimulacionesEnCurso'
+import { detalle, tituloDelTipo } from '../../components/perfiles'
 import { api } from '../../services/api'
 import { mensajeDeError } from '../../services/auth'
 import {
-  COLOR_ESTADO, enCurso, ETIQUETA_ESTADO, formatearFecha, INTERVALO_CONSULTA_MS, resumenDeParametros,
-  simulacionesApi,
+  enCurso, formatearFecha, INTERVALO_CONSULTA_MS, simulacionesApi,
 } from '../../services/simulaciones'
 import type { PerfilAuditivo, Simulacion } from '../../services/tiposSimulacion'
 
@@ -21,6 +23,12 @@ export default function DetalleSimulacion() {
   const [error, setError] = useState<string | null>(null)
   const [perfil, setPerfil] = useState<PerfilAuditivo | null>(null)
   const nombrePerfil = simulacion?.parametros.poles_profile
+  const { marcarVista } = useSimulacionesEnCurso()
+
+  // Abrir el detalle de una terminada apaga su aviso en la barra
+  useEffect(() => {
+    if (simulacion && !enCurso(simulacion.estado)) marcarVista(simulacion.id)
+  }, [simulacion?.id, simulacion?.estado])
 
   // Las curvas del perfil para el aviso final; los personalizados viejos no las guardaron (404) y no se muestran
   useEffect(() => {
@@ -66,35 +74,63 @@ export default function DetalleSimulacion() {
   }
   if (!simulacion) return null
 
+  const conEstosParametros: EstadoNuevaSimulacion = {
+    parametros: simulacion.parametros, casoId: simulacion.caso_id, perfil,
+  }
+
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      <div className="glass-panel rounded-2xl p-5 space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg font-bold text-white">Simulación</h2>
-          <span className={`text-xs px-3 py-1 rounded-full border font-medium ${COLOR_ESTADO[simulacion.estado]}`}>
-            {ETIQUETA_ESTADO[simulacion.estado]}
-            {simulacion.estado === 'en_cola' && simulacion.posicion ? ` (lugar ${simulacion.posicion})` : ''}
-          </span>
-        </div>
-        {perfil && <p className="text-sm text-white">{perfil.etiqueta}</p>}
-        <p className="font-mono text-sm text-cyan-300">{resumenDeParametros(simulacion.parametros)}</p>
-        <div className="text-xs text-slate-400 flex flex-wrap gap-x-4 gap-y-1">
-          <span>Pedida: {formatearFecha(simulacion.creado_en)}</span>
-          {simulacion.iniciada_en && <span>Iniciada: {formatearFecha(simulacion.iniciada_en)}</span>}
-          {simulacion.finalizada_en && <span>Terminó: {formatearFecha(simulacion.finalizada_en)}</span>}
+    <div className="aparecer space-y-6">
+      {/* Retrocede a donde se estaba (el historial con su filtro, Simular…); si se abrió directo, va al historial */}
+      <Volver a="/simulaciones" texto="Volver" />
+      <Encabezado titulo="Simulación" bajada={perfil?.etiqueta}>
+        <EstadoChip estado={simulacion.estado}
+          extra={simulacion.estado === 'en_cola' && simulacion.posicion ? ` (lugar ${simulacion.posicion})` : ''} />
+      </Encabezado>
+
+      <nav aria-label="Qué hacer ahora" className="flex flex-wrap items-center gap-2">
+        <Link to="/simular" state={conEstosParametros} className={botonPrimario}>Simular nuevamente con estos parámetros</Link>
+        <Link to="/simular" state={{} satisfies EstadoNuevaSimulacion} className={botonSecundario}>Nueva simulación</Link>
+        <Link to="/simulaciones" className={botonTexto}>Ver historial</Link>
+        <Link to="/" className={botonTexto}>Volver al inicio</Link>
+      </nav>
+
+      <dl className="flex flex-wrap gap-x-8 gap-y-4 text-sm text-tenue">
+        {([
+          ...(perfil
+            ? [['Tipo de caso', tituloDelTipo(perfil)], ['Perfil auditivo', detalle(perfil)], ['PTA', `${perfil.pta} dB HL`]]
+            : [['Perfil', simulacion.parametros.poles_profile]]),
+          ['Frecuencia', `${simulacion.parametros.carrier_freq} Hz`],
+          ['Nivel', `${simulacion.parametros.spl_level} dB SPL`],
+          ['Modulación', `${simulacion.parametros.f_mod} Hz`],
+          ['Fibras', `nH ${simulacion.parametros.nH} · nM ${simulacion.parametros.nM} · nL ${simulacion.parametros.nL}`],
+          ['Pedida', formatearFecha(simulacion.creado_en)],
+          ...(simulacion.iniciada_en ? [['Iniciada', formatearFecha(simulacion.iniciada_en)]] : []),
+          ...(simulacion.finalizada_en ? [['Terminó', formatearFecha(simulacion.finalizada_en)]] : []),
+        ] as [string, string][]).map(([nombre, valor]) => (
+          <div key={nombre}>
+            <dt>{nombre}</dt>
+            <dd className="font-medium text-tinta">{valor}</dd>
+          </div>
+        ))}
+      </dl>
+
+      {/* Para quien investiga o quiere replicarla: el nombre en el modelo de Verhulst */}
+      <p className="-mt-3 text-xs text-tenue">
+        Perfil del modelo: <code className="font-mono">{simulacion.parametros.poles_profile}</code>
+      </p>
+
+      {(simulacion.reutilizada || simulacion.caso_id) && (
+        <p className="flex flex-wrap gap-x-4 text-sm text-tenue">
           {simulacion.reutilizada && <span>Resultado reutilizado de una simulación idéntica</span>}
           {simulacion.caso_id && (
-            <Link to={`/casos/${simulacion.caso_id}`} className="text-cyan-400 hover:underline">Ver el caso</Link>
+            <Link to={`/casos/${simulacion.caso_id}`} className="text-acento hover:underline">Ver el caso</Link>
           )}
-        </div>
-        {enCurso(simulacion.estado) && (
-          <p className="text-xs text-slate-400">Esta página se actualiza sola cuando termine.</p>
-        )}
-        {simulacion.estado === 'error' && (
-          <Aviso tipo="error">{simulacion.mensaje_error ?? 'La simulación no se pudo completar.'}</Aviso>
-        )}
-        <Link to="/simulaciones" className={botonSecundario}>← Historial</Link>
-      </div>
+        </p>
+      )}
+      {enCurso(simulacion.estado) && <p className="text-sm text-tenue">Esta página se actualiza sola cuando termine.</p>}
+      {simulacion.estado === 'error' && (
+        <Aviso tipo="error">{simulacion.mensaje_error ?? 'La simulación no se pudo completar.'}</Aviso>
+      )}
 
       {simulacion.resultado && (
         <>

@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
-import { Aviso, Campo, Tarjeta } from '../components/ui'
-import { botonPrimario, entrada } from '../components/estilos'
+import { Aviso, Campo, Encabezado, Volver } from '../components/ui'
+import { botonPrimario, entrada, etiqueta, panel } from '../components/estilos'
 import { useSesion } from '../context/SesionContext'
 import { authApi, mensajeDeError } from '../services/auth'
 
@@ -39,19 +39,20 @@ export default function MiCuenta() {
   }
 
   return (
-    <div className="space-y-6">
-      <Tarjeta titulo="Mi cuenta">
-        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-          <dt className="text-slate-400">Nombre</dt>
-          <dd className="text-white">{usuario.nombre}</dd>
-          <dt className="text-slate-400">Email</dt>
-          <dd className="text-white">{usuario.email}</dd>
-          <dt className="text-slate-400">Perfil</dt>
-          <dd className="text-white">{usuario.tipo_perfil}{usuario.es_admin && ' · admin'}</dd>
-        </dl>
-      </Tarjeta>
+    <div className="max-w-md mx-auto space-y-6">
+      <Volver a="/" texto="Volver" />
+      <Encabezado titulo="Mi cuenta" />
+      <dl className={`${panel} p-5 md:p-7 grid grid-cols-[auto_1fr] gap-x-6 gap-y-3`}>
+        <dt className="text-tenue">Nombre</dt>
+        <dd className="text-tinta break-words">{usuario.nombre}</dd>
+        <dt className="text-tenue">Email</dt>
+        <dd className="text-tinta break-all">{usuario.email}</dd>
+        <dt className="text-tenue">Perfil</dt>
+        <dd className="text-tinta">{usuario.tipo_perfil}{usuario.es_admin && ' · admin'}</dd>
+      </dl>
 
-      <Tarjeta titulo="Cambiar contraseña">
+      <section className={`${panel} p-5 md:p-7 space-y-5`}>
+        <h2 className={etiqueta}>Cambiar contraseña</h2>
         <form onSubmit={enviar} noValidate className="space-y-4">
           {/* El campo de usuario oculto ayuda a los gestores de contraseñas a saber de qué cuenta es */}
           <input type="email" autoComplete="username" value={usuario.email} readOnly hidden />
@@ -73,7 +74,7 @@ export default function MiCuenta() {
             {enviando ? 'Guardando…' : 'Cambiar contraseña'}
           </button>
         </form>
-      </Tarjeta>
+      </section>
     </div>
   )
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { Aviso, Tarjeta } from '../../components/ui'
+import { Aviso, Tarjeta, Volver } from '../../components/ui'
 import { botonPrimario, botonSecundario } from '../../components/estilos'
 import { mensajeDeError } from '../../services/auth'
 import { casosApi, resumenDelCaso, type Caso } from '../../services/casos'
@@ -56,19 +56,21 @@ export default function FichaCaso() {
   }
 
   return (
+    <div className="space-y-6">
+    <Volver a="/casos" texto="Mis casos" />
     <Tarjeta titulo={caso.alias}>
-      <p className="text-xs text-slate-400">{resumenDelCaso(caso)}</p>
-      {caso.notas && <p className="text-sm text-slate-200 whitespace-pre-wrap">{caso.notas}</p>}
+      <p className="text-sm text-tenue">{resumenDelCaso(caso)}</p>
+      {caso.notas && <p className="text-tinta whitespace-pre-wrap">{caso.notas}</p>}
       {error && <Aviso tipo="error">{error}</Aviso>}
-      <div className="flex justify-between">
-        <Link to="/casos" className={botonSecundario}>← Mis casos</Link>
-        <div className="flex space-x-2">
-          <button onClick={borrar} className={`${botonSecundario} hover:!border-rose-500/60 hover:!text-rose-300`}>
+      <div className="flex flex-wrap justify-end gap-2">
+        <div className="flex gap-2">
+          <button onClick={borrar} className={`${botonSecundario} hover:!border-rose-400 hover:!text-rose-700 dark:hover:!text-rose-300`}>
             Borrar
           </button>
           <button onClick={() => setEditando(true)} className={botonPrimario}>Editar</button>
         </div>
       </div>
     </Tarjeta>
+    </div>
   )
 }

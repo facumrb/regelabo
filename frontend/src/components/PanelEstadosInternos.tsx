@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
-import Plot from 'react-plotly.js'
 import type { Data, Layout } from 'plotly.js'
 import { mensajeDeError } from '../services/auth'
 import { simulacionesApi } from '../services/simulaciones'
 import type { EstadosFibra, EstadosInternos } from '../services/tiposSimulacion'
+import { panel } from './estilos'
+import Grafico from './Grafico'
+import { layoutBase, TRAZOS, useColoresGrafico, type ColoresGrafico } from './graficos'
 
 // Siete figuras de estados internos del modelo (decisión 023). Las magnitudes vienen del modelo: acá solo se
 // eligen canales y se dibujan. Cada figura declara canal, muestreo, ventana y unidades (nunca "diagnóstico", RN9).
@@ -13,29 +15,22 @@ const tiempoMs = (n: number, fs: number) => Array.from({ length: n }, (_, i) => 
 // La reserva w(t) se escala por 14/60 solo para compararla visualmente con q(t)
 const ESCALA_RESERVA = 14 / 60
 
-function layout(titulo: string, ejeY: string, extra: Partial<Layout> = {}): Partial<Layout> {
-  return {
-    title: { text: `<b>${titulo}</b>`, font: { color: '#f1f5f9', size: 13 } },
-    autosize: true,
-    paper_bgcolor: 'transparent',
-    plot_bgcolor: 'rgba(17, 24, 39, 0.6)',
-    font: { color: '#94a3b8', family: 'Inter, sans-serif' },
-    xaxis: { title: { text: 'Tiempo (ms)' }, gridcolor: 'rgba(255, 255, 255, 0.06)' },
-    yaxis: { title: { text: ejeY }, gridcolor: 'rgba(255, 255, 255, 0.06)' },
-    margin: { l: 60, r: 60, t: 45, b: 45 },
-    legend: { orientation: 'h', y: -0.25 },
+function layout(c: ColoresGrafico, ejeY: string, extra: Partial<Layout> = {}): Partial<Layout> {
+  return layoutBase(c, {
+    margin: { l: 60, r: 60, t: 16, b: 100 },
     ...extra,
-  }
+    xaxis: { title: { text: 'Tiempo (ms)' }, ...extra.xaxis },
+    yaxis: { title: { text: ejeY }, ...extra.yaxis },
+  })
 }
 
-function Figura({ numero, data, layout: l, nota }: { numero: number; data: Data[]; layout: Partial<Layout>; nota: string }) {
+function Figura({ numero, titulo, data, layout: l, nota }: {
+  numero: number; titulo: string; data: Data[]; layout: Partial<Layout>; nota: string
+}) {
   return (
-    <div className="glass-panel rounded-2xl p-5 shadow-xl space-y-2">
-      <div className="w-full h-80">
-        <Plot data={data} layout={l} config={{ responsive: true, displaylogo: false }}
-          style={{ width: '100%', height: '100%' }} />
-      </div>
-      <p className="text-xs text-slate-500">Figura {numero}. {nota}</p>
+    <div className={`${panel} p-3 md:p-5 space-y-2`}>
+      <Grafico titulo={titulo} archivo={`estados-internos-figura-${numero}`} data={data} layout={l} />
+      <p className="text-sm text-tenue">Figura {numero}. {nota}</p>
     </div>
   )
 }
@@ -44,11 +39,11 @@ function Selector({ opciones, valor, onCambio }: {
   opciones: { etiqueta: string; valor: number }[]; valor: number; onCambio: (v: number) => void
 }) {
   return (
-    <div className="flex space-x-1.5 bg-dark-800 p-1 rounded-lg border border-slate-800 w-fit">
+    <div className="flex flex-wrap gap-1.5">
       {opciones.map((o) => (
-        <button key={o.valor} onClick={() => onCambio(o.valor)}
-          className={`px-2.5 py-1 text-xs rounded-md transition ${
-            valor === o.valor ? 'bg-cyan-500/20 text-cyan-300 font-semibold' : 'text-slate-400 hover:text-white'
+        <button key={o.valor} onClick={() => onCambio(o.valor)} aria-pressed={valor === o.valor}
+          className={`min-h-[36px] px-3 rounded-full border text-xs font-medium transition ${
+            valor === o.valor ? 'bg-acento-suave border-acento text-tinta' : 'border-linea text-tenue hover:text-tinta'
           }`}>
           {o.etiqueta}
         </button>
@@ -59,6 +54,7 @@ function Selector({ opciones, valor, onCambio }: {
 
 function Figuras({ estados }: { estados: EstadosInternos }) {
   const { canales, polo_shera, ihc, vesiculas, cn_ic } = estados
+  const c = useColoresGrafico()
   const [canal, setCanal] = useState(0) // índice en `canales`, para las figuras 3 a 6
   const [canalCorto, setCanalCorto] = useState(0) // índice en `ihc.canales` / `cn_ic.canales`, figuras 2 y 7
 
@@ -78,27 +74,30 @@ function Figuras({ estados }: { estados: EstadosInternos }) {
   const indiceCorto = ihc.canales[canalCorto]
 
   const fibras: [string, EstadosFibra][] = [['HSR', vesiculas.hsr], ['MSR', vesiculas.msr], ['LSR', vesiculas.lsr]]
-  const linea = (x: number[], y: number[], name: string, color: string, extra: Partial<Data> = {}): Data =>
-    ({ x, y, type: 'scatter', mode: 'lines', name, line: { color, width: 1.5 }, ...extra } as Data)
+  // Color y trazo de la serie `n` de la paleta (orden fijo: cada curva conserva el suyo)
+  const linea = (x: number[], y: number[], name: string, n: number, extra: Partial<Data> = {}): Data =>
+    ({ x, y, type: 'scatter', mode: 'lines', name, line: { color: c.series[n], width: 1.5, dash: TRAZOS[n] }, ...extra } as Data)
 
-  const tronco = (exc: number[][], inh: number[][], nombre: string, colores: string[]): Data[] => {
+  // El color dice el rol (excitatoria, inhibitoria, neta) y el trazo el núcleo: CN continuo, IC a guiones
+  const tronco = (exc: number[][], inh: number[][], nombre: string, trazo: string): Data[] => {
     const e = columna(exc, canalCorto)
     const i = columna(inh, canalCorto)
+    const estilo = (n: number, width = 1.5) => ({ line: { color: c.series[n], width, dash: trazo } })
     return [
-      linea(tTronco, e, `${nombre} excitatoria`, colores[0]),
-      linea(tTronco, i.map((v) => -v), `${nombre} inhibitoria (−)`, colores[1]),
-      linea(tTronco, e.map((v, k) => v - i[k]), `${nombre} neta`, colores[2], { line: { color: colores[2], width: 2 } }),
+      linea(tTronco, e, `${nombre} excitatoria`, 0, estilo(0)),
+      linea(tTronco, i.map((v) => -v), `${nombre} inhibitoria (−)`, 1, estilo(1)),
+      linea(tTronco, e.map((v, k) => v - i[k]), `${nombre} neta`, 2, estilo(2, 2)),
     ]
   }
 
   return (
     <div className="space-y-6">
-      <Figura numero={1}
+      <Figura numero={1} titulo="Polo de Shera (control de ganancia OHC)"
         data={[{
           x: tShera, y: polo_shera.frecuencia_caracteristica_hz, z: zShera, type: 'heatmap', colorscale: 'Viridis',
           colorbar: { title: { text: 'Polo' } },
         } as Data]}
-        layout={layout('Polo de Shera (control de ganancia OHC)', 'Frecuencia característica (Hz)', {
+        layout={layout(c, 'Frecuencia característica (Hz)', {
           yaxis: { title: { text: 'Frecuencia característica (Hz)' }, type: 'log' },
         })}
         nota={`Polo de Shera por tiempo y frecuencia característica (adimensional): representa el control de ` +
@@ -106,57 +105,55 @@ function Figuras({ estados }: { estados: EstadosInternos }) {
           `${muestreo(polo_shera.fs_hz, [0, Math.round(tShera.length * 1000 / polo_shera.fs_hz)])}.`} />
 
       <div className="space-y-2">
-        <span className="text-xs text-slate-400 font-medium">Canal de las figuras 2 y 7</span>
+        <span className="text-sm text-tenue">Canal de las figuras 2 y 7</span>
         <Selector valor={canalCorto} onCambio={setCanalCorto}
           opciones={ihc.canales.map((c, i) => ({ etiqueta: `${canales[c].frecuencia_solicitada_hz} Hz`, valor: i }))} />
       </div>
 
-      <Figura numero={2}
+      <Figura numero={2} titulo="Corrientes y potencial de la célula ciliada interna"
         data={[
-          linea(tIhc, columna(ihc.imet_na, canalCorto), 'I_MET (nA)', '#2196F3'),
-          linea(tIhc, columna(ihc.ikf_na, canalCorto), 'I_kf (nA)', '#FF9800'),
-          linea(tIhc, columna(ihc.iks_na, canalCorto), 'I_ks (nA)', '#f44336'),
-          linea(tIhc, columna(ihc.vm_mv, canalCorto), 'Vm (mV)', '#e2e8f0', { yaxis: 'y2' }),
+          linea(tIhc, columna(ihc.imet_na, canalCorto), 'I_MET (nA)', 0),
+          linea(tIhc, columna(ihc.ikf_na, canalCorto), 'I_kf (nA)', 1),
+          linea(tIhc, columna(ihc.iks_na, canalCorto), 'I_ks (nA)', 2),
+          linea(tIhc, columna(ihc.vm_mv, canalCorto), 'Vm (mV)', 3, { yaxis: 'y2' }),
         ]}
-        layout={layout('Corrientes y potencial de la célula ciliada interna', 'Corriente (nA)', {
+        layout={layout(c, 'Corriente (nA)', {
           yaxis2: { title: { text: 'Vm (mV)' }, overlaying: 'y', side: 'right', showgrid: false },
         })}
         nota={`${describir(indiceCorto)} · ${muestreo(ihc.fs_hz, ihc.ventana_ms)} · corrientes en nA, Vm en mV.`} />
 
       <div className="space-y-2">
-        <span className="text-xs text-slate-400 font-medium">Canal de las figuras 3 a 6</span>
+        <span className="text-sm text-tenue">Canal de las figuras 3 a 6</span>
         <Selector valor={canal} onCambio={setCanal}
           opciones={canales.map((c, i) => ({ etiqueta: `${c.frecuencia_solicitada_hz} Hz`, valor: i }))} />
       </div>
 
-      <Figura numero={3}
-        data={fibras.map(([nombre, f], k) => linea(tVes, columna(f.q, canal), `q(t) ${nombre}`,
-          ['#22d3ee', '#a78bfa', '#f472b6'][k]))}
-        layout={layout('Vesículas disponibles q(t) por tipo de fibra', 'Vesículas')}
+      <Figura numero={3} titulo="Vesículas disponibles q(t) por tipo de fibra"
+        data={fibras.map(([nombre, f], k) => linea(tVes, columna(f.q, canal), `q(t) ${nombre}`, k))}
+        layout={layout(c, 'Vesículas')}
         nota={`${describir(canal)} · ${muestreo(vesiculas.fs_hz, vesiculas.ventana_ms)}. Describe la dinámica de ` +
           `una fibra representativa de cada tipo: no está ponderada por la cantidad de fibras.`} />
 
       {fibras.map(([nombre, f], k) => (
-        <Figura key={nombre} numero={4 + k}
+        <Figura key={nombre} numero={4 + k} titulo={`Estados sinápticos de las fibras ${nombre}`}
           data={[
-            linea(tVes, columna(f.q, canal), 'q(t) disponibles', '#22d3ee'),
-            linea(tVes, columna(f.w, canal).map((v) => v * ESCALA_RESERVA), 'w(t) reserva (×14/60)', '#fbbf24',
-              { line: { color: '#fbbf24', width: 1.5, dash: 'dash' } }),
-            linea(tVes, columna(f.a, canal), 'A(t) fuera del período refractario', '#34d399', { yaxis: 'y2' }),
+            linea(tVes, columna(f.q, canal), 'q(t) disponibles', 0),
+            linea(tVes, columna(f.w, canal).map((v) => v * ESCALA_RESERVA), 'w(t) reserva (×14/60)', 1),
+            linea(tVes, columna(f.a, canal), 'A(t) fuera del período refractario', 2, { yaxis: 'y2' }),
           ]}
-          layout={layout(`Estados sinápticos de las fibras ${nombre}`, 'Vesículas', {
+          layout={layout(c, 'Vesículas', {
             yaxis2: { title: { text: 'Fracción disponible' }, overlaying: 'y', side: 'right', showgrid: false },
           })}
           nota={`${describir(canal)} · ${muestreo(vesiculas.fs_hz, vesiculas.ventana_ms)}. La reserva w(t) se ` +
             `multiplica por 14/60 solo para compararla con q(t). Dinámica por fibra, no recuentos.`} />
       ))}
 
-      <Figura numero={7}
+      <Figura numero={7} titulo="Núcleo coclear y colículo inferior"
         data={[
-          ...tronco(cn_ic.cn_exc, cn_ic.cn_inh, 'CN', ['#4ade80', '#fb7185', '#e2e8f0']),
-          ...tronco(cn_ic.ic_exc, cn_ic.ic_inh, 'IC', ['#86efac', '#fda4af', '#94a3b8']),
+          ...tronco(cn_ic.cn_exc, cn_ic.cn_inh, 'CN', 'solid'),
+          ...tronco(cn_ic.ic_exc, cn_ic.ic_inh, 'IC', 'dash'),
         ]}
-        layout={layout('Núcleo coclear y colículo inferior', 'Actividad (spikes/s)')}
+        layout={layout(c, 'Actividad (spikes/s)')}
         nota={`${describir(indiceCorto)} · ${muestreo(cn_ic.fs_hz, cn_ic.ventana_ms)} · actividad agregada en ` +
           `spikes/s. La respuesta neta es la excitatoria menos la inhibitoria.`} />
     </div>
@@ -186,17 +183,18 @@ export default function PanelEstadosInternos({ simulacionId }: { simulacionId: s
   return (
     <div className="space-y-4">
       <button onClick={() => setAbierto(!abierto)}
-        className="glass-panel w-full rounded-2xl px-5 py-4 flex items-center justify-between text-left">
+        aria-expanded={abierto}
+        className={`${panel} w-full min-h-[44px] px-5 py-4 flex items-center justify-between gap-4 text-left hover:border-tenue`}>
         <span>
-          <span className="block text-sm font-semibold text-slate-200">Estados internos</span>
-          <span className="block text-xs text-slate-500">
+          <span className="block font-semibold text-tinta">Estados internos</span>
+          <span className="block text-sm text-tenue">
             Siete figuras de la cadena auditiva simulada: cóclea, célula ciliada interna, sinapsis y tronco.
           </span>
         </span>
-        <span className="text-slate-400 text-sm">{abierto ? 'Ocultar' : 'Mostrar'}</span>
+        <span className="text-tenue text-sm shrink-0">{abierto ? 'Ocultar' : 'Mostrar'}</span>
       </button>
-      {abierto && error && <p className="text-sm text-rose-300">{error}</p>}
-      {abierto && !error && !estados && <p className="text-sm text-slate-400">Cargando estados internos…</p>}
+      {abierto && error && <p role="alert" className="text-sm text-rose-700 dark:text-rose-300">{error}</p>}
+      {abierto && !error && !estados && <p className="text-sm text-tenue">Cargando estados internos…</p>}
       {abierto && estados && <Figuras estados={estados} />}
     </div>
   )

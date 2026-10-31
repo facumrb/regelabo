@@ -1,14 +1,14 @@
-import { useState, type Dispatch, type SetStateAction } from 'react'
-import CurvasPerfil, { avisoPrevio } from './CurvasPerfil'
+import type { Dispatch, ReactNode, SetStateAction } from 'react'
+import { Link } from 'react-router-dom'
+import Icono from './Icono'
+import { avisoPrevio } from './CurvasPerfil'
+import { avisoAtencion, botonPrimario, botonSecundario, entrada, etiqueta, panel } from './estilos'
+import { Deslizador } from './ui'
+import { detalle, TIPOS, tipoDe, type Tipo } from './perfiles'
 import type { Caso } from '../services/casos'
 import type { ParametrosSimulacion, PerfilAuditivo, Simulacion } from '../services/tiposSimulacion'
 
-const GRUPOS: { forma: PerfilAuditivo['forma']; titulo: string }[] = [
-  { forma: 'personalizada', titulo: 'Generado desde un audiograma' },
-  { forma: 'plana', titulo: 'Pérdida plana' },
-  { forma: 'descendente', titulo: 'Pérdida descendente (agudos)' },
-  { forma: 'combinada', titulo: 'Plana + descendente' },
-]
+const FRECUENCIAS_RAPIDAS = [500, 1000, 2000, 4000]
 
 interface Props {
   profiles: PerfilAuditivo[]
@@ -21,9 +21,13 @@ interface Props {
   elapsedTime: number
   /** La simulación que se está esperando, para mostrar si está en cola o ejecutando */
   simulacion: Simulacion | null
+  /** Ya terminó: se muestra un momento antes de pasar a su detalle */
+  lista: boolean
   casos: Caso[]
   casoId: string
   setCasoId: (id: string) => void
+  /** Vista previa del perfil elegido: va al pie del paso 1 */
+  vistaPrevia: ReactNode
 }
 
 export default function SimulationControls({
@@ -35,14 +39,12 @@ export default function SimulationControls({
   isLoading,
   elapsedTime,
   simulacion,
+  lista,
   casos,
   casoId,
   setCasoId,
+  vistaPrevia,
 }: Props) {
-  const [showAdvanced, setShowAdvanced] = useState(false)
-
-  const quickFrequencies = [500, 1000, 2000, 4000]
-
   const handleChange = <K extends keyof ParametrosSimulacion>(field: K, value: ParametrosSimulacion[K]) => {
     setParams(prev => ({ ...prev, [field]: value }))
   }
@@ -52,278 +54,147 @@ export default function SimulationControls({
     ? [perfilActivo, ...profiles]
     : profiles
   const aviso = perfilActivo ? avisoPrevio(perfilActivo) : null
+  const tipoActivo = perfilActivo ? tipoDe(perfilActivo) : 'normal'
+  const tiposDisponibles = TIPOS.filter(({ tipo }) => opciones.some(p => tipoDe(p) === tipo))
+  const delTipo = opciones.filter(p => tipoDe(p) === tipoActivo)
+
+  // Al cambiar de tipo se elige su primer perfil, el de menor pérdida (el backend los manda ordenados por PTA)
+  const elegirTipo = (tipo: Tipo) => {
+    const primero = opciones.find(p => tipoDe(p) === tipo)
+    if (primero) handleChange('poles_profile', primero.nombre)
+  }
 
   return (
-    <div className="glass-panel rounded-2xl p-6 shadow-xl space-y-6">
-      
-      {/* Header del panel */}
-      <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-        <div>
-          <h2 className="text-base font-semibold text-white flex items-center space-x-2">
-            <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
-            <span>Parámetros de Simulación</span>
-          </h2>
-          <p className="text-xs text-slate-400">Configuración del estímulo acústico y perfil coclear</p>
-        </div>
-        <span className="text-xs font-mono text-cyan-400/80 bg-cyan-950/40 px-2 py-1 rounded border border-cyan-800/40">
-          RAM Stimulus
-        </span>
-      </div>
-
-      <div className="space-y-5">
-        
-        {/* 0. Caso al que se asocia la simulación (opcional) */}
-        <div>
-          <label className="text-xs font-medium text-slate-300 block mb-1.5">Caso (opcional)</label>
-          <select
-            value={casoId}
-            onChange={(e) => setCasoId(e.target.value)}
-            disabled={isLoading}
-            className="w-full bg-dark-800 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 transition cursor-pointer"
-          >
-            <option value="">Sin caso</option>
-            {casos.map((c) => (
-              <option key={c.id} value={c.id}>{c.alias}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* 1. Perfil Auditivo (Polos de Shera) */}
-        <div>
-          <label htmlFor="perfil-auditivo" className="text-xs font-medium text-slate-300 block mb-1.5">
-            Perfil auditivo
+    // Paso 1 a la izquierda y paso 2 a la derecha, de alto parecido; en el celular, uno debajo del otro
+    <div className="grid gap-6 lg:gap-8 lg:grid-cols-2 items-start">
+      <section className={`${panel} p-5 space-y-3.5`}>
+        <h2 className={etiqueta}>1 · Caso y perfil</h2>
+        <div className="grid gap-4">
+          <label className="block">
+            <span className="block text-sm text-tenue mb-1.5">Caso (opcional)</span>
+            <select value={casoId} onChange={(e) => setCasoId(e.target.value)} disabled={isLoading} className={entrada}>
+              <option value="">Sin caso</option>
+              {casos.map((c) => (
+                <option key={c.id} value={c.id}>{c.alias}</option>
+              ))}
+            </select>
           </label>
-          <select
-            id="perfil-auditivo"
-            value={params.poles_profile}
-            onChange={(e) => handleChange('poles_profile', e.target.value)}
-            disabled={isLoading}
-            className="w-full bg-dark-800 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 transition cursor-pointer"
-          >
-            {opciones.length > 0 ? (
-              GRUPOS.map(({ forma, titulo }) => {
-                const delGrupo = opciones.filter(p => p.forma === forma)
-                return delGrupo.length > 0 && (
-                  <optgroup key={forma} label={titulo}>
-                    {delGrupo.map(p => <option key={p.nombre} value={p.nombre}>{p.etiqueta}</option>)}
-                  </optgroup>
-                )
-              })
-            ) : (
-              <option value="Flat00">Sin pérdida (0 dB HL)</option>
-            )}
-          </select>
-          {perfilActivo && (
-            <div className="mt-2 rounded-xl bg-dark-800/60 border border-slate-800 p-2">
-              <CurvasPerfil perfil={perfilActivo} alto={170} />
-            </div>
+          {tiposDisponibles.length > 0 && (
+            <label className="block">
+              <span className="block text-sm text-tenue mb-1.5">Tipo de caso</span>
+              <select value={tipoActivo} disabled={isLoading} className={entrada}
+                onChange={(e) => elegirTipo(e.target.value as Tipo)}>
+                {tiposDisponibles.map(({ tipo, titulo }) => <option key={tipo} value={tipo}>{titulo}</option>)}
+              </select>
+            </label>
           )}
-        </div>
-
-        {/* 2. Frecuencia Portadora (Carrier Frequency) */}
-        <div>
-          <div className="flex justify-between items-center mb-1.5">
-            <label className="text-xs font-medium text-slate-300">
-              Frecuencia Portadora (Hz)
-            </label>
-            <span className="text-xs font-mono font-bold text-cyan-400">
-              {params.carrier_freq} Hz
-            </span>
-          </div>
-
-          {/* Quick buttons */}
-          <div className="grid grid-cols-4 gap-2 mb-2">
-            {quickFrequencies.map(f => (
-              <button
-                key={f}
-                type="button"
-                disabled={isLoading}
-                onClick={() => handleChange('carrier_freq', f)}
-                className={`py-1.5 text-xs font-medium rounded-lg border transition ${
-                  params.carrier_freq === f
-                    ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 font-semibold'
-                    : 'bg-dark-800 text-slate-400 border-slate-800 hover:text-slate-200 hover:border-slate-700'
-                }`}
-              >
-                {f} Hz
-              </button>
-            ))}
-          </div>
-
-          <input
-            type="range"
-            min="250"
-            max="8000"
-            step="250"
-            value={params.carrier_freq}
-            onChange={(e) => handleChange('carrier_freq', parseFloat(e.target.value))}
-            disabled={isLoading}
-            className="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
-          />
-        </div>
-
-        {/* 3. Nivel de Intensidad (dB SPL) */}
-        <div>
-          <div className="flex justify-between items-center mb-1.5">
-            <label className="text-xs font-medium text-slate-300">
-              Intensidad del Estímulo (dB SPL)
-            </label>
-            <span className="text-xs font-mono font-bold text-cyan-400">
-              {params.spl_level} dB SPL
-            </span>
-          </div>
-          <input
-            type="range"
-            min="20"
-            max="95"
-            step="5"
-            value={params.spl_level}
-            onChange={(e) => handleChange('spl_level', parseFloat(e.target.value))}
-            disabled={isLoading}
-            className="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
-          />
-          <div className="flex justify-between text-[10px] text-slate-500 mt-1">
-            <span>20 dB (Muy bajo)</span>
-            <span>70 dB (Estándar clínico)</span>
-            <span>95 dB (Elevado)</span>
+          <div>
+            <label htmlFor="perfil-auditivo" className="block text-sm text-tenue mb-1.5">Perfil auditivo</label>
+            <div className="grid grid-cols-[1fr_auto] gap-2">
+              <select id="perfil-auditivo" value={params.poles_profile} disabled={isLoading} className={entrada}
+                onChange={(e) => handleChange('poles_profile', e.target.value)}>
+                {delTipo.length > 0 ? (
+                  delTipo.map(p => <option key={p.nombre} value={p.nombre}>{detalle(p)}</option>)
+                ) : (
+                  <option value="Flat00">Sin pérdida (0 dB HL)</option>
+                )}
+              </select>
+              {/* Sin aria-label: lo que se ve y lo que lee el lector de pantalla es lo mismo (WCAG 2.5.3) */}
+              <Link to="/simular/audiograma" aria-disabled={isLoading}
+                className={`${botonSecundario} px-3 gap-2 ${isLoading ? 'pointer-events-none opacity-50' : ''}`}>
+                <Icono nombre="subir" tamano={18} />Cargar audiograma
+              </Link>
+            </div>
+            <p className="mt-1.5 text-sm text-tenue">¿Buscás otra configuración? Cargá su audiograma y se genera el perfil.</p>
           </div>
         </div>
+        {/* Cartel previo (Q20): no frena, solo avisa que el perfil se simulará recortado */}
+        {aviso && <p role="status" className={`text-sm border rounded-lg px-3 py-2 ${avisoAtencion}`}>⚠ {aviso}</p>}
+        {vistaPrevia}
+      </section>
 
-        {/* 4. Frecuencia de Modulación */}
-        <div>
-          <div className="flex justify-between items-center mb-1.5">
-            <label className="text-xs font-medium text-slate-300">
-              Frecuencia de Modulación ($f_{'{mod}'}$)
-            </label>
-            <span className="text-xs font-mono font-bold text-cyan-400">
-              {params.f_mod} Hz
-            </span>
+      <div className="space-y-6">
+        <section className={`${panel} p-5 space-y-4`}>
+          <h2 className={etiqueta}>2 · Estímulo</h2>
+          {/* Uno por fila: de a dos, la barra quedaba de ~6rem en la columna de 30rem */}
+          <div className="grid gap-5">
+            <Deslizador id="nivel" etiqueta="Intensidad del estímulo" unidad="dB SPL" min={20} max={95} paso={5}
+              valor={params.spl_level} deshabilitado={isLoading} onCambio={(v) => handleChange('spl_level', v)}
+              marcas={['20 · muy bajo', '70 · estándar clínico', '95 · elevado']} />
+            <div className="space-y-2">
+              <Deslizador id="frecuencia" etiqueta="Frecuencia portadora" unidad="Hz" min={250} max={8000} paso={250}
+                valor={params.carrier_freq} deshabilitado={isLoading} onCambio={(v) => handleChange('carrier_freq', v)} />
+              <div className="flex flex-wrap gap-1.5" role="group" aria-label="Frecuencias habituales">
+                {FRECUENCIAS_RAPIDAS.map(f => (
+                  <button key={f} type="button" disabled={isLoading} onClick={() => handleChange('carrier_freq', f)}
+                    aria-pressed={params.carrier_freq === f}
+                    className={`min-h-[36px] px-3 rounded-full border text-xs font-medium transition ${
+                      params.carrier_freq === f
+                        ? 'bg-acento-suave border-acento text-tinta'
+                        : 'border-linea text-tenue hover:text-tinta hover:border-tenue'
+                    }`}>
+                    {f} Hz
+                  </button>
+                ))}
+              </div>
+            </div>
+            <Deslizador id="modulacion" etiqueta="Frecuencia de modulación" sigla="f_mod" unidad="Hz" min={50} max={250} paso={10}
+              valor={params.f_mod} deshabilitado={isLoading} onCambio={(v) => handleChange('f_mod', v)} />
           </div>
-          <input
-            type="range"
-            min="50"
-            max="250"
-            step="10"
-            value={params.f_mod}
-            onChange={(e) => handleChange('f_mod', parseFloat(e.target.value))}
-            disabled={isLoading}
-            className="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
-          />
-        </div>
 
-        {/* 5. Parámetros Biológicos Avanzados (Sinaptopatía) */}
-        <div className="pt-2 border-t border-slate-800/80">
-          <button
-            type="button"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            className="w-full flex items-center justify-between text-xs text-slate-400 hover:text-cyan-400 transition py-1"
-          >
-            <span className="flex items-center space-x-1.5">
-              <span>Fibras del Nervio Auditivo (Sinaptopatía)</span>
-            </span>
-            <span>{showAdvanced ? '▲ Ocultar' : '▼ Configurar'}</span>
-          </button>
-
-          {showAdvanced && (
-            <div className="mt-3 p-3.5 rounded-xl bg-dark-800/80 border border-slate-800 space-y-3 animate-fadeIn">
-              <p className="text-[11px] text-slate-400 leading-relaxed">
+          <details className="group border-t border-linea pt-3">
+            <summary className="flex items-center justify-between min-h-[44px] cursor-pointer list-none text-sm font-medium text-tinta">
+              Fibras del Nervio Auditivo (Sinaptopatía)
+              <span className="text-tenue group-open:hidden">▼ Configurar</span>
+              <span className="text-tenue hidden group-open:inline">▲ Ocultar</span>
+            </summary>
+            <div className="pt-3 space-y-4">
+              <p className="text-sm text-tenue">
                 Modulá las fibras por célula ciliada interna para simular pérdida sináptica coclear (sordera oculta).
               </p>
-              
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-slate-300">Fibras HSR (Alta tasa, nH):</span>
-                  <span className="font-mono text-cyan-400 font-bold">{params.nH}</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="20"
-                  value={params.nH}
-                  onChange={(e) => handleChange('nH', parseInt(e.target.value))}
-                  disabled={isLoading}
-                  className="w-full accent-cyan-400 h-1.5 bg-slate-700 rounded-lg cursor-pointer"
-                />
-              </div>
-
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-slate-300">Fibras MSR (Media tasa, nM):</span>
-                  <span className="font-mono text-cyan-400 font-bold">{params.nM}</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="10"
-                  value={params.nM}
-                  onChange={(e) => handleChange('nM', parseInt(e.target.value))}
-                  disabled={isLoading}
-                  className="w-full accent-cyan-400 h-1.5 bg-slate-700 rounded-lg cursor-pointer"
-                />
-              </div>
-
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-slate-300">Fibras LSR (Baja tasa, nL):</span>
-                  <span className="font-mono text-cyan-400 font-bold">{params.nL}</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="10"
-                  value={params.nL}
-                  onChange={(e) => handleChange('nL', parseInt(e.target.value))}
-                  disabled={isLoading}
-                  className="w-full accent-cyan-400 h-1.5 bg-slate-700 rounded-lg cursor-pointer"
-                />
+              <div className="grid gap-4">
+                <Deslizador id="nh" etiqueta="Alta tasa (HSR)" sigla="nH" unidad="fibras" min={0} max={20} valor={params.nH}
+                  deshabilitado={isLoading} onCambio={(v) => handleChange('nH', Math.round(v))} />
+                <Deslizador id="nm" etiqueta="Media tasa (MSR)" sigla="nM" unidad="fibras" min={0} max={10} valor={params.nM}
+                  deshabilitado={isLoading} onCambio={(v) => handleChange('nM', Math.round(v))} />
+                <Deslizador id="nl" etiqueta="Baja tasa (LSR)" sigla="nL" unidad="fibras" min={0} max={10} valor={params.nL}
+                  deshabilitado={isLoading} onCambio={(v) => handleChange('nL', Math.round(v))} />
               </div>
             </div>
-          )}
-        </div>
+          </details>
+        </section>
 
-      </div>
-
-      {/* Cartel previo (Q20): no frena, solo avisa que el perfil se simulará recortado */}
-      {aviso && (
-        <p role="status" className="text-xs text-amber-300 bg-amber-950/40 border border-amber-500/30 rounded-lg px-3 py-2">
-          ⚠ {aviso}
-        </p>
-      )}
-
-      {/* Botón de Ejecución Principal */}
-      <button
-        type="button"
-        onClick={onRunSimulation}
-        disabled={isLoading}
-        className={`w-full py-3.5 px-4 rounded-xl font-semibold text-sm flex items-center justify-center space-x-2 transition shadow-lg ${
-          isLoading
-            ? 'bg-cyan-600/50 text-cyan-100 cursor-not-allowed shadow-none'
-            : 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-cyan-500/25 active:scale-[0.98]'
-        }`}
-      >
-        {isLoading ? (
-          <>
-            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        <button type="button" onClick={onRunSimulation} disabled={isLoading}
+          className={`${botonPrimario} w-full min-h-[52px] text-base`}>
+          {isLoading && !lista && (
+            <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            <span>
-              {simulacion?.estado === 'en_cola'
+          )}
+          <span aria-live="polite">
+            {lista
+              ? '✓ Simulación lista'
+              : !isLoading
+              ? 'Ejecutar Simulación Biológica'
+              : simulacion?.estado === 'en_cola'
                 ? `En cola (lugar ${simulacion.posicion ?? '…'})… (${elapsedTime}s)`
                 : `Simulando modelo biológico... (${elapsedTime}s)`}
-            </span>
-          </>
-        ) : (
-          <>
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>Ejecutar Simulación Biológica</span>
-          </>
+          </span>
+        </button>
+        {/* La caché (RN10) es por huella: no se puede anticipar cuáles salen al instante */}
+        {!isLoading && (
+          <p className="-mt-4 text-center text-sm text-tenue">
+            Tarda unos 80 s. Si esta misma combinación ya se calculó antes, el resultado aparece al instante.
+          </p>
         )}
-      </button>
-
+        {simulacion && !lista && (
+          <p className="-mt-4 text-center text-sm text-tenue">
+            Podés seguir usando la página: la barra avisa cuando termine.{' '}
+            <Link to={`/simulaciones/${simulacion.id}`} className="text-acento hover:underline">Seguir en el detalle</Link>
+          </p>
+        )}
+      </div>
     </div>
   )
 }
