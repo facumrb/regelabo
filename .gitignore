@@ -80,3 +80,6 @@ graphify-out/
 
 # Validación estadística del estudio piloto (complementa el paper; uso local)
 validacionPlanAnalisis/
+
+# Capturas y logs de las pruebas con Playwright
+.playwright-mcp/

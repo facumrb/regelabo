@@ -234,6 +234,7 @@ class PerfilAuditivo(BaseModel):
     etiqueta: str = Field(description="Descripción legible, con el grado y el PTA")
     forma: Literal["plana", "descendente", "combinada", "personalizada"]
     grado: Literal["normal", "leve", "moderada", "severa"] = Field(description="RN2, según el PTA pedido")
+    patron: Literal["plano", "caida_en_agudos"] = Field(description="RN2, según la curva pedida")
     pta: float = Field(description="PTA de la curva pedida, en dB HL")
     curva_pedida: List[AudiogramPoint]
     curva_simulada: List[AudiogramPoint] = Field(description="La pedida, recortada al techo del modelo")

@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Aviso } from '../../components/ui'
-import { botonPrimario, botonSecundario } from '../../components/estilos'
+import { Aviso, Encabezado, Tabla } from '../../components/ui'
+import { botonPrimario, botonSecundario, vacio } from '../../components/estilos'
 import { mensajeDeError } from '../../services/auth'
-import { casosApi, resumenDelCaso, type Caso } from '../../services/casos'
+import { casosApi, type Caso } from '../../services/casos'
+
+const SEXO = { femenino: 'Femenino', masculino: 'Masculino', otro: 'Otro' } as const
 
 export default function MisCasos() {
   const [casos, setCasos] = useState<Caso[]>([])
@@ -31,32 +33,27 @@ export default function MisCasos() {
   }, [])
 
   return (
-    <div className="max-w-3xl mx-auto space-y-5">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-white">Mis casos</h2>
+    <div className="space-y-6">
+      <Encabezado titulo="Mis casos" bajada="Los casos que cargaste, sin datos que identifiquen a nadie.">
         <Link to="/casos/nuevo" className={botonPrimario}>+ Nuevo caso</Link>
-      </div>
+      </Encabezado>
 
       {error && <Aviso tipo="error">{error}</Aviso>}
 
       {!cargando && !error && casos.length === 0 && (
-        <p className="text-sm text-slate-400 text-center py-10 border border-dashed border-slate-800 rounded-2xl">
+        <p className={vacio}>
           Todavía no creaste casos.
         </p>
       )}
 
       {casos.length > 0 && (
-        <ul className="divide-y divide-slate-800 border border-slate-800 rounded-2xl bg-dark-800/80 overflow-hidden">
-          {casos.map((caso) => (
-            <li key={caso.id}>
-              <Link to={`/casos/${caso.id}`}
-                className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 px-4 py-3 hover:bg-slate-800/50 transition">
-                <span className="text-sm font-semibold text-white">{caso.alias}</span>
-                <span className="text-xs text-slate-400">{resumenDelCaso(caso)}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <Tabla nombre="Casos" filas={casos} clave={(c) => c.id} enlace={(c) => `/casos/${c.id}`}
+          columnas={[
+            { titulo: 'Caso', celda: (c) => c.alias },
+            { titulo: 'Edad', celda: (c) => (c.edad !== null ? `${c.edad} años` : '—'), mono: true },
+            { titulo: 'Sexo', celda: (c) => (c.sexo ? SEXO[c.sexo] : '—') },
+            { titulo: 'Creado', celda: (c) => new Date(c.creado_en).toLocaleDateString('es-AR') },
+          ]} />
       )}
 
       {siguiente && (

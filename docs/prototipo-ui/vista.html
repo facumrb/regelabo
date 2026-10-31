@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>regelabo · vista móvil y tablet</title>
+<style>
+body{margin:0;font:14px/1.4 system-ui,sans-serif;background:#2a2d2c;color:#eee}
+.ctl{position:sticky;top:0;z-index:2;background:#1a1c1b;padding:10px 16px;display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+label{display:flex;gap:6px;align-items:center}select{padding:4px 8px}
+.marcos{display:flex;gap:32px;padding:24px;align-items:flex-start;justify-content:center;flex-wrap:wrap}
+figure{margin:0}figcaption{text-align:center;opacity:.6;margin-bottom:8px}
+iframe{border:0;background:#fff;border-radius:26px;box-shadow:0 0 0 8px #000}
+</style></head><body>
+<div class="ctl">
+  <label>Pantalla <select id="p"><option>bienvenida</option><option>login</option><option>registro</option><option selected>inicio</option><option>simular</option><option>casos</option><option>historial</option><option>detalle</option><option>audiograma</option><option>cuenta</option><option>config</option></select></label>
+  <label>Paleta <select id="pa"><option value="a">A · teal</option><option value="b">B · violeta</option><option value="c">C · ámbar</option><option value="d">D · salvia</option><option value="e">E · vino</option></select></label>
+  <label>Tema <select id="t"><option value="claro">Claro</option><option value="oscuro">Oscuro</option></select></label>
+  <label>Dispositivos <select id="d"><option value="2">Móvil y tablet</option><option value="m">Móvil (390 px)</option><option value="t">Tablet vertical (820 px)</option><option value="h">Tablet horizontal (1100 px)</option></select></label>
+</div>
+<div class="marcos" id="m"></div>
+<script>
+const $=id=>document.getElementById(id);
+const tam={m:['Móvil · 390 × 800',390,800],t:['Tablet vertical · 820 × 1000',820,1000],h:['Tablet horizontal · 1100 × 760',1100,760]};
+function pintar(){
+  const q=`?sin-barra&paleta=${$('pa').value}&tema=${$('t').value}#${$('p').value}`;
+  const k=$('d').value==='2'?['m','t']:[$('d').value];
+  $('m').innerHTML=k.map(x=>`<figure><figcaption>${tam[x][0]}</figcaption><iframe title="${tam[x][0]}" width="${tam[x][1]}" height="${tam[x][2]}" src="index.html${q}"></iframe></figure>`).join('');
+}
+['p','pa','t','d'].forEach(i=>$(i).onchange=pintar);pintar();
+</script></body></html>

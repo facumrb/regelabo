@@ -70,7 +70,9 @@ El [Plan de Mitigación de Cuellos de Botella](specs/Plan%20de%20Mitigación%20d
 - **Licencia de Verhulst (UGent):** el repo es público y contiene el código del modelo; la licencia prohíbe redistribuirlo sin autorización escrita. Hasta resolverlo con la cátedra, no se traen los `.mat` de `OHC_ind`, lo que bloquea el perfil propio del módulo de casos y audiogramas.
 - **`proposal.md` desactualizado:** su sección 4 habla de Celery, Supabase Auth y Storage. Hay que alinearlo con las decisiones.
 - **Latencias y amplitudes de las ondas I, III y V**: definir con fonoaudiología las ventanas de búsqueda y el criterio de amplitud (decisión 020). Las necesita la comparación con arquetipos.
-- **Revisión del panel de estados internos por fonoaudiología** (nomenclatura y legibilidad de las 7 figuras): pendiente por falta de disponibilidad; no bloquea el merge (decisión 023).
+- **Revisión del panel de estados internos por fonoaudiología** (nomenclatura y legibilidad de las 7 figuras): pendiente por falta de disponibilidad; no bloquea el merge (decisión 023). Suma las etiquetas clínicas de los perfiles y el recorte del catálogo (decisión 026).
+- **Comparar simulaciones entre sí** (decisión 025, propuesta): próxima funcionalidad tras el rediseño; falta diseñarla y asignarla. Distinta de la comparación con arquetipos.
+- **Varias simulaciones a la vez desde Simular** (cupo de 3 para investigadores): hoy el formulario espera una por pestaña; se revisa junto con la 025.
 - **Perfiles `Custom_*` compartidos entre usuarios** (se pisan por nombre y `/profiles` los muestra a todos): se resuelve en el módulo de audiogramas, ligándolos a un caso (decisión 019).
 
 ---

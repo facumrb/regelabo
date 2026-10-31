@@ -1,21 +1,21 @@
 import { useState } from 'react'
-import Plot from 'react-plotly.js'
-import type { Data, Layout } from 'plotly.js'
+import type { Data } from 'plotly.js'
+import { panel, vacio } from './estilos'
+import Grafico from './Grafico'
+import { layoutBase, TRAZOS, useColoresGrafico } from './graficos'
 import type { ResultadoSimulacion } from '../services/tiposSimulacion'
 
+type Ondas = 'all' | 'total' | 'separate'
+
 export default function PlotsPanel({ result }: { result: ResultadoSimulacion | null }) {
-  const [waveMode, setWaveMode] = useState<'total' | 'separate' | 'all'>('all')
+  const [waveMode, setWaveMode] = useState<Ondas>('all')
+  const c = useColoresGrafico()
 
   if (!result) {
     return (
-      <div className="glass-panel rounded-2xl p-12 text-center border border-dashed border-slate-800 space-y-3">
-        <div className="w-12 h-12 mx-auto rounded-full bg-slate-800/80 flex items-center justify-center text-slate-400">
-          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
-          </svg>
-        </div>
-        <h3 className="text-base font-semibold text-slate-300">Sin simulación activa</h3>
-        <p className="text-xs text-slate-500 max-w-sm mx-auto">
+      <div className={`${vacio} space-y-2`}>
+        <h3 className="font-semibold text-tinta">Sin simulación activa</h3>
+        <p className="text-sm max-w-sm mx-auto">
           Configurá los parámetros en el panel izquierdo y hacé clic en "Ejecutar Simulación Biológica" para visualizar el espectro de Fourier y las ondas ABR.
         </p>
       </div>
@@ -23,8 +23,9 @@ export default function PlotsPanel({ result }: { result: ResultadoSimulacion | n
   }
 
   const { fft_spectrum, abr_waves, harmonics } = result
+  const tiempo = '%{x:.2f} ms: %{y:.4f} µV<extra></extra>'
 
-  // ---- Configuración Gráfico 1: FFT Spectrum ----
+  // ---- Gráfico 1: espectro FFT ----
   const fftData: Data[] = [
     {
       x: fft_spectrum.frequencies,
@@ -32,9 +33,9 @@ export default function PlotsPanel({ result }: { result: ResultadoSimulacion | n
       type: 'scatter',
       mode: 'lines',
       name: 'Espectro FFT',
-      line: { color: '#38bdf8', width: 2 },
+      line: { color: c.acento, width: 2 },
       fill: 'tozeroy',
-      fillcolor: 'rgba(56, 189, 248, 0.08)',
+      fillcolor: `${c.acento}1a`,
       hoverinfo: 'x+y',
       hovertemplate: '%{x:.1f} Hz: %{y:.4f} µV<extra></extra>',
     },
@@ -46,186 +47,68 @@ export default function PlotsPanel({ result }: { result: ResultadoSimulacion | n
       name: 'Armónicos clave',
       text: harmonics.map(h => `H${h.harmonic_order} (${h.amplitude_uv.toFixed(3)} µV)`),
       textposition: 'top center',
-      textfont: { size: 10, color: '#f8fafc' },
-      marker: {
-        color: '#f43f5e',
-        size: 9,
-        symbol: 'circle',
-        line: { color: '#ffffff', width: 1.5 }
-      },
-      hoverinfo: 'text'
-    }
+      textfont: { size: 10, color: c.tinta },
+      marker: { color: c.c2, size: 9, symbol: 'circle', line: { color: c.panel, width: 1.5 } },
+      hoverinfo: 'text',
+    },
   ]
 
-  const fftLayout: Partial<Layout> = {
-    title: {
-      text: '<b>Espectro FFT del EFR (Armónicos de Sincronización)</b>',
-      font: { color: '#f1f5f9', size: 14 }
-    },
-    autosize: true,
-    paper_bgcolor: 'transparent',
-    plot_bgcolor: 'rgba(17, 24, 39, 0.6)',
-    font: { color: '#94a3b8', family: 'Inter, sans-serif' },
-    xaxis: {
-      title: { text: 'Frecuencia (Hz)' },
-      range: [0, 600],
-      gridcolor: 'rgba(255, 255, 255, 0.06)',
-      zerolinecolor: 'rgba(255, 255, 255, 0.1)',
-    },
-    yaxis: {
-      title: { text: 'Amplitud (µV)' },
-      gridcolor: 'rgba(255, 255, 255, 0.06)',
-      zerolinecolor: 'rgba(255, 255, 255, 0.1)',
-    },
-    margin: { l: 50, r: 25, t: 45, b: 45 },
-    showlegend: true,
-    legend: {
-      x: 0.75,
-      y: 0.95,
-      bgcolor: 'rgba(15, 23, 42, 0.8)',
-      bordercolor: 'rgba(255, 255, 255, 0.1)',
-      borderwidth: 1
-    }
-  }
-
-  // ---- Configuración Gráfico 2: Ondas ABR ----
-  const timeMs = abr_waves.time_ms
+  // ---- Gráfico 2: ondas ABR ----
   const abrTraces: Data[] = []
-
   if (waveMode === 'all' || waveMode === 'total') {
     abrTraces.push({
-      x: timeMs,
-      y: abr_waves.efr_wave,
-      type: 'scatter',
-      mode: 'lines',
-      name: 'EFR Total (W1+W3+W5)',
-      line: { color: '#38bdf8', width: 2 },
-      hovertemplate: '%{x:.2f} ms: %{y:.4f} µV<extra></extra>',
+      x: abr_waves.time_ms, y: abr_waves.efr_wave, type: 'scatter', mode: 'lines', name: 'EFR Total (W1+W3+W5)',
+      line: { color: c.series[0], width: 2, dash: TRAZOS[0] }, hovertemplate: tiempo,
     })
   }
-
   if (waveMode === 'all' || waveMode === 'separate') {
     abrTraces.push(
-      {
-        x: timeMs,
-        y: abr_waves.w1,
-        type: 'scatter',
-        mode: 'lines',
-        name: 'Onda I (Nervio AN)',
-        line: { color: '#10b981', width: 1.5, dash: 'dot' },
-        hovertemplate: '%{x:.2f} ms: %{y:.4f} µV<extra></extra>',
-      },
-      {
-        x: timeMs,
-        y: abr_waves.w3,
-        type: 'scatter',
-        mode: 'lines',
-        name: 'Onda III (Núcleo CN)',
-        line: { color: '#f59e0b', width: 1.5, dash: 'dash' },
-        hovertemplate: '%{x:.2f} ms: %{y:.4f} µV<extra></extra>',
-      },
-      {
-        x: timeMs,
-        y: abr_waves.w5,
-        type: 'scatter',
-        mode: 'lines',
-        name: 'Onda V (Colículo IC)',
-        line: { color: '#c084fc', width: 1.5 },
-        hovertemplate: '%{x:.2f} ms: %{y:.4f} µV<extra></extra>',
-      }
+      { x: abr_waves.time_ms, y: abr_waves.w1, type: 'scatter', mode: 'lines', name: 'Onda I (Nervio AN)',
+        line: { color: c.series[1], width: 1.5, dash: TRAZOS[1] }, hovertemplate: tiempo },
+      { x: abr_waves.time_ms, y: abr_waves.w3, type: 'scatter', mode: 'lines', name: 'Onda III (Núcleo CN)',
+        line: { color: c.series[2], width: 1.5, dash: TRAZOS[2] }, hovertemplate: tiempo },
+      { x: abr_waves.time_ms, y: abr_waves.w5, type: 'scatter', mode: 'lines', name: 'Onda V (Colículo IC)',
+        line: { color: c.series[3], width: 1.5, dash: TRAZOS[3] }, hovertemplate: tiempo },
     )
   }
 
-  const abrLayout: Partial<Layout> = {
-    title: {
-      text: '<b>Respuesta en el Dominio Temporal (Ondas ABR & EFR)</b>',
-      font: { color: '#f1f5f9', size: 14 }
-    },
-    autosize: true,
-    paper_bgcolor: 'transparent',
-    plot_bgcolor: 'rgba(17, 24, 39, 0.6)',
-    font: { color: '#94a3b8', family: 'Inter, sans-serif' },
-    xaxis: {
-      title: { text: 'Tiempo (ms)' },
-      range: [0, 50], // Primeros 50 ms para inspección fina
-      gridcolor: 'rgba(255, 255, 255, 0.06)',
-      zerolinecolor: 'rgba(255, 255, 255, 0.1)',
-    },
-    yaxis: {
-      title: { text: 'Amplitud (µV)' },
-      gridcolor: 'rgba(255, 255, 255, 0.06)',
-      zerolinecolor: 'rgba(255, 255, 255, 0.1)',
-    },
-    margin: { l: 50, r: 25, t: 45, b: 45 },
-    showlegend: true,
-    legend: {
-      x: 0.7,
-      y: 0.95,
-      bgcolor: 'rgba(15, 23, 42, 0.8)',
-      bordercolor: 'rgba(255, 255, 255, 0.1)',
-      borderwidth: 1
-    }
-  }
+  const margen = { l: 52, r: 16, t: 16, b: 90 }
+  const modos: [Ondas, string][] = [['all', 'Todas las ondas'], ['total', 'EFR Total'], ['separate', 'W1 / W3 / W5']]
 
   return (
     <div className="space-y-6">
-      
       {/* Gráfico 1: FFT */}
-      <div className="glass-panel rounded-2xl p-5 shadow-xl">
-        <div className="w-full h-80">
-          <Plot
-            data={fftData}
-            layout={fftLayout}
-            config={{ responsive: true, displayModeBar: true, displaylogo: false }}
-            style={{ width: '100%', height: '100%' }}
-          />
-        </div>
+      <div className={`${panel} p-3 md:p-5`}>
+        <Grafico titulo="Espectro FFT del EFR (Armónicos de Sincronización)" archivo="espectro-fft-efr" data={fftData}
+            layout={layoutBase(c, {
+              xaxis: { title: { text: 'Frecuencia (Hz)' }, range: [0, 600] },
+              yaxis: { title: { text: 'Amplitud (µV)' } },
+              margin: margen,
+            })} />
       </div>
 
-      {/* Gráfico 2: Formas de onda ABR con selector de trazas */}
-      <div className="glass-panel rounded-2xl p-5 shadow-xl space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-2">
-          <span className="text-xs text-slate-400 font-medium">
-            Descomposición de Componentes Neurales
-          </span>
-          <div className="flex space-x-1.5 bg-dark-800 p-1 rounded-lg border border-slate-800">
-            <button
-              onClick={() => setWaveMode('all')}
-              className={`px-2.5 py-1 text-xs rounded-md transition ${
-                waveMode === 'all' ? 'bg-cyan-500/20 text-cyan-300 font-semibold' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Todas las ondas
-            </button>
-            <button
-              onClick={() => setWaveMode('total')}
-              className={`px-2.5 py-1 text-xs rounded-md transition ${
-                waveMode === 'total' ? 'bg-cyan-500/20 text-cyan-300 font-semibold' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              EFR Total
-            </button>
-            <button
-              onClick={() => setWaveMode('separate')}
-              className={`px-2.5 py-1 text-xs rounded-md transition ${
-                waveMode === 'separate' ? 'bg-cyan-500/20 text-cyan-300 font-semibold' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              W1 / W3 / W5
-            </button>
+      {/* Gráfico 2: formas de onda ABR con selector de trazas */}
+      <div className={`${panel} p-3 md:p-5 space-y-3`}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-linea">
+          <span className="text-sm text-tenue">Descomposición de Componentes Neurales</span>
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Ondas que se muestran">
+            {modos.map(([v, texto]) => (
+              <button key={v} onClick={() => setWaveMode(v)} aria-pressed={waveMode === v}
+                className={`min-h-[36px] px-3 rounded-full border text-xs font-medium transition ${
+                  waveMode === v ? 'bg-acento-suave border-acento text-tinta' : 'border-linea text-tenue hover:text-tinta'
+                }`}>
+                {texto}
+              </button>
+            ))}
           </div>
         </div>
-
-        <div className="w-full h-80">
-          <Plot
-            data={abrTraces}
-            layout={abrLayout}
-            config={{ responsive: true, displayModeBar: true, displaylogo: false }}
-            style={{ width: '100%', height: '100%' }}
-          />
-        </div>
+        <Grafico titulo="Respuesta en el Dominio Temporal (Ondas ABR & EFR)" archivo="ondas-abr-efr" data={abrTraces}
+            layout={layoutBase(c, {
+              xaxis: { title: { text: 'Tiempo (ms)' }, range: [0, 50] }, // primeros 50 ms para inspección fina
+              yaxis: { title: { text: 'Amplitud (µV)' } },
+              margin: margen,
+            })} />
       </div>
-
     </div>
   )
 }

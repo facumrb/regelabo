@@ -19,7 +19,7 @@ function Estado({ pedido }: { pedido: Pedido }) {
   const { estado, ms } = pedido
   if (estado === undefined) {
     return ms === undefined
-      ? <span className="text-slate-500">…</span>
+      ? <span className="text-tenue">…</span>
       : <span className="px-1.5 rounded bg-rose-500/20 text-rose-300">sin respuesta</span>
   }
   const color = estado < 300 ? 'bg-emerald-500/20 text-emerald-300'
@@ -34,8 +34,8 @@ function Estado({ pedido }: { pedido: Pedido }) {
 function Bloque({ titulo, valor }: { titulo: string; valor: unknown }) {
   return (
     <div>
-      <div className="text-slate-400 mb-1">{titulo}</div>
-      <pre className="bg-dark-900 rounded p-2 overflow-x-auto text-slate-200">
+      <div className="text-tenue mb-1">{titulo}</div>
+      <pre className="bg-fondo rounded p-2 overflow-x-auto text-tinta">
         {valor === undefined || valor === '' ? '—' : JSON.stringify(valor, null, 2)}
       </pre>
     </div>
@@ -50,7 +50,7 @@ function Panel() {
   return (
     <>
       <div className={abierto ? 'h-[45vh]' : 'h-10'} /> {/* para que el panel no tape el pie de página */}
-      <div className="fixed bottom-0 inset-x-0 z-50 bg-dark-800 border-t border-slate-700 text-xs text-slate-200">
+      <div className={`fixed inset-x-0 z-50 bg-panel border-t border-linea text-xs text-tinta ${usuario ? 'bottom-[calc(56px+env(safe-area-inset-bottom))] md:bottom-0' : 'bottom-0'}`}>
         <button onClick={() => setAbierto(!abierto)} className="w-full h-10 px-4 flex items-center justify-between">
           <span className="font-semibold">Panel de pruebas (solo desarrollo) · {pedidos.length} pedidos</span>
           <span>
@@ -66,9 +66,9 @@ function Panel() {
               <button onClick={limpiarPedidos} className={botonSecundario}>Limpiar</button>
             </div>
 
-            <details className="border border-slate-700 rounded-lg p-3 space-y-2">
+            <details className="border border-linea rounded-lg p-3 space-y-2">
               <summary className="cursor-pointer font-semibold">¿Qué es este panel y cómo se lee?</summary>
-              <ul className="list-disc pl-5 space-y-1 text-slate-300">
+              <ul className="list-disc pl-5 space-y-1 text-tenue">
                 <li>Registra cada pedido que esta página le hace al servidor en <code>/api/auth/*</code> y <code>/api/casos</code>: qué envió,
                   qué respondió y cuánto tardó. Los más nuevos van arriba; hacé clic en uno para ver el detalle.</li>
                 <li>Las contraseñas se ocultan. Y no existe en producción: es una ayuda para desarrollar.</li>
@@ -84,15 +84,15 @@ function Panel() {
               </ul>
             </details>
 
-            {pedidos.length === 0 && <p className="text-slate-500">Todavía no hubo pedidos.</p>}
+            {pedidos.length === 0 && <p className="text-tenue">Todavía no hubo pedidos.</p>}
             {pedidos.map((pedido) => (
-              <details key={pedido.id} className="border border-slate-700 rounded-lg">
+              <details key={pedido.id} className="border border-linea rounded-lg">
                 <summary className="flex items-center gap-3 px-3 py-1.5 cursor-pointer">
-                  <span className="text-slate-500">{pedido.hora}</span>
+                  <span className="text-tenue">{pedido.hora}</span>
                   <span className="font-semibold">{pedido.metodo}</span>
-                  <span className="text-slate-300">{pedido.url}</span>
+                  <span className="text-tenue">{pedido.url}</span>
                   <Estado pedido={pedido} />
-                  {pedido.ms !== undefined && <span className="text-slate-500">{pedido.ms} ms</span>}
+                  {pedido.ms !== undefined && <span className="text-tenue">{pedido.ms} ms</span>}
                 </summary>
                 <div className="grid sm:grid-cols-2 gap-3 p-3">
                   <Bloque titulo="Se envió" valor={pedido.envio} />
@@ -108,5 +108,6 @@ function Panel() {
 }
 
 export default function PanelPruebas() {
-  return import.meta.env.DEV ? <Panel /> : null
+  const { usuario } = useSesion()
+  return import.meta.env.DEV && usuario?.es_admin ? <Panel /> : null
 }

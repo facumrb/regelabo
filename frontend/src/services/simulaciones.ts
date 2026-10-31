@@ -33,11 +33,12 @@ export const ETIQUETA_ESTADO: Record<EstadoSimulacion, string> = {
   error: 'Error',
 }
 
-export const COLOR_ESTADO: Record<EstadoSimulacion, string> = {
-  en_cola: 'bg-slate-500/15 text-slate-300 border-slate-500/30',
-  ejecutando: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30',
-  completada: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
-  error: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
+/** Punto de color que acompaña la etiqueta del estado (decisión 024). */
+export const PUNTO_ESTADO: Record<EstadoSimulacion, string> = {
+  en_cola: 'bg-tenue',
+  ejecutando: 'bg-amber-500',
+  completada: 'bg-acento',
+  error: 'bg-rose-500',
 }
 
 /** "Flat00 · 4000 Hz @ 70 dB · fm 110 Hz · nH 13 / nM 3 / nL 3" */

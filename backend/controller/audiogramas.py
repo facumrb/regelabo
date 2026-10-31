@@ -5,7 +5,6 @@ Servicio de procesamiento y conversión de audiogramas a perfiles de simulación
 import re
 from typing import List
 
-import numpy as np
 
 from backend.controller import perfiles
 from backend.controller.modelos import AudiogramPoint, AudiogramResponse
@@ -60,16 +59,8 @@ class AudiogramService:
         if len(points) < 2:
             raise ValueError("Se requieren al menos 2 puntos audiométricos para trazar la curva.")
 
-        freqs = np.array([p.frequency for p in points])
-        losses = np.array([p.hearing_loss_db for p in points])
         valor_pta = perfiles.pta(points)
-
-        # RN2: patrón en pendiente si los agudos (>= 3 kHz) pierden >= 15 dB más que los graves (<= 1 kHz)
-        low_idx = freqs <= 1000
-        high_idx = freqs >= 3000
-        mean_low = np.mean(losses[low_idx]) if np.any(low_idx) else valor_pta
-        mean_high = np.mean(losses[high_idx]) if np.any(high_idx) else valor_pta
-        pattern = "patrón en pendiente" if mean_high - mean_low >= 15.0 else "patrón plano"
+        pattern = "patrón en pendiente" if perfiles.patron(points) == "caida_en_agudos" else "patrón plano"
         grado = perfiles.grado(valor_pta)
         nombre_grado = "Audición normal" if grado == "normal" else f"Hipoacusia {grado}"
         classification = f"{nombre_grado} ({pattern}, PTA: {valor_pta:.1f} dB HL)"

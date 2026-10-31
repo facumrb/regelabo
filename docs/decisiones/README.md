@@ -26,5 +26,8 @@ Cada archivo documenta una decisión: el contexto, lo que se eligió, las altern
 | [020](020-cola-de-simulaciones-en-detalle.md) | La cola de simulaciones en detalle |
 | [022](022-perfiles-auditivos.md) | Perfiles auditivos: forma real del audiograma y techo del modelo |
 | [023](023-estados-internos.md) | Estados internos del modelo: siete figuras de estados internos |
+| [024](024-rediseno-de-la-interfaz.md) | Rediseño de la interfaz: paleta turquesa (antes vino), tema claro/oscuro y mobile first |
+| [025](025-comparar-simulaciones.md) | Comparar simulaciones entre sí (propuesta) |
+| [026](026-etiquetas-clinicas-de-los-perfiles.md) | Etiquetas clínicas y catálogo de 9 perfiles |
 
 Las reglas de negocio están en [`../reglas-de-negocio.md`](../reglas-de-negocio.md).
