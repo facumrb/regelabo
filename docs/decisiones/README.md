@@ -31,5 +31,6 @@ Cada archivo documenta una decisión: el contexto, lo que se eligió, las altern
 | [026](026-etiquetas-clinicas-de-los-perfiles.md) | Etiquetas clínicas y catálogo de 9 perfiles |
 | [027](027-prioridad-en-la-cola.md) | Prioridad en la cola de simulaciones (propuesta) |
 | [028](028-panel-de-administracion.md) | Panel de administración (propuesta) |
+| [029](029-despliegue.md) | Despliegue en producción (reemplaza la 011 y la 003 en producción) |
 
 Las reglas de negocio están en [`../reglas-de-negocio.md`](../reglas-de-negocio.md).

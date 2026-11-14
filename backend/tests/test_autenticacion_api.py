@@ -165,3 +165,14 @@ def test_crear_admin_y_promover_a_un_usuario_existente(cliente, registro_valido)
     _, existia = autenticacion.crear_admin("ana@example.com", "Ana", "clave-del-admin")
     assert existia is True
     assert _sql("SELECT es_admin FROM usuario WHERE email = 'ana@example.com'").scalar() is True
+
+
+def test_swagger_y_el_esquema_son_solo_para_admin(cliente, registro_valido):
+    assert cliente.get("/api/docs").status_code == 401
+    _registrar(cliente, registro_valido)
+    _login(cliente)
+    assert cliente.get("/api/openapi.json").status_code == 403
+    autenticacion.crear_admin("jefe@example.com", "Jefe", "clave-del-admin")
+    _login(cliente, email="jefe@example.com", password="clave-del-admin")
+    assert cliente.get("/api/docs").status_code == 200
+    assert "/api/auth/login" in cliente.get("/api/openapi.json").json()["paths"]

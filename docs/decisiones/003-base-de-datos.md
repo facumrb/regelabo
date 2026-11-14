@@ -1,6 +1,6 @@
 # 003 — Base de datos, entornos y backups
 
-**Fecha:** 2026-10-13 · **Estado:** aceptada
+**Fecha:** 2026-10-13 · **Estado:** aceptada; la parte de producción (Supabase y backup desde GitHub Actions) fue reemplazada por la [029](029-despliegue.md)
 
 ## Contexto
 El TPI pide una base SQL con acceso directo o ORM, y que el negocio siga funcionando si cambia el motor. La propuesta original usaba Supabase.
