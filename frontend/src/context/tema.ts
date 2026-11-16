@@ -5,6 +5,8 @@ export type Tema = 'claro' | 'oscuro'
 
 const raiz = document.documentElement
 const oyentes = new Set<() => void>()
+// Al imprimir, el navegador puede avisar que el sistema "pasó" a claro: eso no es un cambio de tema
+let imprimiendo = false
 const avisar = () => oyentes.forEach((oyente) => oyente())
 
 function elegido(): string | null {
@@ -27,7 +29,7 @@ export function cambiarTema(tema: Tema) {
 
 // Mientras el usuario no elija uno, acompaña los cambios del sistema
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-  if (elegido()) return
+  if (elegido() || imprimiendo) return
   raiz.dataset.tema = e.matches ? 'oscuro' : 'claro'
   avisar()
 })
@@ -47,15 +49,19 @@ export function useTema(): Tema {
  * leerían. No cambia la preferencia guardada.
  */
 export async function imprimirEnClaro() {
-  const anterior = raiz.dataset.tema
-  if (anterior === 'oscuro') {
-    raiz.dataset.tema = 'claro'
-    avisar()
-    await new Promise((listo) => setTimeout(listo, 400)) // que los gráficos se vuelvan a dibujar
+  if (raiz.dataset.tema !== 'oscuro') {
+    window.print()
+    return
   }
-  window.print() // en los navegadores de escritorio, espera a que se cierre el diálogo
-  if (anterior === 'oscuro') {
-    raiz.dataset.tema = anterior
+  imprimiendo = true
+  raiz.dataset.tema = 'claro'
+  avisar()
+  await new Promise((listo) => setTimeout(listo, 400)) // que los gráficos se vuelvan a dibujar
+  // Se restaura cuando el navegador termina de imprimir: según el navegador, print() espera o no
+  window.addEventListener('afterprint', () => {
+    imprimiendo = false
+    raiz.dataset.tema = 'oscuro'
     avisar()
-  }
+  }, { once: true })
+  window.print()
 }
