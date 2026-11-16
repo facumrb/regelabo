@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import Icono from './Icono'
 import { avisoPrevio } from './CurvasPerfil'
 import { avisoAtencion, botonPrimario, botonSecundario, entrada, etiqueta, panel } from './estilos'
-import { Deslizador } from './ui'
+import { Deslizador, EstadoChip } from './ui'
 import { detalle, TIPOS, tipoDe, type Tipo } from './perfiles'
 import type { Caso } from '../services/casos'
 import type { ParametrosSimulacion, PerfilAuditivo, Simulacion } from '../services/tiposSimulacion'
@@ -17,12 +17,10 @@ interface Props {
   params: ParametrosSimulacion
   setParams: Dispatch<SetStateAction<ParametrosSimulacion>>
   onRunSimulation: () => void
-  isLoading: boolean
-  elapsedTime: number
-  /** La simulación que se está esperando, para mostrar si está en cola o ejecutando */
-  simulacion: Simulacion | null
-  /** Ya terminó: se muestra un momento antes de pasar a su detalle */
-  lista: boolean
+  /** Mientras se manda el pedido (un instante): después se pasa al detalle de la nueva */
+  enviando: boolean
+  /** Las del usuario en cola o ejecutando: se puede pedir otra hasta el cupo (RN5a) */
+  enCurso: Simulacion[]
   casos: Caso[]
   casoId: string
   setCasoId: (id: string) => void
@@ -36,10 +34,8 @@ export default function SimulationControls({
   params,
   setParams,
   onRunSimulation,
-  isLoading,
-  elapsedTime,
-  simulacion,
-  lista,
+  enviando,
+  enCurso,
   casos,
   casoId,
   setCasoId,
@@ -72,7 +68,7 @@ export default function SimulationControls({
         <div className="grid gap-4">
           <label className="block">
             <span className="block text-sm text-tenue mb-1.5">Caso (opcional)</span>
-            <select value={casoId} onChange={(e) => setCasoId(e.target.value)} disabled={isLoading} className={entrada}>
+            <select value={casoId} onChange={(e) => setCasoId(e.target.value)} disabled={enviando} className={entrada}>
               <option value="">Sin caso</option>
               {casos.map((c) => (
                 <option key={c.id} value={c.id}>{c.alias}</option>
@@ -82,7 +78,7 @@ export default function SimulationControls({
           {tiposDisponibles.length > 0 && (
             <label className="block">
               <span className="block text-sm text-tenue mb-1.5">Tipo de caso</span>
-              <select value={tipoActivo} disabled={isLoading} className={entrada}
+              <select value={tipoActivo} disabled={enviando} className={entrada}
                 onChange={(e) => elegirTipo(e.target.value as Tipo)}>
                 {tiposDisponibles.map(({ tipo, titulo }) => <option key={tipo} value={tipo}>{titulo}</option>)}
               </select>
@@ -91,7 +87,7 @@ export default function SimulationControls({
           <div>
             <label htmlFor="perfil-auditivo" className="block text-sm text-tenue mb-1.5">Perfil auditivo</label>
             <div className="grid grid-cols-[1fr_auto] gap-2">
-              <select id="perfil-auditivo" value={params.poles_profile} disabled={isLoading} className={entrada}
+              <select id="perfil-auditivo" value={params.poles_profile} disabled={enviando} className={entrada}
                 onChange={(e) => handleChange('poles_profile', e.target.value)}>
                 {delTipo.length > 0 ? (
                   delTipo.map(p => <option key={p.nombre} value={p.nombre}>{detalle(p)}</option>)
@@ -100,8 +96,8 @@ export default function SimulationControls({
                 )}
               </select>
               {/* Sin aria-label: lo que se ve y lo que lee el lector de pantalla es lo mismo (WCAG 2.5.3) */}
-              <Link to="/simular/audiograma" aria-disabled={isLoading}
-                className={`${botonSecundario} px-3 gap-2 ${isLoading ? 'pointer-events-none opacity-50' : ''}`}>
+              <Link to="/simular/audiograma" aria-disabled={enviando}
+                className={`${botonSecundario} px-3 gap-2 ${enviando ? 'pointer-events-none opacity-50' : ''}`}>
                 <Icono nombre="subir" tamano={18} />Cargar audiograma
               </Link>
             </div>
@@ -119,14 +115,14 @@ export default function SimulationControls({
           {/* Uno por fila: de a dos, la barra quedaba de ~6rem en la columna de 30rem */}
           <div className="grid gap-5">
             <Deslizador id="nivel" etiqueta="Intensidad del estímulo" unidad="dB SPL" min={20} max={95} paso={5}
-              valor={params.spl_level} deshabilitado={isLoading} onCambio={(v) => handleChange('spl_level', v)}
+              valor={params.spl_level} deshabilitado={enviando} onCambio={(v) => handleChange('spl_level', v)}
               marcas={['20 · muy bajo', '70 · estándar clínico', '95 · elevado']} />
             <div className="space-y-2">
               <Deslizador id="frecuencia" etiqueta="Frecuencia portadora" unidad="Hz" min={250} max={8000} paso={250}
-                valor={params.carrier_freq} deshabilitado={isLoading} onCambio={(v) => handleChange('carrier_freq', v)} />
+                valor={params.carrier_freq} deshabilitado={enviando} onCambio={(v) => handleChange('carrier_freq', v)} />
               <div className="flex flex-wrap gap-1.5" role="group" aria-label="Frecuencias habituales">
                 {FRECUENCIAS_RAPIDAS.map(f => (
-                  <button key={f} type="button" disabled={isLoading} onClick={() => handleChange('carrier_freq', f)}
+                  <button key={f} type="button" disabled={enviando} onClick={() => handleChange('carrier_freq', f)}
                     aria-pressed={params.carrier_freq === f}
                     className={`min-h-[36px] px-3 rounded-full border text-xs font-medium transition ${
                       params.carrier_freq === f
@@ -139,7 +135,7 @@ export default function SimulationControls({
               </div>
             </div>
             <Deslizador id="modulacion" etiqueta="Frecuencia de modulación" sigla="f_mod" unidad="Hz" min={50} max={250} paso={10}
-              valor={params.f_mod} deshabilitado={isLoading} onCambio={(v) => handleChange('f_mod', v)} />
+              valor={params.f_mod} deshabilitado={enviando} onCambio={(v) => handleChange('f_mod', v)} />
           </div>
 
           <details className="group border-t border-linea pt-3">
@@ -154,45 +150,52 @@ export default function SimulationControls({
               </p>
               <div className="grid gap-4">
                 <Deslizador id="nh" etiqueta="Alta tasa (HSR)" sigla="nH" unidad="fibras" min={0} max={20} valor={params.nH}
-                  deshabilitado={isLoading} onCambio={(v) => handleChange('nH', Math.round(v))} />
+                  deshabilitado={enviando} onCambio={(v) => handleChange('nH', Math.round(v))} />
                 <Deslizador id="nm" etiqueta="Media tasa (MSR)" sigla="nM" unidad="fibras" min={0} max={10} valor={params.nM}
-                  deshabilitado={isLoading} onCambio={(v) => handleChange('nM', Math.round(v))} />
+                  deshabilitado={enviando} onCambio={(v) => handleChange('nM', Math.round(v))} />
                 <Deslizador id="nl" etiqueta="Baja tasa (LSR)" sigla="nL" unidad="fibras" min={0} max={10} valor={params.nL}
-                  deshabilitado={isLoading} onCambio={(v) => handleChange('nL', Math.round(v))} />
+                  deshabilitado={enviando} onCambio={(v) => handleChange('nL', Math.round(v))} />
               </div>
             </div>
           </details>
         </section>
 
-        <button type="button" onClick={onRunSimulation} disabled={isLoading}
+        <button type="button" onClick={onRunSimulation} disabled={enviando}
           className={`${botonPrimario} w-full min-h-[52px] text-base`}>
-          {isLoading && !lista && (
+          {enviando && (
             <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24" aria-hidden="true">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
           )}
-          <span aria-live="polite">
-            {lista
-              ? '✓ Simulación lista'
-              : !isLoading
-              ? 'Ejecutar Simulación Biológica'
-              : simulacion?.estado === 'en_cola'
-                ? `En cola (lugar ${simulacion.posicion ?? '…'})… (${elapsedTime}s)`
-                : `Simulando modelo biológico... (${elapsedTime}s)`}
-          </span>
+          <span aria-live="polite">{enviando ? 'Pidiendo la simulación…' : 'Ejecutar Simulación Biológica'}</span>
         </button>
         {/* La caché (RN10) es por huella: no se puede anticipar cuáles salen al instante */}
-        {!isLoading && (
-          <p className="-mt-4 text-center text-sm text-tenue">
-            Tarda unos 80 s. Si esta misma combinación ya se calculó antes, el resultado aparece al instante.
-          </p>
-        )}
-        {simulacion && !lista && (
-          <p className="-mt-4 text-center text-sm text-tenue">
-            Podés seguir usando la página: la barra avisa cuando termine.{' '}
-            <Link to={`/simulaciones/${simulacion.id}`} className="text-acento hover:underline">Seguir en el detalle</Link>
-          </p>
+        <p className="-mt-4 text-center text-sm text-tenue">
+          Tarda unos 80 s. Si esta misma combinación ya se calculó antes, el resultado aparece al instante.
+        </p>
+        {enCurso.length > 0 && (
+          <section aria-labelledby="titulo-en-curso" className={`${panel} p-4 space-y-2`}>
+            <h2 id="titulo-en-curso" className="text-sm font-medium text-tinta">
+              {enCurso.length === 1 ? '1 simulación en curso' : `${enCurso.length} simulaciones en curso`}
+            </h2>
+            <p className="text-xs text-tenue">
+              Podés pedir otra mientras tanto, hasta tu cupo de simultáneas. La barra avisa cuando termine cada una.
+            </p>
+            <ul className="space-y-1">
+              {enCurso.map((s) => (
+                <li key={s.id} className="flex flex-wrap items-center gap-x-3 text-sm">
+                  <EstadoChip estado={s.estado} extra={s.estado === 'en_cola' && s.posicion ? ` (lugar ${s.posicion})` : ''} />
+                  <span className="font-mono text-xs text-tenue">
+                    {s.parametros.carrier_freq} Hz @ {s.parametros.spl_level} dB
+                  </span>
+                  <Link to={`/simulaciones/${s.id}`} className="ml-auto inline-flex items-center min-h-[44px] text-acento hover:underline">
+                    Ver detalle
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
       </div>
     </div>

@@ -88,10 +88,11 @@ Hace falta el worker (lo levanta `npm run dev`). Una simulación tarda ~80 s.
 
 | # | Qué hacer | Qué deberías ver |
 |---|---|---|
-| T1 | En el simulador, **Ejecutar Simulación Biológica** | El botón dice "En cola (lugar 1)…" y enseguida "Simulando modelo biológico… (Ns)". A los ~75 s dice "✓ Simulación lista" y pasa solo al detalle con el EFR y los gráficos. En la base, el estado pasó de `en_cola` a `ejecutando` y a `completada`. |
+| T1 | En el simulador, **Ejecutar Simulación Biológica** | Pasa enseguida al detalle de la nueva, que muestra "En cola" y después "Ejecutando"; a los ~75 s aparecen el EFR y los gráficos. En la base, el estado pasó de `en_cola` a `ejecutando` y a `completada`. |
+| T1b | Con un investigador o fonoaudiólogo, volver a Simular mientras corre | El formulario está libre y muestra "1 simulación en curso" con su estado y *Ver detalle*. Se pueden pedir hasta 3; la cuarta da "Ya tenés el máximo de simulaciones en curso…" (**429**). Cuando terminan, la barra avisa y no te cambia de pantalla. |
 | T2 | **Repetir** exactamente los mismos parámetros | El resultado aparece **al instante**, sin pasar por la cola. En el historial figura como "Resultado reutilizado" (RN10). |
 | T3 | Cambiar un parámetro (por ejemplo, el nivel) y simular | Es una simulación nueva: pasa por la cola. |
-| T4 | **Cupo (RN5a)**: como estudiante, lanzar una simulación y, **desde otra pestaña**, otra distinta | "Ya tenés el máximo de simulaciones en curso…" → **429** `cupo_agotado`. Al terminar la primera, se puede volver a pedir. (Un investigador o fonoaudiólogo admite 3.) |
+| T4 | **Cupo (RN5a)**: como estudiante, lanzar una simulación, volver a Simular y pedir otra distinta | "Ya tenés el máximo de simulaciones en curso…" → **429** `cupo_agotado`. Al terminar la primera, se puede volver a pedir. (Un investigador o fonoaudiólogo admite 3.) |
 | T5 | **Salir de la página mientras corre**: ir a *Historial* en la barra | La barra muestra "Simulando… N s" y no te mueve de pantalla. Al terminar, cambia a "✓ Resultado listo" y aparece un aviso abajo con *Ver resultado*. Si recargás mientras corre, el indicador vuelve a aparecer. |
 | T6 | **Historial** (`/simulaciones`) | Lista de la más nueva a la más vieja, con estado, parámetros y fecha; clic en una abre su detalle. Con más de 20, aparece **Cargar más** (igual que *Mis casos*). |
 | T7 | Elegir un **caso** en el selector antes de simular, y luego filtrar el historial por ese caso | La simulación queda ligada al caso; el filtro "Todos los casos" / un caso la muestra u oculta. Es opcional: se puede simular sin caso. |

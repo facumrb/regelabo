@@ -52,7 +52,7 @@ export function IndicadorSimulaciones() {
  * pantalla, y se va solo a los 8 s.
  */
 export function AvisoSimulacionTerminada() {
-  const { terminadas, esperada } = useSimulacionesEnCurso()
+  const { terminadas } = useSimulacionesEnCurso()
   const { pathname } = useLocation()
   const [aviso, setAviso] = useState<Simulacion | null>(null)
   const vistas = useRef(new Set<string>())
@@ -61,10 +61,9 @@ export function AvisoSimulacionTerminada() {
     const nueva = terminadas.find((s) => !vistas.current.has(s.id))
     terminadas.forEach((s) => vistas.current.add(s.id))
     if (!nueva) return
-    // Si se la espera en Simular o ya se mira su detalle, la pantalla misma lo muestra
-    const mirandola = (nueva.id === esperada && pathname === '/simular') || pathname === `/simulaciones/${nueva.id}`
-    if (!mirandola) setAviso(nueva)
-  }, [terminadas, esperada, pathname])
+    // Si ya se mira su detalle, la pantalla misma lo muestra
+    if (pathname !== `/simulaciones/${nueva.id}`) setAviso(nueva)
+  }, [terminadas, pathname])
 
   useEffect(() => {
     if (!aviso) return

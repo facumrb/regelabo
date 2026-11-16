@@ -8,10 +8,8 @@ interface ValorEnCurso {
   enCurso: Simulacion[]
   /** Terminadas (completadas o con error) cuyo detalle todavía no se abrió */
   terminadas: Simulacion[]
-  /** La que se espera desde el formulario de Simular: al terminar, Simular pasa a su detalle */
-  esperada: string | null
-  esperar: (simulacion: Simulacion) => void
-  dejarDeEsperar: () => void
+  /** Suma una recién pedida para seguirla (puede haber varias, hasta el cupo de RN5a) */
+  seguir: (simulacion: Simulacion) => void
   marcarVista: (id: string) => void
   marcarTodasVistas: () => void
 }
@@ -26,13 +24,11 @@ export function SimulacionesEnCursoProvider({ children }: { children: ReactNode 
   const { usuario } = useSesion()
   const [enCurso, setEnCurso] = useState<Simulacion[]>([])
   const [terminadas, setTerminadas] = useState<Simulacion[]>([])
-  const [esperada, setEsperada] = useState<string | null>(null)
 
   // Al iniciar sesión (o recargar) se recuperan las que siguen en curso; al cerrarla se olvida todo
   useEffect(() => {
     setEnCurso([])
     setTerminadas([])
-    setEsperada(null)
     if (!usuario) return
     let activo = true
     // shortcut: busca solo entre las últimas 20; alcanza mientras el cupo en curso (RN5a) sea de 1 a 3
@@ -64,15 +60,12 @@ export function SimulacionesEnCursoProvider({ children }: { children: ReactNode 
   const valor = useMemo<ValorEnCurso>(() => ({
     enCurso,
     terminadas,
-    esperada,
-    esperar: (simulacion) => {
+    seguir: (simulacion) => {
       setEnCurso((previas) => [...previas.filter((s) => s.id !== simulacion.id), simulacion])
-      setEsperada(simulacion.id)
     },
-    dejarDeEsperar: () => setEsperada(null),
     marcarVista: (id) => setTerminadas((previas) => previas.filter((s) => s.id !== id)),
     marcarTodasVistas: () => setTerminadas([]),
-  }), [enCurso, terminadas, esperada])
+  }), [enCurso, terminadas])
 
   return <SimulacionesEnCursoContext.Provider value={valor}>{children}</SimulacionesEnCursoContext.Provider>
 }

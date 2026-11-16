@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import Header from './components/Header'
 import CurvasPerfil from './components/CurvasPerfil'
 import { avisoError, avisoOk } from './components/estilos'
@@ -52,14 +52,11 @@ export interface EstadoNuevaSimulacion {
   perfil?: PerfilAuditivo | null
 }
 
-// Tiempo para ver "✓ Simulación lista" antes de pasar al detalle (decisión 024)
-const PAUSA_ANTES_DEL_DETALLE_MS = 1500
-
 export default function App() {
   const { usuario, cargando } = useSesion()
   const navigate = useNavigate()
   const location = useLocation()
-  const { enCurso: pendientes, terminadas, esperada, esperar, dejarDeEsperar, marcarVista } = useSimulacionesEnCurso()
+  const { enCurso: pendientes, seguir } = useSimulacionesEnCurso()
   const [backendHealth, setBackendHealth] = useState<EstadoServidor | null>(null)
   const [profiles, setProfiles] = useState<PerfilAuditivo[]>([])
   // El generado desde un audiograma: no viene en /profiles (sería visible para todos, RN4)
@@ -68,17 +65,11 @@ export default function App() {
   const [params, setParams] = useState<ParametrosSimulacion>(PARAMETROS_INICIALES)
 
   const [enviando, setEnviando] = useState(false)
-  const [elapsedTime, setElapsedTime] = useState(0)
   const [casos, setCasos] = useState<Caso[]>([])
   const [casoId, setCasoId] = useState('') // '' = sin caso
-  // La que se espera desde el formulario: sigue en el contexto aunque se navegue a otra pantalla
-  const simulacion = pendientes.find(s => s.id === esperada) ?? null
-  const terminada = terminadas.find(s => s.id === esperada) ?? null
-  const isLoading = enviando || esperada !== null
   const [error, setError] = useState<string | null>(null)
   const [successToast, setSuccessToast] = useState<string | null>(null)
 
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const perfilActivo = profiles.find(p => p.nombre === params.poles_profile)
     ?? (perfilPersonalizado?.nombre === params.poles_profile ? perfilPersonalizado : null)
@@ -119,20 +110,6 @@ export default function App() {
     fetchInitialData()
   }, [usuario])
 
-  // 2. Timer durante la ejecución de la simulación
-  useEffect(() => {
-    if (isLoading) {
-      setElapsedTime(0)
-      timerRef.current = setInterval(() => {
-        setElapsedTime(prev => prev + 1)
-      }, 1000)
-    } else {
-      if (timerRef.current) clearInterval(timerRef.current)
-    }
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current)
-    }
-  }, [isLoading])
 
   // 3. Ejecutar simulación: el pedido solo la deja en cola; el contexto consulta su estado
   const handleRunSimulation = async () => {
@@ -141,9 +118,9 @@ export default function App() {
     setSuccessToast(null)
     try {
       const actual = await simulacionesApi.crear(params, casoId || null)
-      // Resultado reutilizado (RN10): no hay nada que esperar
-      if (actual.estado === 'completada') navigate(`/simulaciones/${actual.id}`)
-      else esperar(actual)
+      // Al detalle de la nueva, que se actualiza solo; Simular queda libre para pedir otra (hasta el cupo, RN5a)
+      if (actual.estado !== 'completada') seguir(actual) // si salió de la caché (RN10), no hay nada que seguir
+      navigate(`/simulaciones/${actual.id}`)
     } catch (err) {
       console.error('Error en simulación:', err)
       setError(mensajeDeError(err))
@@ -152,26 +129,6 @@ export default function App() {
     }
   }
 
-  // Al terminar la esperada: si se la mira desde Simular, pasa al detalle tras una pausa; si no, avisa la barra
-  useEffect(() => {
-    if (!terminada) return
-    const enSimular = location.pathname === '/simular'
-    if (terminada.estado === 'error') {
-      setError(terminada.mensaje_error ?? 'La simulación no se pudo completar.')
-      if (enSimular) marcarVista(terminada.id)
-      dejarDeEsperar()
-      return
-    }
-    if (!enSimular) {
-      dejarDeEsperar()
-      return
-    }
-    const temporizador = setTimeout(() => {
-      dejarDeEsperar()
-      navigate(`/simulaciones/${terminada.id}`)
-    }, PAUSA_ANTES_DEL_DETALLE_MS)
-    return () => clearTimeout(temporizador)
-  }, [terminada, location.pathname])
 
   // Desde el detalle: "Nueva simulación" llega sin parámetros (formulario inicial) o "con estos parámetros"
   useEffect(() => {
@@ -217,17 +174,15 @@ export default function App() {
         <span title="Estímulo de amplitud modulada rectangular" className="shrink-0 mt-1 font-mono text-xs text-tenue border border-linea rounded px-2 py-1">RAM Stimulus</span>
       </div>
 
-      {/* El resultado no se muestra acá: al terminar se pasa a su detalle */}
+      {/* El resultado no se muestra acá: al pedirla se pasa a su detalle */}
       <SimulationControls
         profiles={profiles}
         perfilActivo={perfilActivo}
         params={params}
         setParams={setParams}
         onRunSimulation={handleRunSimulation}
-        isLoading={isLoading}
-        elapsedTime={elapsedTime}
-        simulacion={simulacion ?? terminada}
-        lista={terminada?.estado === 'completada'}
+        enviando={enviando}
+        enCurso={pendientes}
         casos={casos}
         casoId={casoId}
         setCasoId={setCasoId}
