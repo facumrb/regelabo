@@ -177,3 +177,16 @@ def test_swagger_y_el_esquema_son_solo_para_admin(cliente, registro_valido):
     _login(cliente, email="jefe@example.com", password="clave-del-admin")
     assert cliente.get("/api/docs").status_code == 200
     assert "/api/auth/login" in cliente.get("/api/openapi.json").json()["paths"]
+
+
+def test_limite_general_de_120_por_minuto_por_sesion(cliente, registro_valido):
+    _registrar(cliente, registro_valido)
+    _login(cliente)
+    limiter.enabled = True
+    estados = [cliente.get("/api/casos").status_code for _ in range(121)]
+    assert estados == [200] * 120 + [429]
+    assert cliente.get("/api/health").status_code == 200  # exenta
+    # otra sesión, desde la misma IP, tiene su propio contador
+    otra = TestClient(crear_app())
+    _login(otra)
+    assert otra.get("/api/casos").status_code == 200

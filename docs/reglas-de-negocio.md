@@ -28,4 +28,4 @@ Reglas acordadas para el TPI. Cada una se implementa en `backend/controller/` y 
 Se implementan con `slowapi` en la capa de presentación:
 
 - Login y registro: 5 intentos por minuto por IP. Tras 10 intentos fallidos seguidos, la cuenta queda bloqueada 15 minutos.
-- API en general: 120 pedidos por minuto por usuario.
+- API en general: 120 pedidos por minuto por sesión (sin sesión, por IP); `/api/health` queda afuera. Al pasarlo, 429 `demasiados_pedidos`.

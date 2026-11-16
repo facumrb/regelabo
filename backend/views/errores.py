@@ -18,6 +18,7 @@ ESTADOS = {
     "email_ya_verificado": 409,
     "mail_no_enviado": 503,
     "cuenta_bloqueada": 429,
+    "demasiados_pedidos": 429,
     "cupo_agotado": 429,
     "limite_por_hora": 429,
     "sistema_saturado": 503,

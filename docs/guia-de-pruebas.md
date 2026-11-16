@@ -298,6 +298,5 @@ No hay tests automáticos del frontend: sus páginas se verifican con la tabla d
 ## 9. Lo que todavía no está
 
 - Los perfiles `Custom_*` del audiograma son compartidos entre usuarios (decisión 019): se resuelve en el módulo de audiogramas.
-- No hay límite general de 120 pedidos por minuto por usuario (solo el de login, registro y los de email).
 - El email no se puede cambiar (y por eso no hay que volver a verificarlo).
 - Un admin todavía no tiene pantallas propias: solo se distingue por la insignia.

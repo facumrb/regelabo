@@ -13,7 +13,7 @@ from backend.controller.errores import ErrorDeNegocio
 from backend.views import admin, audiogramas, autenticacion, casos, comentarios, simulacion, simulaciones
 from backend.views.dependencias import requiere_admin
 from backend.views.errores import manejar_error_de_negocio
-from backend.views.limites import demasiados_pedidos, limiter
+from backend.views.limites import demasiados_pedidos, limite_general, limiter
 
 
 def crear_app() -> FastAPI:
@@ -26,6 +26,7 @@ def crear_app() -> FastAPI:
         docs_url=None,
         redoc_url=None,
         openapi_url=None,
+        dependencies=[Depends(limite_general)],  # 120 pedidos por minuto por sesión (decisión 009)
     )
 
     @app.get("/api/openapi.json", include_in_schema=False, dependencies=[Depends(requiere_admin)])
