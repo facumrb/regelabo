@@ -50,6 +50,8 @@ Para tener el sistema online sin servidor (presentación, corrección, pruebas).
 4. Copiar el `.env` que generó `instalar.sh` a Bitwarden.
 
 ### Mails (verificación y recuperación, decisión 030)
+**Sin SMTP el sistema funciona igual**, pero los mails no salen (quedan en `logs api`) y los usuarios nuevos no pueden simular hasta verificar su email (RN15). Mientras tanto, el admin los destraba desde **Administración → Usuarios → Verificar email**, y los pedidos de "olvidé mi contraseña" le aparecen en el mismo panel.
+
 Agregar al `.env` de la VM (y a Bitwarden) y reiniciar con `sudo docker compose -f compose.prod.yaml up -d`:
 ```
 SMTP_HOST=smtp.gmail.com
