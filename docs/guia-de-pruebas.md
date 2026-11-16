@@ -156,6 +156,8 @@ Sin `SMTP_HOST` en el `.env`, los mails no se envían: aparecen en la terminal d
 | S3 | Elegir 2 con distintas fibras y tocar **Superponer** | `/superponer?ids=…`: tabla con S1 y S2, lo que difiere en color (las fibras y el EFR); el FFT y la onda elegida con una curva por simulación, del mismo color que en la tabla. |
 | S4 | Cambiar la onda (EFR total, I, III, V) | Cambia solo el gráfico temporal. |
 | S5 | En el detalle de una terminada, **Superponer con…** | Abre el historial con esa ya marcada. |
+| S7 | **Descargar CSV** y abrirlo en una planilla | Una fila por simulación (S1, S2…) con perfil, estímulo, fibras, EFR y fecha; los acentos se ven bien. |
+| S8 | En tema oscuro, **Imprimir o guardar PDF** | La vista previa sale en claro, sin la barra ni los botones; al cerrar el diálogo la página vuelve a oscuro. |
 | S6 | Cambiar a mano un id de la dirección por uno inventado o de otro usuario | "La simulación no existe." (RN4). |
 
 ### Comentarios y panel de admin (decisión 028)

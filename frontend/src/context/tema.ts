@@ -41,3 +41,21 @@ export function useTema(): Tema {
     () => (raiz.dataset.tema === 'oscuro' ? 'oscuro' : 'claro'),
   )
 }
+
+/**
+ * Imprime en tema claro aunque se use el oscuro: Plotly dibuja con colores fijos y en papel blanco no se
+ * leerían. No cambia la preferencia guardada.
+ */
+export async function imprimirEnClaro() {
+  const anterior = raiz.dataset.tema
+  if (anterior === 'oscuro') {
+    raiz.dataset.tema = 'claro'
+    avisar()
+    await new Promise((listo) => setTimeout(listo, 400)) // que los gráficos se vuelvan a dibujar
+  }
+  window.print() // en los navegadores de escritorio, espera a que se cierre el diálogo
+  if (anterior === 'oscuro') {
+    raiz.dataset.tema = anterior
+    avisar()
+  }
+}

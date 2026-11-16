@@ -20,11 +20,14 @@
 - **Pantalla:** tabla con perfil, estímulo, fibras, valor de EFR y fecha, que resalta en color lo que difiere; espectro FFT superpuesto; y la onda temporal elegida con un selector (EFR total, I, III o V), para no mezclar hasta 16 curvas.
 - **No se guarda:** vive en la dirección (`/superponer?ids=a,b,c`), que se puede volver a abrir o guardar en favoritos. Sin backend: cada simulación se pide con `GET /api/simulaciones/{id}`, que ya aplica RN4 (una ajena da 404).
 
+- **Exportar (2026-11-16):** "Descargar CSV" con una fila por simulación (parámetros, EFR y fecha; coma y punto decimal, UTF-8 con BOM para Excel) e "Imprimir o guardar PDF" con el diálogo del navegador: oculta la barra, los botones y los avisos, y en tema oscuro imprime un momento en claro (`imprimirEnClaro` en `context/tema.ts`) porque Plotly dibuja con colores fijos. Sin librerías nuevas.
+
 ## Alternativas descartadas
 - **"Comparar simulaciones":** se confunde con la comparación contra arquetipos (RN7–RN9).
 - **Solo 2:** alcanza para la sordera oculta, pero no para ver una progresión (normal, leve, severa).
 - **Todas las ondas de todas las simulaciones en un gráfico:** con más de 2 se vuelve ilegible.
-- **Guardar superposiciones con nombre:** tabla nueva y pantalla de lista; queda para después, junto con exportar a PDF o CSV.
+- **Guardar superposiciones con nombre:** tabla nueva, endpoints y pantalla de lista para algo que la dirección ya permite volver a abrir.
+- **Generar el PDF en el servidor o con una librería:** el diálogo de impresión del navegador ya guarda PDF.
 
 ## Pendiente
 - A qué integrante y caso de uso del TPI corresponde (hoy lo hizo Valentino, en el módulo de Simulación + historial).

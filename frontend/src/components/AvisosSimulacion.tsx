@@ -72,7 +72,7 @@ export function AvisoSimulacionTerminada() {
   }, [aviso])
 
   return (
-    <div role="status" className="fixed z-50 right-4 left-4 sm:left-auto bottom-[calc(72px+env(safe-area-inset-bottom))] md:bottom-6">
+    <div role="status" className="print:hidden fixed z-50 right-4 left-4 sm:left-auto bottom-[calc(72px+env(safe-area-inset-bottom))] md:bottom-6">
       {aviso && (
         <div className={`${panel} aparecer shadow-xl px-4 py-2 flex items-center gap-3 text-sm text-tinta`}>
           <span>{aviso.estado === 'error' ? 'Tu simulación no se pudo completar' : 'Tu simulación terminó'}</span>

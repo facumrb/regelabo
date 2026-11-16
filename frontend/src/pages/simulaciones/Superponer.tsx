@@ -6,6 +6,7 @@ import EtiquetaPerfil from '../../components/EtiquetaPerfil'
 import { layoutBase, TRAZOS, useColoresGrafico } from '../../components/graficos'
 import { Aviso, Encabezado, Volver } from '../../components/ui'
 import { botonSecundario, panel } from '../../components/estilos'
+import { imprimirEnClaro } from '../../context/tema'
 import { mensajeDeError } from '../../services/auth'
 import { formatearFecha, simulacionesApi } from '../../services/simulaciones'
 import type { OndasABR, Simulacion } from '../../services/tiposSimulacion'
@@ -34,6 +35,24 @@ const FILAS: { titulo: string; valor: (s: Simulacion) => ReactNode; clave: (s: S
     clave: (s) => s.resultado!.efr_value_uv.toFixed(4) },
   { titulo: 'Pedida', valor: (s) => formatearFecha(s.creado_en), clave: (s) => s.id },
 ]
+
+/** CSV de la tabla: una fila por simulación, separado por comas y con punto decimal. */
+function descargarCsv(simulaciones: Simulacion[]) {
+  const encabezado = ['simulacion', 'id', 'perfil', 'frecuencia_portadora_hz', 'nivel_db_spl', 'frecuencia_modulacion_hz',
+    'nH', 'nM', 'nL', 'efr_uv', 'pedida']
+  const filas = simulaciones.map((s, i) => {
+    const p = s.parametros
+    return [nombre(i), s.id, p.poles_profile, p.carrier_freq, p.spl_level, p.f_mod, p.nH, p.nM, p.nL,
+      s.resultado!.efr_value_uv, s.creado_en]
+  })
+  const texto = [encabezado, ...filas].map((fila) => fila.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\r\n')
+  // BOM: así Excel reconoce los acentos (UTF-8)
+  const enlace = document.createElement('a')
+  enlace.href = URL.createObjectURL(new Blob(['\ufeff' + texto], { type: 'text/csv;charset=utf-8' }))
+  enlace.download = 'superposicion-simulaciones.csv'
+  enlace.click()
+  setTimeout(() => URL.revokeObjectURL(enlace.href), 1000) // revocarlo enseguida puede cortar la descarga
+}
 
 /** Superponer de 2 a 4 simulaciones propias y terminadas (decisión 025). Solo frontend: RN4 la cumple el backend. */
 export default function Superponer() {
@@ -68,9 +87,20 @@ export default function Superponer() {
 
   const encabezado = (
     <>
-      <Volver a="/simulaciones" texto="Volver" />
+      <div className="print:hidden"><Volver a="/simulaciones" texto="Volver" /></div>
       <Encabezado titulo="Superponer simulaciones"
-        bajada="Las curvas de cada simulación en un mismo gráfico, para ver qué cambia entre ellas." />
+        bajada="Las curvas de cada simulación en un mismo gráfico, para ver qué cambia entre ellas.">
+        {simulaciones && (
+          <>
+            <button type="button" onClick={() => descargarCsv(simulaciones)} className={`${botonSecundario} print:hidden`}>
+              Descargar CSV
+            </button>
+            <button type="button" onClick={imprimirEnClaro} className={`${botonSecundario} print:hidden`}>
+              Imprimir o guardar PDF
+            </button>
+          </>
+        )}
+      </Encabezado>
     </>
   )
 
@@ -142,7 +172,7 @@ export default function Superponer() {
         <p className="px-4 pb-3 text-xs text-tenue">En color, los datos que cambian entre las simulaciones.</p>
       </div>
 
-      <div className={`${panel} p-3 md:p-5`}>
+      <div className={`${panel} p-3 md:p-5 break-inside-avoid`}>
         <Grafico titulo="Espectro FFT del EFR" archivo="superposicion-fft" data={fft}
           layout={layoutBase(c, {
             xaxis: { title: { text: 'Frecuencia (Hz)' }, range: [0, 600] },
@@ -151,10 +181,10 @@ export default function Superponer() {
           })} />
       </div>
 
-      <div className={`${panel} p-3 md:p-5 space-y-3`}>
+      <div className={`${panel} p-3 md:p-5 space-y-3 break-inside-avoid`}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-linea">
           <span className="text-sm text-tenue">Onda que se superpone</span>
-          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Onda que se superpone">
+          <div className="flex flex-wrap gap-1.5 print:hidden" role="group" aria-label="Onda que se superpone">
             {ONDAS.map(([v, texto]) => (
               <button key={v} type="button" onClick={() => setOnda(v)} aria-pressed={onda === v}
                 className={`min-h-[36px] px-3 rounded-full border text-xs font-medium transition ${

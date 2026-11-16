@@ -197,7 +197,7 @@ export default function Header({ backendHealth, onRefreshHealth }: { backendHeal
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-fondo border-b border-linea">
+      <header className="sticky top-0 z-40 bg-fondo border-b border-linea print:hidden">
         <div className="max-w-7xl mx-auto px-4 md:px-8 h-14 md:h-16 flex items-center gap-4 md:gap-8">
           <Link to="/" className="flex items-center gap-2 shrink-0 text-tinta">
             <Icono nombre="marca" tamano={22} className="text-acento shrink-0" />
