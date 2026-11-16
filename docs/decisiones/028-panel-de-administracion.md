@@ -26,7 +26,7 @@ Completa la [009](009-roles-cupos-y-limites.md) (rol admin) y la [027](027-prior
 - **Estados libres:** el admin pasa un comentario entre nuevo, leído y archivado en cualquier sentido, así un clic por error se corrige solo.
 - **Lista:** sin filtro de estado se ven los nuevos y los leídos (no los archivados), del más nuevo al más viejo, paginados por cursor. Filtros opcionales por estado y por tipo de usuario. Cada comentario muestra nombre, tipo y email del autor.
 - **Spam:** hasta 5 comentarios por minuto. Se cuenta por sesión (la cookie), no por IP, porque en Codespaces todos llegan desde el mismo proxy.
-- **Contador:** `GET /api/admin/pendientes` (hoy solo comentarios nuevos), pedido al cargar la app y al cambiar de pantalla, sin consultas periódicas. Se muestra sobre el avatar y junto a *Administración*.
+- **Contador:** `GET /api/admin/pendientes`, pedido al cargar la app, al cambiar de pantalla y después de cada acción del panel. Se muestra sobre el avatar y junto a *Administración*. *Cambio del 2026-11-16:* también cada 60 segundos, solo para admin y solo con la pestaña a la vista (y al volver a ella), para que un pedido nuevo aparezca sin navegar; las notificaciones empujadas por el servidor (WebSocket, SSE) se descartaron por ser infraestructura de más para un contador.
 - **Texto inválido:** 422, como el resto de los errores de formato de la API (decisión 014), no 400.
 - **Endpoints:** `POST /api/comentarios` (204, sin cuerpo: el autor no recibe nada), `GET /api/admin/comentarios`, `PATCH /api/admin/comentarios/{id}` y `GET /api/admin/pendientes`.
 

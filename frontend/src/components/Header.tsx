@@ -27,7 +27,9 @@ function BotonTema() {
   )
 }
 
-/** Pendientes del admin (decisión 028): se piden al cargar la app y al cambiar de pantalla, sin consultas periódicas. */
+const INTERVALO_PENDIENTES_MS = 60_000
+
+/** Pendientes del admin (decisión 028): al cargar, al navegar, tras cada acción del panel y cada minuto. */
 function usePendientes(esAdmin: boolean): number {
   const { pathname } = useLocation()
   const [cantidad, setCantidad] = useState(0)
@@ -41,7 +43,20 @@ function usePendientes(esAdmin: boolean): number {
       comentariosApi.pendientes().then((p) => setCantidad(p.comentarios_nuevos + p.restablecimientos)).catch(() => {})
     }
     consultar()
-    return alCambiarPendientes(consultar)
+    // Cada minuto con la pestaña a la vista, y al volver a ella; en segundo plano no consulta
+    const intervalo = window.setInterval(() => {
+      if (document.visibilityState === 'visible') consultar()
+    }, INTERVALO_PENDIENTES_MS)
+    const alVolver = () => {
+      if (document.visibilityState === 'visible') consultar()
+    }
+    document.addEventListener('visibilitychange', alVolver)
+    const dejarDeEscuchar = alCambiarPendientes(consultar)
+    return () => {
+      window.clearInterval(intervalo)
+      document.removeEventListener('visibilitychange', alVolver)
+      dejarDeEscuchar()
+    }
   }, [esAdmin, pathname])
   return esAdmin ? cantidad : 0
 }

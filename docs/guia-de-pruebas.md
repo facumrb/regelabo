@@ -155,7 +155,7 @@ Para el panel hace falta un admin: `uv run python -m backend.comandos.crear_admi
 | C1 | Con un usuario común, menú de usuario → **Dejar un comentario**, enviar uno | "¡Gracias!" y nada más. En el menú no aparece **Administración**; entrar a mano a `/admin` lleva al inicio. |
 | C2 | Enviar un comentario solo con espacios | El botón queda deshabilitado. |
 | C3 | Enviar 6 comentarios seguidos en menos de un minuto | El sexto da "Demasiados pedidos…" → **429**. |
-| C4 | Entrar con el admin | Número rojo sobre el avatar y junto a **Administración** con los comentarios nuevos. |
+| C4 | Entrar con el admin | Número rojo sobre el avatar y junto a **Administración** con los comentarios nuevos. Si otro usuario comenta mientras tanto, el número sube solo en menos de un minuto. |
 | C5 | En **Administración**, marcar uno como leído y archivar otro | El leído cambia de etiqueta; el archivado desaparece (se ve con el filtro *Archivado*). Al navegar, el número baja. |
 | C6 | Filtrar por *Fonoaudiólogo* | Solo los comentarios de fonoaudiólogos. |
 | U1 | En **Administración**, pestaña **Usuarios**; buscar parte de un email | Solo los que coinciden, con la cantidad de casos y simulaciones. |
