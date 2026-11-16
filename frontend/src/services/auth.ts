@@ -11,6 +11,8 @@ export interface Usuario {
   es_admin: boolean
   /** RN15: sin verificar puede entrar, pero no pedir simulaciones */
   email_verificado: boolean
+  /** Entró con una contraseña temporal: hasta elegir una nueva no puede usar nada más (decisión 031) */
+  debe_cambiar_contrasena: boolean
 }
 
 export interface DatosRegistro {
@@ -27,6 +29,10 @@ export const authApi = {
     (await apiClient.post<Usuario>('/auth/login', { email, password })).data,
   logout: async () => {
     await apiClient.post('/auth/logout')
+  },
+  /** Después de entrar con una temporal: no pide la actual. */
+  elegirContrasena: async (nueva: string) => {
+    await apiClient.post('/auth/contrasena-temporal', { nueva })
   },
   cambiarContrasena: async (actual: string, nueva: string) => {
     await apiClient.post('/auth/contrasena', { actual, nueva })

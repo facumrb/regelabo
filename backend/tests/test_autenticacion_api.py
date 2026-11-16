@@ -28,7 +28,7 @@ def test_registro_crea_el_usuario_sin_exponer_el_hash(cliente, registro_valido):
     respuesta = _registrar(cliente, registro_valido)
     assert respuesta.status_code == 201
     assert respuesta.json().keys() == {"id", "email", "nombre", "tipo_perfil", "es_admin",
-                                       "email_verificado"}
+                                       "email_verificado", "debe_cambiar_contrasena"}
     assert respuesta.json()["es_admin"] is False
 
 

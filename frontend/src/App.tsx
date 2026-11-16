@@ -25,6 +25,7 @@ import RecuperarContrasena from './pages/email/RecuperarContrasena'
 import AvisoEmailSinVerificar from './components/AvisoEmailSinVerificar'
 import Comentarios from './pages/Comentarios'
 import Administracion from './pages/admin/Administracion'
+import ElegirContrasena from './pages/ElegirContrasena'
 import { useSesion } from './context/SesionContext'
 import { useSimulacionesEnCurso } from './context/SimulacionesEnCurso'
 import { api } from './services/api'
@@ -258,7 +259,11 @@ export default function App() {
 
       <main id="contenido" tabIndex={-1} className="flex-1 outline-none max-w-7xl w-full mx-auto px-4 md:px-8 py-6 md:py-12">
         <AvisoEmailSinVerificar />
+        {/* Con una contraseña temporal, la única pantalla posible es elegir una nueva (decisión 031) */}
+        {usuario?.debe_cambiar_contrasena && location.pathname !== '/elegir-contrasena' &&
+          <Navigate to="/elegir-contrasena" replace />}
         <Routes>
+          <Route path="/elegir-contrasena" element={<RequiereSesion><ElegirContrasena /></RequiereSesion>} />
           <Route path="/" element={cargando ? null : usuario ? <Inicio /> : <Bienvenida />} />
           <Route path="/simular" element={<RequiereSesion>{simulador}</RequiereSesion>} />
           {/* Paso previo de la simulación: genera un perfil y vuelve a /simular con él elegido (decisión 024) */}

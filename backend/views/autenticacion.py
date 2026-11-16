@@ -8,9 +8,9 @@ from fastapi import APIRouter, Depends, Request, Response, status
 
 from backend.configuracion import COOKIE_SECURE, SESION_HORAS
 from backend.controller import autenticacion
-from backend.controller.modelos import (CambioContrasenaInput, LoginInput, OlvideInput, RecuperarInput,
-                                        RegistroInput, TokenInput, Usuario, UsuarioPublico)
-from backend.views.dependencias import COOKIE_SESION, token_de_sesion, usuario_actual
+from backend.controller.modelos import (CambioContrasenaInput, ContrasenaNuevaInput, LoginInput, OlvideInput,
+                                        RecuperarInput, RegistroInput, TokenInput, Usuario, UsuarioPublico)
+from backend.views.dependencias import COOKIE_SESION, token_de_sesion, usuario_actual, usuario_con_sesion
 from backend.views.limites import limiter
 
 router = APIRouter(prefix="/auth", tags=["Autenticación"])
@@ -49,8 +49,16 @@ def cambiar_contrasena(request: Request, datos: CambioContrasenaInput,
     autenticacion.cambiar_contrasena(usuario, token, datos.actual, datos.nueva)
 
 
+@router.post("/contrasena-temporal", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit(LIMITE_INTENTOS)
+def elegir_contrasena(request: Request, datos: ContrasenaNuevaInput,
+                      usuario: Usuario = Depends(usuario_con_sesion),
+                      token: Optional[str] = Depends(token_de_sesion)) -> None:
+    autenticacion.elegir_contrasena(usuario, token, datos.nueva)
+
+
 @router.get("/yo", response_model=UsuarioPublico)
-def yo(usuario: Usuario = Depends(usuario_actual)) -> Usuario:
+def yo(usuario: Usuario = Depends(usuario_con_sesion)) -> Usuario:
     return usuario
 
 

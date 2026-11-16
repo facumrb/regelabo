@@ -151,3 +151,46 @@ def test_solo_el_admin_ve_y_toca_usuarios(ana, cliente):
     assert ana.get("/api/admin/usuarios").status_code == 403
     assert ana.post(f"/api/admin/usuarios/{INEXISTENTE}/desbloquear").status_code == 403
     assert cliente.get("/api/admin/usuarios").status_code == 401
+
+
+# ---- Cambio obligatorio después de una contraseña temporal (decisión 031) ----
+
+def _con_temporal(admin):
+    """Ana pidió restablecer, el admin le generó una temporal y ella entró con esa."""
+    _pedir()
+    ana_id = _usuario(admin, "ana@example.com")["id"]
+    temporal = admin.post(f"/api/admin/usuarios/{ana_id}/resetear-contrasena").json()["contrasena_temporal"]
+    return _conectado("ana@example.com", temporal), temporal
+
+
+def test_con_la_temporal_solo_puede_elegir_una_nueva(ana, admin):
+    cliente, _ = _con_temporal(admin)
+    assert cliente.get("/api/auth/yo").json()["debe_cambiar_contrasena"] is True
+    pedidos = [cliente.get("/api/casos"), cliente.get("/api/simulaciones"),
+               cliente.post("/api/comentarios", json={"texto": "x"})]
+    for respuesta in pedidos:
+        assert respuesta.status_code == 403
+        assert respuesta.json()["detail"]["codigo"] == "debe_cambiar_contrasena"
+
+
+def test_elegir_la_nueva_sin_la_actual_libera_la_cuenta(ana, admin):
+    cliente, temporal = _con_temporal(admin)
+    elegir = cliente.post
+    assert elegir("/api/auth/contrasena-temporal", json={"nueva": temporal}).status_code == 400  # repetida
+    assert cliente.post("/api/auth/contrasena-temporal", json={"nueva": "corta"}).status_code == 400
+    assert cliente.post("/api/auth/contrasena-temporal", json={"nueva": "mi-clave-nueva"}).status_code == 204
+    assert cliente.get("/api/auth/yo").json()["debe_cambiar_contrasena"] is False  # la sesión sigue
+    assert cliente.get("/api/casos").status_code == 200
+    assert _conectado("ana@example.com", temporal).get("/api/auth/yo").status_code == 401
+    assert _conectado("ana@example.com", "mi-clave-nueva").get("/api/auth/yo").status_code == 200
+
+
+def test_sin_temporal_no_se_puede_saltear_la_actual(ana):
+    respuesta = ana.post("/api/auth/contrasena-temporal", json={"nueva": "otra-clave-larga"})
+    assert respuesta.status_code == 409 and respuesta.json()["detail"]["codigo"] == "sin_contrasena_temporal"
+
+
+def test_el_comando_tambien_obliga_a_cambiarla(ana):
+    autenticacion.resetear_contrasena("ana@example.com", "clave-del-comando")
+    cliente = _conectado("ana@example.com", "clave-del-comando")
+    assert cliente.get("/api/casos").json()["detail"]["codigo"] == "debe_cambiar_contrasena"

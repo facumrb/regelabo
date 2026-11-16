@@ -27,6 +27,7 @@ class Usuario(BaseModel):
     bloqueado_hasta: Optional[datetime]
     email_verificado_en: Optional[datetime] = None
     restablecimiento_pedido_en: Optional[datetime] = None
+    debe_cambiar_contrasena: bool = False
 
     @computed_field  # sale en model_dump: así llega a UsuarioPublico
     @property
@@ -43,6 +44,7 @@ class UsuarioPublico(BaseModel):
     tipo_perfil: TipoPerfil
     es_admin: bool
     email_verificado: bool
+    debe_cambiar_contrasena: bool = False
 
 
 class RegistroInput(BaseModel):
@@ -56,6 +58,12 @@ class RegistroInput(BaseModel):
 class LoginInput(BaseModel):
     email: str
     password: str
+
+
+class ContrasenaNuevaInput(BaseModel):
+    """Para elegir la contraseña después de entrar con una temporal: no pide la actual."""
+
+    nueva: str
 
 
 class CambioContrasenaInput(BaseModel):

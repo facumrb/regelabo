@@ -27,6 +27,8 @@ ESTADOS = {
     "comentario_no_encontrado": 404,
     "usuario_es_admin": 403,
     "sin_pedido_de_restablecimiento": 409,
+    "debe_cambiar_contrasena": 403,
+    "sin_contrasena_temporal": 409,
 }
 ESTADO_POR_DEFECTO = 400
 

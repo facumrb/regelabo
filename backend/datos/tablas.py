@@ -9,7 +9,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Optional
 
-from sqlalchemy import JSON, DateTime, Enum, ForeignKey, String, Text, UniqueConstraint, func
+from sqlalchemy import JSON, DateTime, Enum, ForeignKey, String, Text, UniqueConstraint, false, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -53,6 +53,8 @@ class Usuario(ConIdYFecha, Base):
     email_verificado_en: Mapped[Optional[datetime]]  # RN15: sin verificar no puede simular
     # Pedido de restablecimiento pendiente para el admin (decisión 028); se borra al cambiar la contraseña
     restablecimiento_pedido_en: Mapped[Optional[datetime]]
+    # Entró con una contraseña que conoce un admin (temporal o por comando): tiene que elegir una nueva
+    debe_cambiar_contrasena: Mapped[bool] = mapped_column(default=False, server_default=false())
 
 
 class Sesion(ConIdYFecha, Base):

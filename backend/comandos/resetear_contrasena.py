@@ -24,7 +24,8 @@ def main() -> int:
     except ErrorDeNegocio as error:
         print(f"Error: {error.mensaje}")
         return 1
-    print(f"Contraseña de {usuario.email} cambiada; se cerraron todas sus sesiones.")
+    print(f"Contraseña de {usuario.email} cambiada; se cerraron todas sus sesiones. "
+          "Al entrar va a tener que elegir una nueva.")
     return 0
 
 

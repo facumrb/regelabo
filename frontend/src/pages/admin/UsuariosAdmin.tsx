@@ -16,7 +16,7 @@ function enlaceDeMail(u: UsuarioAdmin, contrasena: string): string {
   const cuerpo = `Hola ${u.nombre}:\n\n` +
     'Recibimos tu pedido para restablecer la contraseña de regelabo. Tu contraseña temporal es:\n\n' +
     `${contrasena}\n\n` +
-    `Entrá con ella y cambiala en Mi cuenta: ${window.location.origin}/cuenta\n\n` +
+    `Entrá con ella en ${window.location.origin}/login y te va a pedir que elijas una nueva.\n\n` +
     'Si no lo pediste vos, respondé este mail para avisarnos.'
   return `mailto:${u.email}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`
 }

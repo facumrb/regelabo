@@ -238,15 +238,36 @@ def cambiar_contrasena(usuario: Usuario, token: str, actual: str, nueva: str) ->
 
 
 def resetear_contrasena(email: str, nueva: str) -> Usuario:
-    """Para el admin (por comando): contraseña nueva, cuenta desbloqueada y todas sus sesiones cerradas."""
+    """Para el admin (comando o contraseña temporal del panel): contraseña nueva, cuenta desbloqueada y
+    todas sus sesiones cerradas. El usuario tendrá que elegir otra al entrar (decisión 031)."""
     validar_contrasena(nueva)
     with transaccion() as tx:
         usuario = usuarios.buscar_por_email(tx, email.strip().lower())
         if usuario is None:
             raise ErrorDeNegocio("usuario_no_encontrado", "No existe una cuenta con ese email.")
-        usuarios.cambiar_contrasena(tx, usuario.id, _hasher.hash(nueva))
+        usuarios.cambiar_contrasena(tx, usuario.id, _hasher.hash(nueva), temporal=True)
         sesiones.borrar_las_demas(tx, usuario.id, None)
     return usuario
+
+
+def exigir_contrasena_definitiva(usuario: Usuario) -> None:
+    """Con una contraseña que conoce un admin, solo se puede elegir una nueva (decisión 031)."""
+    if usuario.debe_cambiar_contrasena:
+        raise ErrorDeNegocio("debe_cambiar_contrasena", "Elegí una contraseña nueva para seguir.")
+
+
+def elegir_contrasena(usuario: Usuario, token: Optional[str], nueva: str) -> None:
+    """Después de entrar con una contraseña temporal: no pide la actual, porque acaba de usarla."""
+    if not usuario.debe_cambiar_contrasena:
+        raise ErrorDeNegocio("sin_contrasena_temporal",
+                             "Tu contraseña no es temporal: cambiala desde Mi cuenta.")
+    validar_contrasena(nueva)
+    if _verificar(usuario.password_hash, nueva):
+        raise ErrorDeNegocio("contrasena_repetida",
+                             "La contraseña nueva tiene que ser distinta de la temporal.")
+    with transaccion() as tx:
+        usuarios.cambiar_contrasena(tx, usuario.id, _hasher.hash(nueva))
+        sesiones.borrar_las_demas(tx, usuario.id, _hash_token(token) if token else None)
 
 
 def crear_admin(email: str, nombre: str, contrasena: str) -> Tuple[Usuario, bool]:

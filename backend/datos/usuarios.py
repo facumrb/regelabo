@@ -71,11 +71,12 @@ def registrar_fallo(tx: Session, usuario_id: UUID, ahora: datetime, intentos_max
     )
 
 
-def cambiar_contrasena(tx: Session, usuario_id: UUID, password_hash: str) -> None:
-    """Guarda el hash nuevo, desbloquea la cuenta y da por atendido un pedido de restablecimiento."""
+def cambiar_contrasena(tx: Session, usuario_id: UUID, password_hash: str, temporal: bool = False) -> None:
+    """Guarda el hash nuevo, desbloquea la cuenta y da por atendido un pedido de restablecimiento.
+    `temporal`: la conoce un admin, así que el usuario tendrá que elegir otra al entrar."""
     tx.execute(update(UsuarioFila).where(UsuarioFila.id == usuario_id)
                .values(password_hash=password_hash, intentos_fallidos=0, bloqueado_hasta=None,
-                       restablecimiento_pedido_en=None))
+                       restablecimiento_pedido_en=None, debe_cambiar_contrasena=temporal))
 
 
 def pedir_restablecimiento(tx: Session, usuario_id: UUID, ahora: datetime) -> None:
