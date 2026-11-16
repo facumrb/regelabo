@@ -18,6 +18,7 @@ if not _url.database.endswith("_test"):
     _url = _url.set(database=f"{_url.database}_test")
 os.environ["DATABASE_URL"] = _url.render_as_string(hide_password=False)
 os.environ["COOKIE_SECURE"] = "false"  # el cliente de test usa http
+os.environ["SMTP_HOST"] = ""  # los tests nunca mandan mails de verdad, aunque el .env tenga SMTP
 
 import pytest  # noqa: E402
 from alembic import command  # noqa: E402
