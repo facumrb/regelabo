@@ -17,7 +17,8 @@ from backend.configuracion import (
 )
 from backend.controller.errores import ErrorDeNegocio
 from backend.controller.modelos import (
-    EstadosInternos, PaginaDeSimulaciones, ParametrosSimulacion, Simulacion, SimulacionInput, Usuario,
+    EstadoCola, EstadosInternos, PaginaDeSimulaciones, ParametrosSimulacion, Simulacion, SimulacionInput,
+    Usuario,
 )
 from backend.controller.simulacion import SimulationService
 from backend.datos import casos, perfiles, simulaciones, usuarios
@@ -73,6 +74,9 @@ def calcular_huella(parametros: ParametrosSimulacion, polos) -> str:
 
 
 def crear(usuario: Usuario, datos: SimulacionInput) -> Simulacion:
+    if not usuario.email_verificado:  # RN15
+        raise ErrorDeNegocio("email_no_verificado", "Confirmá tu email para pedir simulaciones: "
+                                                    "te mandamos un enlace al registrarte.")
     parametros = ParametrosSimulacion(**datos.model_dump(exclude={"caso_id"}))
     validar_parametros(parametros)
     polos = perfiles.cargar_polos(parametros.poles_profile)
@@ -167,3 +171,26 @@ def recuperar_interrumpidas() -> int:
         return simulaciones.interrumpir_vencidas(
             tx, ahora - timedelta(minutes=SIMULACION_MINUTOS_MAX),
             "La simulación se interrumpió. Podés volver a pedirla.", ahora)
+
+
+# Si la simulación más vieja espera más que esto y no hay ninguna ejecutándose, el worker no está andando
+ESPERA_SIN_WORKER = timedelta(minutes=2)
+
+
+def estado_de_la_cola() -> EstadoCola:
+    """Para el panel de admin (decisión 028): solo lectura, no cancela nada."""
+    ahora = _ahora()
+    with transaccion() as tx:
+        resumen = simulaciones.resumen_de_la_cola(tx, ahora - timedelta(hours=24))
+        en_curso = simulaciones.en_curso_para_admin(tx)
+    r = resumen
+    primera = r["primera_en_cola"]
+    promedio = r["duracion_promedio_s"]
+    return EstadoCola(
+        en_cola=r["en_cola"], ejecutando=r["ejecutando"], tope_cola=TOPE_COLA,
+        completadas_24h=r["completadas"], desde_cache_24h=r["desde_cache"], errores_24h=r["errores"],
+        duracion_promedio_s=None if promedio is None else round(float(promedio), 1),
+        worker_detenido=(None if primera is None
+                         else r["ejecutando"] == 0 and ahora - primera > ESPERA_SIN_WORKER),
+        en_curso=en_curso,
+    )

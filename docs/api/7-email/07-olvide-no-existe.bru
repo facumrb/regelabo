@@ -1,0 +1,22 @@
+meta {
+  name: 7. Olvidé mi contraseña (email sin cuenta): misma respuesta
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{base_url}}/auth/olvide
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "nadie-de-bruno@example.com"
+  }
+}
+
+tests {
+  test("responde 202", function () { expect(res.getStatus()).to.equal(202); });
+  test("misma respuesta que con cuenta (RN16)", function () { expect(JSON.stringify(res.getBody())).to.equal(bru.getVar("respuesta_olvide")); });
+}

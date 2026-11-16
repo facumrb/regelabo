@@ -1,0 +1,20 @@
+meta {
+  name: 7. Comentar sin sesión da 401
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{base_url}}/comentarios
+  body: json
+  auth: none
+}
+
+
+body:json {
+  { "texto": "Hola" }
+}
+tests {
+  test("responde 401", function () { expect(res.getStatus()).to.equal(401); });
+  test("código no_autenticado", function () { expect(res.getBody().detail.codigo).to.equal("no_autenticado"); });
+}

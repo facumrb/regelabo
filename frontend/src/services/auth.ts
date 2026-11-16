@@ -9,6 +9,10 @@ export interface Usuario {
   nombre: string
   tipo_perfil: TipoPerfil
   es_admin: boolean
+  /** RN15: sin verificar puede entrar, pero no pedir simulaciones */
+  email_verificado: boolean
+  /** Entró con una contraseña temporal: hasta elegir una nueva no puede usar nada más (decisión 031) */
+  debe_cambiar_contrasena: boolean
 }
 
 export interface DatosRegistro {
@@ -26,10 +30,29 @@ export const authApi = {
   logout: async () => {
     await apiClient.post('/auth/logout')
   },
+  /** Después de entrar con una temporal: no pide la actual. */
+  elegirContrasena: async (nueva: string) => {
+    await apiClient.post('/auth/contrasena-temporal', { nueva })
+  },
   cambiarContrasena: async (actual: string, nueva: string) => {
     await apiClient.post('/auth/contrasena', { actual, nueva })
   },
   yo: async () => (await apiClient.get<Usuario>('/auth/yo')).data,
+  // Decisión 030: verificación del email y recuperación de la contraseña
+  verificarEmail: async (token: string) => {
+    await apiClient.post('/auth/verificar', { token })
+  },
+  reenviarVerificacion: async () => {
+    await apiClient.post('/auth/reenviar-verificacion')
+  },
+  olvide: async (email: string) =>
+    (await apiClient.post<{ mensaje: string }>('/auth/olvide', { email })).data.mensaje,
+  /** El mail de recuperación no llegó: deja el pedido en el panel de admin (decisión 028). */
+  avisarAlAdmin: async (email: string) =>
+    (await apiClient.post<{ mensaje: string }>('/auth/olvide/avisar-admin', { email })).data.mensaje,
+  recuperar: async (token: string, nueva: string) => {
+    await apiClient.post('/auth/recuperar', { token, nueva })
+  },
 }
 
 /** El mensaje en español que manda el backend ({detail: {codigo, mensaje}}), o uno genérico. */

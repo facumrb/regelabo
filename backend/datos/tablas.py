@@ -9,7 +9,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Optional
 
-from sqlalchemy import JSON, DateTime, Enum, ForeignKey, String, Text, UniqueConstraint, func
+from sqlalchemy import JSON, DateTime, Enum, ForeignKey, String, Text, UniqueConstraint, false, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -50,6 +50,11 @@ class Usuario(ConIdYFecha, Base):
     aviso_aceptado_en: Mapped[datetime]  # RN9: aceptación del aviso de uso no profesional
     intentos_fallidos: Mapped[int] = mapped_column(default=0)
     bloqueado_hasta: Mapped[Optional[datetime]]
+    email_verificado_en: Mapped[Optional[datetime]]  # RN15: sin verificar no puede simular
+    # Pedido de restablecimiento pendiente para el admin (decisión 028); se borra al cambiar la contraseña
+    restablecimiento_pedido_en: Mapped[Optional[datetime]]
+    # Entró con una contraseña que conoce un admin (temporal o por comando): tiene que elegir una nueva
+    debe_cambiar_contrasena: Mapped[bool] = mapped_column(default=False, server_default=false())
 
 
 class Sesion(ConIdYFecha, Base):
@@ -58,6 +63,17 @@ class Sesion(ConIdYFecha, Base):
     usuario_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("usuario.id", ondelete="CASCADE"), index=True)
     token_hash: Mapped[str] = mapped_column(String(64), unique=True)  # SHA-256 del token de la cookie
     expira_en: Mapped[datetime] = mapped_column(index=True)
+
+
+class EnlaceEmail(ConIdYFecha, Base):
+    """Enlace de un solo uso enviado por mail (decisión 030). Se borra al usarlo."""
+
+    __tablename__ = "enlace_email"
+
+    usuario_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("usuario.id", ondelete="CASCADE"), index=True)
+    tipo: Mapped[str] = mapped_column(_valores_fijos("tipo_enlace", "verificacion", "recuperacion"))
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)  # SHA-256 del token del enlace
+    expira_en: Mapped[datetime]
 
 
 class Caso(ConIdYFecha, Base):
@@ -180,3 +196,37 @@ class Comparacion(ConIdYFecha, Base):
         ForeignKey("arquetipo.id", ondelete="SET NULL")
     )
     hipotesis: Mapped[Optional[str]] = mapped_column(Text)  # hipótesis de estudio, nunca diagnóstico
+
+
+class Comentario(ConIdYFecha, Base):
+    """Comentario o sugerencia de un usuario (RN13). Solo lo ven los admin."""
+
+    __tablename__ = "comentario"
+
+    usuario_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("usuario.id", ondelete="CASCADE"), index=True)
+    texto: Mapped[str] = mapped_column(Text)
+    estado: Mapped[str] = mapped_column(
+        _valores_fijos("estado_comentario", "nuevo", "leido", "archivado"), default="nuevo"
+    )
+
+
+class Comparativa(ConIdYFecha, Base):
+    """Superposición de 2 a 4 simulaciones guardada con título (decisión 025)."""
+
+    __tablename__ = "comparativa"
+
+    usuario_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("usuario.id"), index=True)
+    caso_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("caso.id"), index=True)
+    titulo: Mapped[str] = mapped_column(String(100))
+    notas: Mapped[Optional[str]] = mapped_column(Text)
+    borrado_en: Mapped[Optional[datetime]]  # borrado lógico, como los casos
+
+
+class ComparativaSimulacion(Base):
+    """Simulaciones de una comparativa, en el orden en que se muestran (S1, S2…)."""
+
+    __tablename__ = "comparativa_simulacion"
+
+    comparativa_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("comparativa.id"), primary_key=True)
+    simulacion_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("simulacion.id"), primary_key=True)
+    orden: Mapped[int]

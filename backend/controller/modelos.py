@@ -3,10 +3,10 @@ Objetos de negocio (Pydantic): usuarios, simulación y audiogramas.
 """
 
 from datetime import datetime
-from typing import Dict, List, Literal, Optional
+from typing import Annotated, Dict, List, Literal, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints, computed_field
 
 TipoPerfil = Literal["estudiante", "investigador", "fonoaudiologo"]
 
@@ -25,6 +25,14 @@ class Usuario(BaseModel):
     password_hash: str = Field(exclude=True)
     intentos_fallidos: int
     bloqueado_hasta: Optional[datetime]
+    email_verificado_en: Optional[datetime] = None
+    restablecimiento_pedido_en: Optional[datetime] = None
+    debe_cambiar_contrasena: bool = False
+
+    @computed_field  # sale en model_dump: así llega a UsuarioPublico
+    @property
+    def email_verificado(self) -> bool:
+        return self.email_verificado_en is not None
 
 
 class UsuarioPublico(BaseModel):
@@ -35,6 +43,8 @@ class UsuarioPublico(BaseModel):
     nombre: str
     tipo_perfil: TipoPerfil
     es_admin: bool
+    email_verificado: bool
+    debe_cambiar_contrasena: bool = False
 
 
 class RegistroInput(BaseModel):
@@ -50,8 +60,27 @@ class LoginInput(BaseModel):
     password: str
 
 
+class ContrasenaNuevaInput(BaseModel):
+    """Para elegir la contraseña después de entrar con una temporal: no pide la actual."""
+
+    nueva: str
+
+
 class CambioContrasenaInput(BaseModel):
     actual: str
+    nueva: str
+
+
+class OlvideInput(BaseModel):
+    email: str
+
+
+class TokenInput(BaseModel):
+    token: str = Field(max_length=100)
+
+
+class RecuperarInput(BaseModel):
+    token: str = Field(max_length=100)
     nueva: str
 
 
@@ -226,6 +255,8 @@ class AudiogramInput(BaseModel):
     """Estructura de entrada manual para un audiograma."""
     patient_name: Optional[str] = Field(default="Paciente", description="Identificador o nombre del paciente")
     points: List[AudiogramPoint] = Field(description="Lista de puntos audiométricos")
+    caso_id: Optional[UUID] = Field(
+        default=None, description="Caso propio donde guardarlo (decisión 032); el perfil toma su alias")
 
 
 class PerfilAuditivo(BaseModel):
@@ -252,6 +283,7 @@ class AudiogramResponse(BaseModel):
     clinical_classification: str = Field(description="Clasificación del audiograma según RN2 (orientativa)")
     notes: str = Field(description="Cómo se generó el perfil")
     perfil: PerfilAuditivo
+    audiograma_id: Optional[UUID] = Field(default=None, description="Si se guardó en un caso (decisión 032)")
 
 
 EstadoSimulacion = Literal["en_cola", "ejecutando", "completada", "error"]
@@ -277,5 +309,133 @@ class Simulacion(BaseModel):
 
 class PaginaDeSimulaciones(BaseModel):
     simulaciones: List[Simulacion]
+    siguiente: Optional[UUID] = Field(description="Pasarlo como `despues_de` para pedir la página siguiente; "
+                                                  "null si no hay más")
+
+
+EstadoComentario = Literal["nuevo", "leido", "archivado"]
+
+
+class ComentarioInput(BaseModel):
+    """RN13: texto libre, no vacío (sin contar espacios) y de hasta 2000 caracteres."""
+
+    texto: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)]
+
+
+class Comentario(BaseModel):
+    """Un comentario tal como lo ve el admin, con los datos de quien lo escribió."""
+
+    id: UUID
+    texto: str
+    estado: EstadoComentario
+    creado_en: datetime
+    autor_nombre: str
+    autor_email: str
+    autor_tipo: TipoPerfil
+
+
+class PaginaDeComentarios(BaseModel):
+    comentarios: List[Comentario]
+    siguiente: Optional[UUID] = Field(description="Pasarlo como `despues_de` para pedir la página siguiente; "
+                                                  "null si no hay más")
+
+
+class CambioEstadoComentario(BaseModel):
+    estado: EstadoComentario
+
+
+class Pendientes(BaseModel):
+    """Lo que el admin tiene para revisar: alimenta el contador del menú."""
+
+    comentarios_nuevos: int
+    restablecimientos: int
+
+
+class UsuarioAdmin(BaseModel):
+    """Un usuario como lo ve el panel de admin: estado de la cuenta y totales, sin contenido (RN4)."""
+
+    id: UUID
+    email: str
+    nombre: str
+    tipo_perfil: TipoPerfil
+    es_admin: bool
+    creado_en: datetime
+    bloqueado_hasta: Optional[datetime]
+    email_verificado: bool
+    restablecimiento_pedido_en: Optional[datetime]
+    casos: int
+    simulaciones: int
+
+
+class PaginaDeUsuarios(BaseModel):
+    usuarios: List[UsuarioAdmin]
+    siguiente: Optional[UUID] = Field(description="Pasarlo como `despues_de` para pedir la página siguiente; "
+                                                  "null si no hay más")
+
+
+class ContrasenaTemporal(BaseModel):
+    """Se muestra una sola vez al admin, que se la pasa al usuario (decisión 028)."""
+
+    contrasena_temporal: str
+
+
+class SimulacionEnCurso(BaseModel):
+    """Una simulación en cola o ejecutando, para el panel: quién y desde cuándo, sin parámetros (RN4)."""
+
+    id: UUID
+    usuario_email: str
+    estado: Literal["en_cola", "ejecutando"]
+    creado_en: datetime
+    iniciada_en: Optional[datetime]
+
+
+class EstadoCola(BaseModel):
+    """Estado de la cola para el panel de admin (decisión 028). Los totales de 24 h cuentan por fin."""
+
+    en_cola: int
+    ejecutando: int
+    tope_cola: int
+    completadas_24h: int = Field(description="Ejecutadas por el worker")
+    desde_cache_24h: int = Field(description="Resueltas al instante con un resultado ya calculado (RN10)")
+    errores_24h: int
+    duracion_promedio_s: Optional[float] = Field(description="De las ejecutadas en 24 h; null si no hubo")
+    worker_detenido: Optional[bool] = Field(
+        description="Deducido: hay simulaciones esperando y ninguna ejecutándose. null si la cola está vacía")
+    en_curso: List[SimulacionEnCurso]
+
+
+class AudiogramaGuardado(BaseModel):
+    """Un audiograma guardado en un caso (decisión 032), con la clasificación de RN2."""
+
+    id: UUID
+    creado_en: datetime
+    origen: Literal["manual", "archivo"]
+    pta_db: float
+    gravedad: Literal["normal", "leve", "moderada", "severa"]
+    patron: Literal["plano", "caida_en_agudos"]
+    perfil: str = Field(description="Perfil de polos generado: el que va en poles_profile")
+    puntos: List[AudiogramPoint]
+
+
+class ComparativaDatos(BaseModel):
+    """Lo que se edita de una comparativa (decisión 025): título, notas y caso opcional."""
+
+    titulo: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
+    notas: Optional[str] = Field(default=None, max_length=2000)
+    caso_id: Optional[UUID] = None
+
+
+class ComparativaInput(ComparativaDatos):
+    simulacion_ids: List[UUID] = Field(min_length=2, max_length=4,
+                                       description="De 2 a 4 simulaciones propias y terminadas, en orden")
+
+
+class Comparativa(ComparativaInput):
+    id: UUID
+    creado_en: datetime
+
+
+class PaginaDeComparativas(BaseModel):
+    comparativas: List[Comparativa]
     siguiente: Optional[UUID] = Field(description="Pasarlo como `despues_de` para pedir la página siguiente; "
                                                   "null si no hay más")

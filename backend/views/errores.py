@@ -11,16 +11,26 @@ ESTADOS = {
     "no_autenticado": 401,
     "credenciales_invalidas": 401,
     "sin_permiso": 403,
+    "email_no_verificado": 403,
     "usuario_no_encontrado": 404,
     "caso_no_encontrado": 404,  # también para casos ajenos (RN4): no revela que existen
     "email_ya_registrado": 409,
+    "email_ya_verificado": 409,
+    "mail_no_enviado": 503,
     "cuenta_bloqueada": 429,
+    "demasiados_pedidos": 429,
     "cupo_agotado": 429,
     "limite_por_hora": 429,
     "sistema_saturado": 503,
     "simulacion_no_encontrada": 404,
     "estados_internos_no_disponibles": 404,
     "perfil_no_encontrado": 404,
+    "comentario_no_encontrado": 404,
+    "usuario_es_admin": 403,
+    "sin_pedido_de_restablecimiento": 409,
+    "debe_cambiar_contrasena": 403,
+    "sin_contrasena_temporal": 409,
+    "comparativa_no_encontrada": 404,
 }
 ESTADO_POR_DEFECTO = 400
 

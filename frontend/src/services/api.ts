@@ -34,10 +34,12 @@ export const api = {
   },
 
   // Subir audiograma vía FilePond (multipart/form-data)
-  async uploadAudiogram(file: File, patientName = 'Paciente'): Promise<ResultadoAudiograma> {
+  // Con `casoId`, se guarda en ese caso y el perfil toma su alias (decisión 032)
+  async uploadAudiogram(file: File, patientName = 'Paciente', casoId?: string): Promise<ResultadoAudiograma> {
     const formData = new FormData()
     formData.append('file', file)
     formData.append('patient_name', patientName)
+    if (casoId) formData.append('caso_id', casoId)
 
     const response = await apiClient.post<ResultadoAudiograma>('/audiogram/upload', formData, {
       headers: {
@@ -48,10 +50,11 @@ export const api = {
   },
 
   // Enviar audiograma ingresado manualmente
-  async submitManualAudiogram(patientName: string, points: PuntoAudiograma[]): Promise<ResultadoAudiograma> {
+  async submitManualAudiogram(patientName: string, points: PuntoAudiograma[], casoId?: string): Promise<ResultadoAudiograma> {
     const response = await apiClient.post<ResultadoAudiograma>('/audiogram/manual', {
       patient_name: patientName,
       points,
+      caso_id: casoId || null,
     })
     return response.data
   },

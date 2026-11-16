@@ -21,6 +21,13 @@ BLOQUEO_MINUTOS = int(os.environ.get("BLOQUEO_MINUTOS", 15))
 # La cookie de sesión solo viaja por HTTPS; en desarrollo (http) se desactiva en el .env
 COOKIE_SECURE = os.environ.get("COOKIE_SECURE", "true").lower() == "true"
 
+# Mails (decisión 030). Sin SMTP_HOST el mail se escribe en el log en vez de enviarse.
+URL_PUBLICA = os.environ.get("URL_PUBLICA", "http://localhost:5173").rstrip("/")  # arma los enlaces
+SMTP_HOST = os.environ.get("SMTP_HOST", "")
+SMTP_PORT = int(os.environ.get("SMTP_PORT", 587))
+SMTP_USUARIO = os.environ.get("SMTP_USUARIO", "")
+SMTP_CONTRASENA = os.environ.get("SMTP_CONTRASENA", "")
+
 # Simulaciones (RN5). Los cupos son por tipo de perfil.
 CUPO_SIMULTANEAS = {"estudiante": 1, "investigador": 3, "fonoaudiologo": 3}
 CUPO_POR_HORA = {"estudiante": 10, "investigador": 30, "fonoaudiologo": 30}

@@ -3,11 +3,16 @@ Servicio de procesamiento y conversión de audiogramas a perfiles de simulación
 """
 
 import re
-from typing import List
-
+from typing import List, Literal, Optional
+from uuid import UUID
 
 from backend.controller import perfiles
-from backend.controller.modelos import AudiogramPoint, AudiogramResponse
+from backend.controller.errores import ErrorDeNegocio
+from backend.controller.modelos import AudiogramaGuardado, AudiogramPoint, AudiogramResponse, Usuario
+from backend.datos import audiogramas, casos
+from backend.datos.conexion import transaccion
+
+_CASO_NO_ENCONTRADO = ErrorDeNegocio("caso_no_encontrado", "El caso no existe.")
 
 
 class AudiogramService:
@@ -50,14 +55,26 @@ class AudiogramService:
     def analyze_and_map(
         cls,
         patient_name: str,
-        points: List[AudiogramPoint]
+        points: List[AudiogramPoint],
+        usuario: Optional[Usuario] = None,
+        caso_id: Optional[UUID] = None,
+        origen: Literal["manual", "archivo"] = "manual",
     ) -> AudiogramResponse:
         """
         Clasifica la curva audiométrica (RN2) y genera el perfil de polos con su forma
-        (ver `controller/perfiles.py`).
+        (ver `controller/perfiles.py`). Con `caso_id`, lo guarda en ese caso del usuario y el perfil
+        toma el alias del caso (decisión 032).
         """
         if len(points) < 2:
             raise ValueError("Se requieren al menos 2 puntos audiométricos para trazar la curva.")
+        if caso_id is not None:
+            with transaccion() as tx:
+                caso = casos.buscar(tx, caso_id, usuario.id) if usuario else None
+            if caso is None:
+                raise _CASO_NO_ENCONTRADO  # ajeno o borrado: no se revela que existe (RN4)
+            if len({p.frequency for p in points}) != len(points):
+                raise ValueError("Hay frecuencias repetidas: cada frecuencia va una sola vez (RN1).")
+            patient_name = caso.alias
 
         valor_pta = perfiles.pta(points)
         pattern = "patrón en pendiente" if perfiles.patron(points) == "caida_en_agudos" else "patrón plano"
@@ -71,7 +88,14 @@ class AudiogramService:
             notas += (" El modelo solo representa la pérdida de las células ciliadas externas: en "
                       f"{_lista_hz(perfil.frecuencias_recortadas)} se simula menos pérdida que la pedida.")
 
+        audiograma_id = None
+        if caso_id is not None:
+            with transaccion() as tx:
+                audiograma_id = audiogramas.crear(tx, caso_id, origen, round(valor_pta, 1), grado,
+                                                  perfiles.patron(points), perfil.nombre, points)
+
         return AudiogramResponse(
+            audiograma_id=audiograma_id,
             status="success",
             patient_name=patient_name,
             points=points,
@@ -85,3 +109,11 @@ class AudiogramService:
 
 def _lista_hz(frecuencias: List[float]) -> str:
     return ", ".join(f"{f / 1000:g} kHz" if f >= 1000 else f"{f:g} Hz" for f in frecuencias)
+
+
+def listar_del_caso(usuario: Usuario, caso_id: UUID) -> List[AudiogramaGuardado]:
+    """Los audiogramas de un caso propio, del más nuevo al más viejo (RN4: ajeno o borrado da 404)."""
+    with transaccion() as tx:
+        if casos.buscar(tx, caso_id, usuario.id) is None:
+            raise _CASO_NO_ENCONTRADO
+        return audiogramas.listar(tx, caso_id, usuario.id)

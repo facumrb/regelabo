@@ -17,8 +17,14 @@ def token_de_sesion(sesion: Optional[str] = Cookie(default=None)) -> Optional[st
     return sesion
 
 
-def usuario_actual(token: Optional[str] = Depends(token_de_sesion)) -> Usuario:
+def usuario_con_sesion(token: Optional[str] = Depends(token_de_sesion)) -> Usuario:
+    """Cualquier sesión válida, aunque tenga que cambiar la contraseña: solo para /auth/yo y elegirla."""
     return autenticacion.usuario_de_sesion(token)
+
+
+def usuario_actual(usuario: Usuario = Depends(usuario_con_sesion)) -> Usuario:
+    autenticacion.exigir_contrasena_definitiva(usuario)
+    return usuario
 
 
 def requiere_admin(usuario: Usuario = Depends(usuario_actual)) -> Usuario:

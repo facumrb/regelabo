@@ -1,0 +1,27 @@
+meta {
+  name: 8. Recuperar con un enlace inventado
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{base_url}}/auth/recuperar
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "token": "no-existe",
+    "nueva": "clave-nueva-1"
+  }
+}
+
+tests {
+  test("responde 400", function () { expect(res.getStatus()).to.equal(400); });
+  test("código enlace_invalido", function () { expect(res.getBody().detail.codigo).to.equal("enlace_invalido"); });
+}
+
+docs {
+  Con el token del mail (consola del backend) responde 204, cierra las sesiones y la contraseña nueva sirve para el login.
+}

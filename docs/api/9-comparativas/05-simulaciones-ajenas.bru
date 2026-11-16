@@ -1,0 +1,24 @@
+meta {
+  name: 5. Con simulaciones que no son tuyas da 404 (RN4)
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/comparativas
+  body: json
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token_comp}}
+}
+
+body:json {
+  { "titulo": "Prueba", "simulacion_ids": ["0190a000-0000-7000-8000-000000000001", "0190a000-0000-7000-8000-000000000002"] }
+}
+
+tests {
+  test("responde 404", function () { expect(res.getStatus()).to.equal(404); });
+  test("código simulacion_no_encontrada", function () { expect(res.getBody().detail.codigo).to.equal("simulacion_no_encontrada"); });
+}

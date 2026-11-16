@@ -88,10 +88,11 @@ Hace falta el worker (lo levanta `npm run dev`). Una simulación tarda ~80 s.
 
 | # | Qué hacer | Qué deberías ver |
 |---|---|---|
-| T1 | En el simulador, **Ejecutar Simulación Biológica** | El botón dice "En cola (lugar 1)…" y enseguida "Simulando modelo biológico… (Ns)". A los ~75 s dice "✓ Simulación lista" y pasa solo al detalle con el EFR y los gráficos. En la base, el estado pasó de `en_cola` a `ejecutando` y a `completada`. |
+| T1 | En el simulador, **Ejecutar Simulación Biológica** | Pasa enseguida al detalle de la nueva, que muestra "En cola" y después "Ejecutando"; a los ~75 s aparecen el EFR y los gráficos. En la base, el estado pasó de `en_cola` a `ejecutando` y a `completada`. |
+| T1b | Con un investigador o fonoaudiólogo, volver a Simular mientras corre | El formulario está libre y muestra "1 simulación en curso" con su estado y *Ver detalle*. Se pueden pedir hasta 3; la cuarta da "Ya tenés el máximo de simulaciones en curso…" (**429**). Cuando terminan, la barra avisa y no te cambia de pantalla. |
 | T2 | **Repetir** exactamente los mismos parámetros | El resultado aparece **al instante**, sin pasar por la cola. En el historial figura como "Resultado reutilizado" (RN10). |
 | T3 | Cambiar un parámetro (por ejemplo, el nivel) y simular | Es una simulación nueva: pasa por la cola. |
-| T4 | **Cupo (RN5a)**: como estudiante, lanzar una simulación y, **desde otra pestaña**, otra distinta | "Ya tenés el máximo de simulaciones en curso…" → **429** `cupo_agotado`. Al terminar la primera, se puede volver a pedir. (Un investigador o fonoaudiólogo admite 3.) |
+| T4 | **Cupo (RN5a)**: como estudiante, lanzar una simulación, volver a Simular y pedir otra distinta | "Ya tenés el máximo de simulaciones en curso…" → **429** `cupo_agotado`. Al terminar la primera, se puede volver a pedir. (Un investigador o fonoaudiólogo admite 3.) |
 | T5 | **Salir de la página mientras corre**: ir a *Historial* en la barra | La barra muestra "Simulando… N s" y no te mueve de pantalla. Al terminar, cambia a "✓ Resultado listo" y aparece un aviso abajo con *Ver resultado*. Si recargás mientras corre, el indicador vuelve a aparecer. |
 | T6 | **Historial** (`/simulaciones`) | Lista de la más nueva a la más vieja, con estado, parámetros y fecha; clic en una abre su detalle. Con más de 20, aparece **Cargar más** (igual que *Mis casos*). |
 | T7 | Elegir un **caso** en el selector antes de simular, y luego filtrar el historial por ese caso | La simulación queda ligada al caso; el filtro "Todos los casos" / un caso la muestra u oculta. Es opcional: se puede simular sin caso. |
@@ -132,6 +133,67 @@ Con sesión iniciada, botón **Mis casos** en el navbar (`/casos`).
 | P | Crear **25 casos** (por ejemplo con el SQL de la sección 5) y entrar a *Mis casos* | Muestra 20, del más nuevo al más viejo, y el botón **Cargar más**. Al apretarlo aparecen los 5 restantes y el botón desaparece. Panel: el segundo pedido lleva `despues_de=<id>`. |
 | Q | **Borrar** un caso y confirmar | Vuelve a la lista sin ese caso. Panel: `DELETE /casos/<id>` → **204**. En la base sigue la fila, con `borrado_en` cargado. Si volvés a su dirección (atrás en el navegador): "Caso no encontrado". |
 | R | **RN4**: copiá la dirección de un caso, cerrá sesión, entrá con **otro usuario** y pegala | "Caso no encontrado" → **404** `caso_no_encontrado`, igual que con un id inventado. El caso tampoco aparece en su lista. |
+
+### Email: verificación y recuperación (decisión 030)
+
+Sin `SMTP_HOST` en el `.env`, los mails no se envían: aparecen en la terminal del backend con el enlace adentro. Copiar el enlace al navegador.
+
+| # | Qué hacer | Qué deberías ver |
+|---|---|---|
+| E1 | Registrarse e iniciar sesión | En la terminal del backend, "Mail sin enviar…" con un enlace `/verificar?token=…`. En la app, un aviso amarillo arriba: "Confirmá tu email para poder pedir simulaciones". |
+| E2 | Sin verificar, pedir una simulación | "Confirmá tu email para pedir simulaciones…" → **403** `email_no_verificado`. Casos, historial y audiograma andan igual. |
+| E3 | En el aviso, **Reenviar el mail** | "Te mandamos uno nuevo". El enlace anterior deja de servir. |
+| E4 | Abrir el enlace del último mail | "Tu email quedó confirmado"; el aviso desaparece y ya se puede simular. Abrirlo otra vez: "El enlace venció o ya se usó" → **400**. |
+| E5 | Cerrar sesión, **¿Olvidaste tu contraseña?** con un email registrado y con uno inventado | El mismo mensaje en los dos casos; solo el registrado recibe el mail (`/recuperar?token=…`). |
+| E6 | Abrir el enlace, poner una contraseña corta y después una válida | La corta da error y el enlace sigue sirviendo; con la válida, "Contraseña cambiada". La contraseña vieja ya no entra y la nueva sí. Si había otra sesión abierta, se cerró. |
+
+### Audiogramas en el caso (decisión 032)
+
+| # | Qué hacer | Qué deberías ver |
+|---|---|---|
+| A1 | En la ficha de un caso, **Cargar audiograma** | Abre la pantalla de audiograma con ese caso elegido y sin el campo "Nombre del perfil". |
+| A2 | Generar el perfil | "Quedó guardado en la ficha del caso". **Usar este perfil y simular** abre Simular con el caso y el perfil elegidos. |
+| A3 | Volver a la ficha | El audiograma aparece con grado, patrón, PTA, fecha y su curva. Cargar otro lo suma arriba. |
+| A4 | **Simular con este** | Simular con el caso y ese perfil elegidos. |
+| A5 | En la pantalla de audiograma, elegir "Sin caso (no se guarda)" | Funciona como antes y la ficha no cambia. |
+
+### Superponer simulaciones (decisión 025)
+
+| # | Qué hacer | Qué deberías ver |
+|---|---|---|
+| S1 | En **Historial**, marcar la casilla de una simulación terminada | Abajo aparece "1 de 4 elegidas · elegí al menos 2", con **Superponer** deshabilitado. Las que no terminaron tienen la casilla deshabilitada. |
+| S2 | Marcar 4 | Las demás casillas se deshabilitan. Tocar la fila (no la casilla) sigue abriendo el detalle. |
+| S3 | Elegir 2 con distintas fibras y tocar **Superponer** | `/superponer?ids=…`: tabla con S1 y S2, lo que difiere en color (las fibras y el EFR); el FFT y la onda elegida con una curva por simulación, del mismo color que en la tabla. |
+| S4 | Cambiar la onda (EFR total, I, III, V) | Cambia solo el gráfico temporal. |
+| S5 | En el detalle de una terminada, **Superponer con…** | Abre el historial con esa ya marcada. |
+| S7 | **Descargar CSV** y abrirlo en una planilla | Una fila por simulación (S1, S2…) con perfil, estímulo, fibras, EFR y fecha; los acentos se ven bien. |
+| S8 | En tema oscuro, **Imprimir o guardar PDF** | La vista previa sale en claro, sin la barra ni los botones; al cerrar el diálogo la página vuelve a oscuro. |
+| S9 | En una superposición, **Guardar comparativa** con título, notas y un caso | La dirección pasa a `?comparativa=…`, el título y las notas reemplazan al encabezado y aparecen **Editar** y **Borrar**. |
+| S10 | **Historial → Comparativas** y la ficha del caso | La guardada aparece en las dos (en la ficha, solo las de ese caso). Al abrirla se ven las mismas curvas. |
+| S11 | **Editar** el título y **Borrar** | El título cambia; al borrar vuelve a *Comparativas* y ya no figura. Las simulaciones siguen en el historial. |
+| S6 | Cambiar a mano un id de la dirección por uno inventado o de otro usuario | "La simulación no existe." (RN4). |
+
+### Comentarios y panel de admin (decisión 028)
+
+Para el panel hace falta un admin: `uv run python -m backend.comandos.crear_admin`.
+
+| # | Qué hacer | Qué deberías ver |
+|---|---|---|
+| C1 | Con un usuario común, menú de usuario → **Dejar un comentario**, enviar uno | "¡Gracias!" y nada más. En el menú no aparece **Administración**; entrar a mano a `/admin` lleva al inicio. |
+| C2 | Enviar un comentario solo con espacios | El botón queda deshabilitado. |
+| C3 | Enviar 6 comentarios seguidos en menos de un minuto | El sexto da "Demasiados pedidos…" → **429**. |
+| C4 | Entrar con el admin | Número rojo sobre el avatar y junto a **Administración** con los comentarios nuevos. Si otro usuario comenta mientras tanto, el número sube solo en menos de un minuto. |
+| C5 | En **Administración**, marcar uno como leído y archivar otro | El leído cambia de etiqueta; el archivado desaparece (se ve con el filtro *Archivado*). Al navegar, el número baja. |
+| C6 | Filtrar por *Fonoaudiólogo* | Solo los comentarios de fonoaudiólogos. |
+| U1 | En **Administración**, pestaña **Usuarios**; buscar parte de un email | Solo los que coinciden, con la cantidad de casos y simulaciones. |
+| U2 | Con un usuario sin verificar, **Verificar email** | Desaparece "Email sin verificar"; ese usuario ya puede simular sin abrir el mail. |
+| U3 | Bloquear una cuenta (10 contraseñas mal) y en el panel **Desbloquear** | "Bloqueada hasta…" desaparece y el usuario entra con su contraseña. |
+| U4 | Con un usuario común, cerrar sesión, pedir **¿Olvidaste tu contraseña?** y tocar **¿No te llegó el mail? Avisar a un administrador** (sin SMTP en el `.env`, el pedido se crea solo con el primer paso); entrar con el admin | El número del menú suma 1. En **Usuarios**, la cuenta aparece arriba en *Pedidos de restablecimiento*, con el recuadro amarillo y el botón **Contraseña temporal** (en las cuentas sin pedido, ese botón no aparece). |
+| U4b | **Contraseña temporal** → aceptar → **Enviar por mail** | Se abre el programa de correo con el mail escrito al email del usuario. La cuenta sale de los pedidos. La contraseña vieja ya no entra, la del mail sí, y las sesiones abiertas de ese usuario se cerraron. |
+| U6 | Abrir el mail de U4b y entrar con la temporal | Lleva directo a **Elegí tu contraseña**; cualquier otra dirección vuelve ahí. Con una nueva válida, entra al inicio y la temporal ya no sirve (decisión 031). Lo mismo después del comando `resetear_contrasena`. |
+| Q1 | Pestaña **Cola**, con `npm run dev` corriendo; pedir una simulación con otro usuario | Aparece *Ejecutando* con su email y, al terminar (~80 s), suma a *Ejecutadas (24 h)* con el promedio. Pedir los mismos parámetros otra vez suma a *Desde la caché*. |
+| Q2 | Cortar solo el worker, pedir una simulación y esperar 2 minutos | Aviso amarillo: "El worker parece detenido". Al volver a correr el worker, desaparece. |
+| U5 | Buscar otro admin | Sin botones: "Las cuentas de admin se manejan por comando." |
 
 ## 4. Probar sin interfaz
 
@@ -244,9 +306,13 @@ No hay tests automáticos del frontend: sus páginas se verifican con la tabla d
 | Versión del modelo (invalida la caché) y semilla | `VERSION_MODELO` y `SEMILLA` en `backend/services/motor.py` |
 | Cada cuánto se consulta el estado de una simulación | `INTERVALO_CONSULTA_MS` en `frontend/src/services/simulaciones.ts` |
 | Pantallas de casos | `frontend/src/pages/casos/` |
+| Largo máximo de un comentario (RN13) | `ComentarioInput` en `backend/controller/modelos.py` y `LARGO_MAXIMO` en `frontend/src/services/comentarios.ts` |
+| Límite de comentarios por minuto | `backend/views/comentarios.py` |
+| Pantallas de comentarios y del panel | `frontend/src/pages/Comentarios.tsx` y `frontend/src/pages/admin/` |
+| Acciones del panel sobre usuarios (desbloquear, temporal, verificar) | `backend/controller/usuarios.py` |
 
 ## 9. Lo que todavía no está
 
 - Los perfiles `Custom_*` del audiograma son compartidos entre usuarios (decisión 019): se resuelve en el módulo de audiogramas.
-- No hay límite general de 120 pedidos por minuto por usuario (solo el de login y registro).
+- El email no se puede cambiar (y por eso no hay que volver a verificarlo).
 - Un admin todavía no tiene pantallas propias: solo se distingue por la insignia.

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useSesion } from '../context/SesionContext'
 import { useSimulacionesEnCurso } from '../context/SimulacionesEnCurso'
 import { IndicadorSimulaciones } from './AvisosSimulacion'
@@ -7,6 +7,7 @@ import { cambiarTema, useTema } from '../context/tema'
 import Icono, { type NombreIcono } from './Icono'
 import { botonPrimario, botonTexto } from './estilos'
 import type { EstadoServidor } from '../services/tiposSimulacion'
+import { alCambiarPendientes, comentariosApi } from '../services/comentarios'
 
 const SECCIONES: { a: string; texto: string; icono: NombreIcono }[] = [
   { a: '/', texto: 'Inicio', icono: 'inicio' },
@@ -26,6 +27,40 @@ function BotonTema() {
   )
 }
 
+const INTERVALO_PENDIENTES_MS = 60_000
+
+/** Pendientes del admin (decisión 028): al cargar, al navegar, tras cada acción del panel y cada minuto. */
+function usePendientes(esAdmin: boolean): number {
+  const { pathname } = useLocation()
+  const [cantidad, setCantidad] = useState(0)
+  useEffect(() => {
+    // El menú no se desmonta al cambiar de usuario: sin admin, el número viejo se borra
+    if (!esAdmin) {
+      setCantidad(0)
+      return
+    }
+    const consultar = () => {
+      comentariosApi.pendientes().then((p) => setCantidad(p.comentarios_nuevos + p.restablecimientos)).catch(() => {})
+    }
+    consultar()
+    // Cada minuto con la pestaña a la vista, y al volver a ella; en segundo plano no consulta
+    const intervalo = window.setInterval(() => {
+      if (document.visibilityState === 'visible') consultar()
+    }, INTERVALO_PENDIENTES_MS)
+    const alVolver = () => {
+      if (document.visibilityState === 'visible') consultar()
+    }
+    document.addEventListener('visibilitychange', alVolver)
+    const dejarDeEscuchar = alCambiarPendientes(consultar)
+    return () => {
+      window.clearInterval(intervalo)
+      document.removeEventListener('visibilitychange', alVolver)
+      dejarDeEscuchar()
+    }
+  }, [esAdmin, pathname])
+  return esAdmin ? cantidad : 0
+}
+
 /** Menú de usuario (decisión 024): Cuenta, tema y Salir. Se cierra con Escape o al hacer clic afuera. */
 function MenuUsuario() {
   const { usuario, cerrarSesion } = useSesion()
@@ -34,6 +69,7 @@ function MenuUsuario() {
   const [abierto, setAbierto] = useState(false)
   const caja = useRef<HTMLDivElement>(null)
   const boton = useRef<HTMLButtonElement>(null)
+  const pendientes = usePendientes(!!usuario?.es_admin)
 
   useEffect(() => {
     if (!abierto) return
@@ -59,10 +95,16 @@ function MenuUsuario() {
   return (
     <div className="relative" ref={caja}>
       <button ref={boton} onClick={() => setAbierto(!abierto)} aria-haspopup="menu" aria-expanded={abierto}
-        aria-label={`Menú de ${usuario.nombre}`}
+        aria-label={`Menú de ${usuario.nombre}${pendientes ? ` (${pendientes} pendientes)` : ''}`}
         className="flex items-center gap-2 min-h-[44px] pl-1 pr-2 md:pr-3 rounded-full border border-linea text-sm text-tinta hover:border-tenue">
-        <span className="grid place-items-center w-8 h-8 rounded-full bg-acento text-acento-tinta font-semibold text-sm">
+        <span className="relative grid place-items-center w-8 h-8 rounded-full bg-acento text-acento-tinta font-semibold text-sm">
           {usuario.nombre.charAt(0).toUpperCase()}
+          {pendientes > 0 && (
+            <span aria-hidden="true"
+              className="absolute -top-1 -right-1 min-w-[1.1rem] h-[1.1rem] px-1 rounded-full bg-rose-600 text-white text-[10px] leading-[1.1rem] text-center">
+              {pendientes}
+            </span>
+          )}
         </span>
         <span className="hidden md:inline">{usuario.nombre}</span>
         <Icono nombre="abajo" tamano={16} className={`text-tenue transition-transform ${abierto ? 'rotate-180' : ''}`} />
@@ -85,6 +127,17 @@ function MenuUsuario() {
             <Icono nombre={tema === 'claro' ? 'luna' : 'sol'} tamano={18} className="text-tenue" />Tema
             <span className="ml-auto text-tenue">{tema === 'claro' ? 'Claro' : 'Oscuro'}</span>
           </button>
+          <button role="menuitem" className={opcion} onClick={elegir(() => navigate('/comentarios'))}>
+            <Icono nombre="comentario" tamano={18} className="text-tenue" />Dejar un comentario
+          </button>
+          {usuario.es_admin && (
+            <button role="menuitem" className={opcion} onClick={elegir(() => navigate('/admin'))}>
+              <Icono nombre="admin" tamano={18} className="text-tenue" />Administración
+              {pendientes > 0 && (
+                <span className="ml-auto text-xs px-2 rounded-full bg-rose-600 text-white">{pendientes}</span>
+              )}
+            </button>
+          )}
           {usuario.es_admin && (
             <a role="menuitem" href="/api/docs" target="_blank" rel="noreferrer" className={`${opcion} xl:hidden`}>
               <Icono nombre="descargar" tamano={18} className="text-tenue -rotate-90" />Swagger API
@@ -144,7 +197,7 @@ export default function Header({ backendHealth, onRefreshHealth }: { backendHeal
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-fondo border-b border-linea">
+      <header className="sticky top-0 z-40 bg-fondo border-b border-linea print:hidden">
         <div className="max-w-7xl mx-auto px-4 md:px-8 h-14 md:h-16 flex items-center gap-4 md:gap-8">
           <Link to="/" className="flex items-center gap-2 shrink-0 text-tinta">
             <Icono nombre="marca" tamano={22} className="text-acento shrink-0" />

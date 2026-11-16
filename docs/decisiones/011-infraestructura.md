@@ -1,6 +1,6 @@
 # 011 — Hosting y dominio
 
-**Fecha:** 2026-10-13 · **Estado:** aceptada (provisoria)
+**Fecha:** 2026-10-13 · **Estado:** reemplazada por la [029](029-despliegue.md)
 
 ## Contexto
 El TPI exige que el sistema esté online. Una simulación necesita ~1,1 GB de RAM; con la API y el worker hacen falta al menos 2 GB, y lo cómodo son 4 GB.

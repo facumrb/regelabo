@@ -1,0 +1,22 @@
+meta {
+  name: 3. Comentar (204, sin respuesta)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/comentarios
+  body: json
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token_comentario}}
+}
+
+body:json {
+  { "texto": "Comentario de prueba desde Bruno" }
+}
+tests {
+  test("responde 204", function () { expect(res.getStatus()).to.equal(204); });
+}

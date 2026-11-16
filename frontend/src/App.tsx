@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import Header from './components/Header'
 import CurvasPerfil from './components/CurvasPerfil'
 import { avisoError, avisoOk } from './components/estilos'
@@ -19,6 +19,14 @@ import Historial from './pages/simulaciones/Historial'
 import DetalleSimulacion from './pages/simulaciones/DetalleSimulacion'
 import Bienvenida from './pages/Bienvenida'
 import Inicio from './pages/Inicio'
+import VerificarEmail from './pages/email/VerificarEmail'
+import OlvideContrasena from './pages/email/OlvideContrasena'
+import RecuperarContrasena from './pages/email/RecuperarContrasena'
+import AvisoEmailSinVerificar from './components/AvisoEmailSinVerificar'
+import Comentarios from './pages/Comentarios'
+import Administracion from './pages/admin/Administracion'
+import ElegirContrasena from './pages/ElegirContrasena'
+import Superponer from './pages/simulaciones/Superponer'
 import { useSesion } from './context/SesionContext'
 import { useSimulacionesEnCurso } from './context/SimulacionesEnCurso'
 import { api } from './services/api'
@@ -44,14 +52,11 @@ export interface EstadoNuevaSimulacion {
   perfil?: PerfilAuditivo | null
 }
 
-// Tiempo para ver "✓ Simulación lista" antes de pasar al detalle (decisión 024)
-const PAUSA_ANTES_DEL_DETALLE_MS = 1500
-
 export default function App() {
   const { usuario, cargando } = useSesion()
   const navigate = useNavigate()
   const location = useLocation()
-  const { enCurso: pendientes, terminadas, esperada, esperar, dejarDeEsperar, marcarVista } = useSimulacionesEnCurso()
+  const { enCurso: pendientes, seguir } = useSimulacionesEnCurso()
   const [backendHealth, setBackendHealth] = useState<EstadoServidor | null>(null)
   const [profiles, setProfiles] = useState<PerfilAuditivo[]>([])
   // El generado desde un audiograma: no viene en /profiles (sería visible para todos, RN4)
@@ -60,17 +65,11 @@ export default function App() {
   const [params, setParams] = useState<ParametrosSimulacion>(PARAMETROS_INICIALES)
 
   const [enviando, setEnviando] = useState(false)
-  const [elapsedTime, setElapsedTime] = useState(0)
   const [casos, setCasos] = useState<Caso[]>([])
   const [casoId, setCasoId] = useState('') // '' = sin caso
-  // La que se espera desde el formulario: sigue en el contexto aunque se navegue a otra pantalla
-  const simulacion = pendientes.find(s => s.id === esperada) ?? null
-  const terminada = terminadas.find(s => s.id === esperada) ?? null
-  const isLoading = enviando || esperada !== null
   const [error, setError] = useState<string | null>(null)
   const [successToast, setSuccessToast] = useState<string | null>(null)
 
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const perfilActivo = profiles.find(p => p.nombre === params.poles_profile)
     ?? (perfilPersonalizado?.nombre === params.poles_profile ? perfilPersonalizado : null)
@@ -111,20 +110,6 @@ export default function App() {
     fetchInitialData()
   }, [usuario])
 
-  // 2. Timer durante la ejecución de la simulación
-  useEffect(() => {
-    if (isLoading) {
-      setElapsedTime(0)
-      timerRef.current = setInterval(() => {
-        setElapsedTime(prev => prev + 1)
-      }, 1000)
-    } else {
-      if (timerRef.current) clearInterval(timerRef.current)
-    }
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current)
-    }
-  }, [isLoading])
 
   // 3. Ejecutar simulación: el pedido solo la deja en cola; el contexto consulta su estado
   const handleRunSimulation = async () => {
@@ -133,9 +118,9 @@ export default function App() {
     setSuccessToast(null)
     try {
       const actual = await simulacionesApi.crear(params, casoId || null)
-      // Resultado reutilizado (RN10): no hay nada que esperar
-      if (actual.estado === 'completada') navigate(`/simulaciones/${actual.id}`)
-      else esperar(actual)
+      // Al detalle de la nueva, que se actualiza solo; Simular queda libre para pedir otra (hasta el cupo, RN5a)
+      if (actual.estado !== 'completada') seguir(actual) // si salió de la caché (RN10), no hay nada que seguir
+      navigate(`/simulaciones/${actual.id}`)
     } catch (err) {
       console.error('Error en simulación:', err)
       setError(mensajeDeError(err))
@@ -144,32 +129,13 @@ export default function App() {
     }
   }
 
-  // Al terminar la esperada: si se la mira desde Simular, pasa al detalle tras una pausa; si no, avisa la barra
-  useEffect(() => {
-    if (!terminada) return
-    const enSimular = location.pathname === '/simular'
-    if (terminada.estado === 'error') {
-      setError(terminada.mensaje_error ?? 'La simulación no se pudo completar.')
-      if (enSimular) marcarVista(terminada.id)
-      dejarDeEsperar()
-      return
-    }
-    if (!enSimular) {
-      dejarDeEsperar()
-      return
-    }
-    const temporizador = setTimeout(() => {
-      dejarDeEsperar()
-      navigate(`/simulaciones/${terminada.id}`)
-    }, PAUSA_ANTES_DEL_DETALLE_MS)
-    return () => clearTimeout(temporizador)
-  }, [terminada, location.pathname])
 
   // Desde el detalle: "Nueva simulación" llega sin parámetros (formulario inicial) o "con estos parámetros"
   useEffect(() => {
     const estado = location.state as EstadoNuevaSimulacion | null
     if (location.pathname !== '/simular' || !estado) return
-    setParams(estado.parametros ?? PARAMETROS_INICIALES)
+    // Desde un audiograma del caso llega solo el perfil: el resto, los parámetros iniciales
+    setParams(estado.parametros ?? { ...PARAMETROS_INICIALES, ...(estado.perfil && { poles_profile: estado.perfil.nombre }) })
     setCasoId(estado.casoId ?? '')
     // Personalizados y perfiles fuera del catálogo (decisión 026) no están en el selector: se suman
     if (estado.perfil) setPerfilPersonalizado(estado.perfil)
@@ -177,9 +143,10 @@ export default function App() {
   }, [location.key])
 
   // 4. Usar el perfil generado desde un audiograma: lleva directo a la simulación con el perfil elegido
-  const handleSelectProfileFromAudiogram = (perfil: PerfilAuditivo) => {
+  const handleSelectProfileFromAudiogram = (perfil: PerfilAuditivo, caso: string | null) => {
     setPerfilPersonalizado(perfil)
     setParams(prev => ({ ...prev, poles_profile: perfil.nombre }))
+    if (caso) setCasoId(caso)
     navigate('/simular')
     setSuccessToast(`Perfil "${perfil.etiqueta}" listo para simular.`)
     setTimeout(() => setSuccessToast(null), 5000)
@@ -209,17 +176,15 @@ export default function App() {
         <span title="Estímulo de amplitud modulada rectangular" className="shrink-0 mt-1 font-mono text-xs text-tenue border border-linea rounded px-2 py-1">RAM Stimulus</span>
       </div>
 
-      {/* El resultado no se muestra acá: al terminar se pasa a su detalle */}
+      {/* El resultado no se muestra acá: al pedirla se pasa a su detalle */}
       <SimulationControls
         profiles={profiles}
         perfilActivo={perfilActivo}
         params={params}
         setParams={setParams}
         onRunSimulation={handleRunSimulation}
-        isLoading={isLoading}
-        elapsedTime={elapsedTime}
-        simulacion={simulacion ?? terminada}
-        lista={terminada?.estado === 'completada'}
+        enviando={enviando}
+        enCurso={pendientes}
         casos={casos}
         casoId={casoId}
         setCasoId={setCasoId}
@@ -251,7 +216,12 @@ export default function App() {
       <Header backendHealth={backendHealth} onRefreshHealth={fetchInitialData} />
 
       <main id="contenido" tabIndex={-1} className="flex-1 outline-none max-w-7xl w-full mx-auto px-4 md:px-8 py-6 md:py-12">
+        <AvisoEmailSinVerificar />
+        {/* Con una contraseña temporal, la única pantalla posible es elegir una nueva (decisión 031) */}
+        {usuario?.debe_cambiar_contrasena && location.pathname !== '/elegir-contrasena' &&
+          <Navigate to="/elegir-contrasena" replace />}
         <Routes>
+          <Route path="/elegir-contrasena" element={<RequiereSesion><ElegirContrasena /></RequiereSesion>} />
           <Route path="/" element={cargando ? null : usuario ? <Inicio /> : <Bienvenida />} />
           <Route path="/simular" element={<RequiereSesion>{simulador}</RequiereSesion>} />
           {/* Paso previo de la simulación: genera un perfil y vuelve a /simular con él elegido (decisión 024) */}
@@ -265,12 +235,18 @@ export default function App() {
           } />
           <Route path="/login" element={<Login />} />
           <Route path="/registro" element={<Registro />} />
+          <Route path="/verificar" element={<VerificarEmail />} />
+          <Route path="/olvide" element={<OlvideContrasena />} />
+          <Route path="/recuperar" element={<RecuperarContrasena />} />
           <Route path="/cuenta" element={<RequiereSesion><MiCuenta /></RequiereSesion>} />
           <Route path="/simulaciones" element={<RequiereSesion><Historial /></RequiereSesion>} />
           <Route path="/simulaciones/:id" element={<RequiereSesion><DetalleSimulacion /></RequiereSesion>} />
+          <Route path="/superponer" element={<RequiereSesion><Superponer /></RequiereSesion>} />
           <Route path="/casos" element={<RequiereSesion><MisCasos /></RequiereSesion>} />
           <Route path="/casos/nuevo" element={<RequiereSesion><NuevoCaso /></RequiereSesion>} />
           <Route path="/casos/:id" element={<RequiereSesion><FichaCaso /></RequiereSesion>} />
+          <Route path="/comentarios" element={<RequiereSesion><Comentarios /></RequiereSesion>} />
+          <Route path="/admin" element={<RequiereSesion admin><Administracion /></RequiereSesion>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

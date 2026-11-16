@@ -1,0 +1,70 @@
+# Producción (decisión 029). Se usa con los scripts de deploy/, que leen el .env de la raíz:
+#   docker compose -f compose.prod.yaml up -d --build
+# El .env de producción define DOMINIO, POSTGRES_PASSWORD y WORKERS (lo genera deploy/instalar.sh),
+# y los SMTP_* de los mails (se agregan a mano, ver docs/despliegue.md).
+x-app: &app
+  image: regelabo-app
+  restart: unless-stopped
+  environment:
+    DATABASE_URL: postgresql+psycopg://regelabo:${POSTGRES_PASSWORD:?falta en .env}@db:5432/regelabo
+    COOKIE_SECURE: ${COOKIE_SECURE:-true}  # solo la prueba local por http lo pone en false
+    # Mails (decisión 030): URL_PUBLICA arma los enlaces; sin SMTP_HOST los mails van al log
+    URL_PUBLICA: ${URL_PUBLICA:-https://${DOMINIO}}
+    SMTP_HOST: ${SMTP_HOST:-}
+    SMTP_PORT: ${SMTP_PORT:-587}
+    SMTP_USUARIO: ${SMTP_USUARIO:-}
+    SMTP_CONTRASENA: ${SMTP_CONTRASENA:-}
+  volumes:
+    # Los perfiles Custom_* los escribe la API (audiogramas) y los lee el worker: tienen que compartir
+    # la carpeta. Al crearse vacío, el volumen copia los perfiles base de la imagen.
+    # shortcut: si cambian los perfiles base en el repo, el volumen no se entera; ver docs/despliegue.md
+    - polos:/app/backend/services/verhulst/data/Poles
+  depends_on:
+    db: { condition: service_healthy }
+
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: regelabo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?falta en .env}
+      POSTGRES_DB: regelabo
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U regelabo"]
+      interval: 5s
+      retries: 10
+
+  api:
+    <<: *app
+    build: { context: ., target: app }
+
+  worker:
+    <<: *app
+    # Prioridad baja: con 2 simulaciones corriendo, la API sigue respondiendo (decisión 029)
+    command: ["nice", "-n", "10", "python", "worker.py"]
+    pull_policy: never  # usa la imagen que construye api
+    deploy:
+      # 1 en Azure (4 GB), 2 en Oracle (12 GB): cada simulación usa ~1,1 GB y un núcleo
+      replicas: ${WORKERS:-1}
+
+  caddy:
+    build: { context: ., target: web }
+    restart: unless-stopped
+    environment:
+      DOMINIO: ${DOMINIO:?falta en .env}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [api]
+
+volumes:
+  pgdata:
+  polos:
+  caddy_data:
+  caddy_config:

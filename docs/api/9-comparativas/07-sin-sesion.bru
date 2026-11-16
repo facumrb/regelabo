@@ -1,0 +1,16 @@
+meta {
+  name: 7. Sin sesión da 401
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{base_url}}/comparativas
+  body: none
+  auth: none
+}
+
+tests {
+  test("responde 401", function () { expect(res.getStatus()).to.equal(401); });
+  test("código no_autenticado", function () { expect(res.getBody().detail.codigo).to.equal("no_autenticado"); });
+}

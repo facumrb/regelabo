@@ -52,6 +52,7 @@ def motor_falso(monkeypatch):
 def _conectado(email, registro_valido, tipo="estudiante"):
     cliente = TestClient(crear_app())
     cliente.post("/api/auth/registro", json={**registro_valido, "email": email, "tipo_perfil": tipo})
+    _sql("UPDATE usuario SET email_verificado_en = now() WHERE email = :e", e=email)  # RN15
     cliente.post("/api/auth/login", json={"email": email, "password": registro_valido["password"]})
     return cliente
 
@@ -357,3 +358,56 @@ def test_las_recientes_no_se_tocan(ana, motor_falso):
     _ejecutando_desde(minutos=2)
     assert simulaciones.recuperar_interrumpidas() == 0
     assert ana.get(f"/api/simulaciones/{simulacion_id}").json()["estado"] == "ejecutando"
+
+
+# ---- Estado de la cola en el panel de admin (decisión 028) ----
+
+@pytest.fixture
+def admin():
+    from backend.controller import autenticacion
+    autenticacion.crear_admin("jefa@example.com", "Jefa", "clave-del-admin")
+    cliente = TestClient(crear_app())
+    cliente.post("/api/auth/login", json={"email": "jefa@example.com", "password": "clave-del-admin"})
+    return cliente
+
+
+def _cola(admin):
+    return admin.get("/api/admin/cola").json()
+
+
+def test_cola_vacia_no_puede_saber_si_el_worker_anda(admin):
+    cola = _cola(admin)
+    assert (cola["en_cola"], cola["ejecutando"], cola["completadas_24h"], cola["en_curso"]) == (0, 0, 0, [])
+    assert cola["worker_detenido"] is None and cola["duracion_promedio_s"] is None
+
+
+def test_cola_muestra_quien_espera_sin_parametros(ana, admin, motor_falso):
+    _pedir(ana)
+    cola = _cola(admin)
+    assert cola["en_cola"] == 1 and cola["worker_detenido"] is False  # recién pedida
+    assert [(s["usuario_email"], s["estado"]) for s in cola["en_curso"]] == [("ana@example.com", "en_cola")]
+    assert "parametros" not in cola["en_curso"][0] and "perfil" not in cola["en_curso"][0]
+
+
+def test_cola_deduce_el_worker_detenido(ana, beto, admin, motor_falso):
+    _pedir(ana)
+    _pedir(beto, spl_level=50)
+    _sql("UPDATE simulacion SET creado_en = now() - interval '3 minutes'")
+    assert _cola(admin)["worker_detenido"] is True  # esperan hace 3 minutos y nadie las toma
+    _sql("UPDATE simulacion SET estado = 'ejecutando', iniciada_en = now() "
+         "WHERE usuario_id = (SELECT id FROM usuario WHERE email = 'ana@example.com')")
+    assert _cola(admin)["worker_detenido"] is False  # una se está ejecutando: el worker anda
+
+
+def test_cola_cuenta_ejecutadas_y_cache_de_24_horas(ana, admin, motor_falso):
+    _pedir(ana)
+    simulaciones.procesar_siguiente()
+    _pedir(ana)  # mismos parámetros: sale de la caché (RN10)
+    cola = _cola(admin)
+    assert (cola["completadas_24h"], cola["desde_cache_24h"], cola["errores_24h"]) == (1, 1, 0)
+    assert cola["duracion_promedio_s"] is not None and cola["en_cola"] == 0
+
+
+def test_solo_el_admin_ve_la_cola(ana, cliente):
+    assert ana.get("/api/admin/cola").status_code == 403
+    assert cliente.get("/api/admin/cola").status_code == 401

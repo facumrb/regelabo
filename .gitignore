@@ -83,3 +83,6 @@ validacionPlanAnalisis/
 
 # Capturas y logs de las pruebas con Playwright
 .playwright-mcp/
+
+# Dumps de producción (deploy/backup.sh)
+backups/

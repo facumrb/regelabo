@@ -27,7 +27,13 @@ Cada archivo documenta una decisión: el contexto, lo que se eligió, las altern
 | [022](022-perfiles-auditivos.md) | Perfiles auditivos: forma real del audiograma y techo del modelo |
 | [023](023-estados-internos.md) | Estados internos del modelo: siete figuras de estados internos |
 | [024](024-rediseno-de-la-interfaz.md) | Rediseño de la interfaz: paleta turquesa (antes vino), tema claro/oscuro y mobile first |
-| [025](025-comparar-simulaciones.md) | Comparar simulaciones entre sí (propuesta) |
+| [025](025-comparar-simulaciones.md) | Superponer simulaciones y comparativas guardadas |
 | [026](026-etiquetas-clinicas-de-los-perfiles.md) | Etiquetas clínicas y catálogo de 9 perfiles |
+| [027](027-prioridad-en-la-cola.md) | Prioridad en la cola de simulaciones (propuesta) |
+| [028](028-panel-de-administracion.md) | Panel de administración (etapas 1 y 3 implementadas: comentarios y usuarios) |
+| [029](029-despliegue.md) | Despliegue en producción (reemplaza la 011 y la 003 en producción) |
+| [030](030-verificacion-y-recuperacion-por-email.md) | Verificación del email y recuperación de la contraseña |
+| [031](031-cambio-obligatorio-de-contrasena-temporal.md) | Cambio obligatorio después de una contraseña temporal |
+| [032](032-audiogramas-en-el-caso.md) | Audiogramas guardados en el caso |
 
 Las reglas de negocio están en [`../reglas-de-negocio.md`](../reglas-de-negocio.md).

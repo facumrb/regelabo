@@ -1,0 +1,16 @@
+# DOMINIO viene del .env (ej. regelabo.duckdns.org). Con un dominio, Caddy saca y renueva solo
+# el certificado HTTPS; con ":80" (prueba local) sirve por http.
+{$DOMINIO} {
+	encode zstd gzip
+
+	handle /api* {
+		reverse_proxy api:8000
+	}
+
+	# El frontend es una SPA: toda ruta que no sea un archivo devuelve index.html
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}

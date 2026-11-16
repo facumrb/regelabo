@@ -1,0 +1,20 @@
+meta {
+  name: 6. Ver una que no existe da 404
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{base_url}}/comparativas/0190a000-0000-7000-8000-000000000003
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token_comp}}
+}
+
+tests {
+  test("responde 404", function () { expect(res.getStatus()).to.equal(404); });
+  test("código comparativa_no_encontrada", function () { expect(res.getBody().detail.codigo).to.equal("comparativa_no_encontrada"); });
+}

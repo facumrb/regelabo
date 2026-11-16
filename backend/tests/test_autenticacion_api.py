@@ -27,7 +27,8 @@ def _sql(consulta, **parametros):
 def test_registro_crea_el_usuario_sin_exponer_el_hash(cliente, registro_valido):
     respuesta = _registrar(cliente, registro_valido)
     assert respuesta.status_code == 201
-    assert respuesta.json().keys() == {"id", "email", "nombre", "tipo_perfil", "es_admin"}
+    assert respuesta.json().keys() == {"id", "email", "nombre", "tipo_perfil", "es_admin",
+                                       "email_verificado", "debe_cambiar_contrasena"}
     assert respuesta.json()["es_admin"] is False
 
 
@@ -165,3 +166,27 @@ def test_crear_admin_y_promover_a_un_usuario_existente(cliente, registro_valido)
     _, existia = autenticacion.crear_admin("ana@example.com", "Ana", "clave-del-admin")
     assert existia is True
     assert _sql("SELECT es_admin FROM usuario WHERE email = 'ana@example.com'").scalar() is True
+
+
+def test_swagger_y_el_esquema_son_solo_para_admin(cliente, registro_valido):
+    assert cliente.get("/api/docs").status_code == 401
+    _registrar(cliente, registro_valido)
+    _login(cliente)
+    assert cliente.get("/api/openapi.json").status_code == 403
+    autenticacion.crear_admin("jefe@example.com", "Jefe", "clave-del-admin")
+    _login(cliente, email="jefe@example.com", password="clave-del-admin")
+    assert cliente.get("/api/docs").status_code == 200
+    assert "/api/auth/login" in cliente.get("/api/openapi.json").json()["paths"]
+
+
+def test_limite_general_de_120_por_minuto_por_sesion(cliente, registro_valido):
+    _registrar(cliente, registro_valido)
+    _login(cliente)
+    limiter.enabled = True
+    estados = [cliente.get("/api/casos").status_code for _ in range(121)]
+    assert estados == [200] * 120 + [429]
+    assert cliente.get("/api/health").status_code == 200  # exenta
+    # otra sesión, desde la misma IP, tiene su propio contador
+    otra = TestClient(crear_app())
+    _login(otra)
+    assert otra.get("/api/casos").status_code == 200

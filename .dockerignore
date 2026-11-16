@@ -1,0 +1,23 @@
+# Solo entra a la imagen lo que hace falta para construir y correr (decisión 029)
+.git
+.env
+.env.*
+!.env.example
+**/node_modules
+**/__pycache__
+**/*.so
+**/*.npz
+.venv
+.pytest_cache
+.claude
+.agents
+.opencode
+.playwright-mcp
+agent
+graphify-out
+validacionPlanAnalisis
+plots
+docs
+frontend/dist
+backups
+backend/services/verhulst/data/Poles/Custom_*

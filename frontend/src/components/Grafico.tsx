@@ -24,7 +24,7 @@ export default function Grafico({ titulo, archivo, data, layout }: {
           onInitialized={(_, div) => { grafico.current = div }}
           style={{ width: '100%', height: '100%' }} />
       </div>
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 print:hidden">
         <p className="mr-auto text-xs text-tenue">Arrastrá sobre el gráfico para ampliar una zona.</p>
         <button type="button" className={botonTexto} onClick={() => setVista((v) => v + 1)}>Restablecer vista</button>
         <button type="button" className={botonTexto}

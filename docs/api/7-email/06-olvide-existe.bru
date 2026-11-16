@@ -1,0 +1,25 @@
+meta {
+  name: 6. Olvidé mi contraseña (email con cuenta)
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{base_url}}/auth/olvide
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{email_mail}}"
+  }
+}
+
+script:post-response {
+  bru.setVar("respuesta_olvide", JSON.stringify(res.getBody()));
+}
+
+tests {
+  test("responde 202", function () { expect(res.getStatus()).to.equal(202); });
+}
