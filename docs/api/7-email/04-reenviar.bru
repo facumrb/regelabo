@@ -1,0 +1,23 @@
+meta {
+  name: 4. Reenviar el mail
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/auth/reenviar-verificacion
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token_mail}}
+}
+
+tests {
+  test("responde 204", function () { expect(res.getStatus()).to.equal(204); });
+}
+
+docs {
+  Invalida el enlace anterior. Con `SMTP_HOST` configurado manda un mail de verdad a la dirección de prueba (no existe): mejor correrla sin SMTP.
+}

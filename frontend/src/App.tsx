@@ -19,6 +19,10 @@ import Historial from './pages/simulaciones/Historial'
 import DetalleSimulacion from './pages/simulaciones/DetalleSimulacion'
 import Bienvenida from './pages/Bienvenida'
 import Inicio from './pages/Inicio'
+import VerificarEmail from './pages/email/VerificarEmail'
+import OlvideContrasena from './pages/email/OlvideContrasena'
+import RecuperarContrasena from './pages/email/RecuperarContrasena'
+import AvisoEmailSinVerificar from './components/AvisoEmailSinVerificar'
 import { useSesion } from './context/SesionContext'
 import { useSimulacionesEnCurso } from './context/SimulacionesEnCurso'
 import { api } from './services/api'
@@ -251,6 +255,7 @@ export default function App() {
       <Header backendHealth={backendHealth} onRefreshHealth={fetchInitialData} />
 
       <main id="contenido" tabIndex={-1} className="flex-1 outline-none max-w-7xl w-full mx-auto px-4 md:px-8 py-6 md:py-12">
+        <AvisoEmailSinVerificar />
         <Routes>
           <Route path="/" element={cargando ? null : usuario ? <Inicio /> : <Bienvenida />} />
           <Route path="/simular" element={<RequiereSesion>{simulador}</RequiereSesion>} />
@@ -265,6 +270,9 @@ export default function App() {
           } />
           <Route path="/login" element={<Login />} />
           <Route path="/registro" element={<Registro />} />
+          <Route path="/verificar" element={<VerificarEmail />} />
+          <Route path="/olvide" element={<OlvideContrasena />} />
+          <Route path="/recuperar" element={<RecuperarContrasena />} />
           <Route path="/cuenta" element={<RequiereSesion><MiCuenta /></RequiereSesion>} />
           <Route path="/simulaciones" element={<RequiereSesion><Historial /></RequiereSesion>} />
           <Route path="/simulaciones/:id" element={<RequiereSesion><DetalleSimulacion /></RequiereSesion>} />

@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import case, select, update
+from sqlalchemy import case, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -21,10 +21,12 @@ def buscar_por_email(tx: Session, email: str) -> Optional[Usuario]:
 
 
 def crear(tx: Session, email: str, password_hash: str, nombre: str, tipo_perfil: str,
-          es_admin: bool, aviso_aceptado_en: datetime) -> Optional[Usuario]:
+          es_admin: bool, aviso_aceptado_en: datetime,
+          email_verificado_en: Optional[datetime] = None) -> Optional[Usuario]:
     """Crea el usuario; devuelve None si el email ya existe."""
     fila = UsuarioFila(email=email, password_hash=password_hash, nombre=nombre,
-                       tipo_perfil=tipo_perfil, es_admin=es_admin, aviso_aceptado_en=aviso_aceptado_en)
+                       tipo_perfil=tipo_perfil, es_admin=es_admin, aviso_aceptado_en=aviso_aceptado_en,
+                       email_verificado_en=email_verificado_en)
     try:
         with tx.begin_nested():  # savepoint: el choque con el email único no arruina la transacción
             tx.add(fila)
@@ -38,8 +40,18 @@ def bloquear(tx: Session, usuario_id: UUID) -> None:
     tx.execute(select(UsuarioFila.id).where(UsuarioFila.id == usuario_id).with_for_update())
 
 
-def marcar_admin(tx: Session, usuario_id: UUID) -> None:
-    tx.execute(update(UsuarioFila).where(UsuarioFila.id == usuario_id).values(es_admin=True))
+def marcar_admin(tx: Session, usuario_id: UUID, ahora: datetime) -> None:
+    """Los admin se crean por comando: quedan con el email verificado (RN15)."""
+    verificado = func.coalesce(UsuarioFila.email_verificado_en, ahora)
+    tx.execute(update(UsuarioFila).where(UsuarioFila.id == usuario_id)
+               .values(es_admin=True, email_verificado_en=verificado))
+
+
+def marcar_verificado(tx: Session, usuario_id: UUID, ahora: datetime) -> None:
+    """RN15. Si ya estaba verificado conserva la fecha original."""
+    tx.execute(update(UsuarioFila)
+               .where(UsuarioFila.id == usuario_id, UsuarioFila.email_verificado_en.is_(None))
+               .values(email_verificado_en=ahora))
 
 
 def registrar_fallo(tx: Session, usuario_id: UUID, ahora: datetime, intentos_max: int,

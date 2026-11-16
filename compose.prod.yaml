@@ -1,12 +1,19 @@
 # Producción (decisión 029). Se usa con los scripts de deploy/, que leen el .env de la raíz:
 #   docker compose -f compose.prod.yaml up -d --build
-# El .env de producción define DOMINIO, POSTGRES_PASSWORD y WORKERS (lo genera deploy/instalar.sh).
+# El .env de producción define DOMINIO, POSTGRES_PASSWORD y WORKERS (lo genera deploy/instalar.sh),
+# y los SMTP_* de los mails (se agregan a mano, ver docs/despliegue.md).
 x-app: &app
   image: regelabo-app
   restart: unless-stopped
   environment:
     DATABASE_URL: postgresql+psycopg://regelabo:${POSTGRES_PASSWORD:?falta en .env}@db:5432/regelabo
     COOKIE_SECURE: ${COOKIE_SECURE:-true}  # solo la prueba local por http lo pone en false
+    # Mails (decisión 030): URL_PUBLICA arma los enlaces; sin SMTP_HOST los mails van al log
+    URL_PUBLICA: ${URL_PUBLICA:-https://${DOMINIO}}
+    SMTP_HOST: ${SMTP_HOST:-}
+    SMTP_PORT: ${SMTP_PORT:-587}
+    SMTP_USUARIO: ${SMTP_USUARIO:-}
+    SMTP_CONTRASENA: ${SMTP_CONTRASENA:-}
   volumes:
     # Los perfiles Custom_* los escribe la API (audiogramas) y los lee el worker: tienen que compartir
     # la carpeta. Al crearse vacío, el volumen copia los perfiles base de la imagen.

@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Dict, List, Literal, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, computed_field
 
 TipoPerfil = Literal["estudiante", "investigador", "fonoaudiologo"]
 
@@ -25,6 +25,12 @@ class Usuario(BaseModel):
     password_hash: str = Field(exclude=True)
     intentos_fallidos: int
     bloqueado_hasta: Optional[datetime]
+    email_verificado_en: Optional[datetime] = None
+
+    @computed_field  # sale en model_dump: así llega a UsuarioPublico
+    @property
+    def email_verificado(self) -> bool:
+        return self.email_verificado_en is not None
 
 
 class UsuarioPublico(BaseModel):
@@ -35,6 +41,7 @@ class UsuarioPublico(BaseModel):
     nombre: str
     tipo_perfil: TipoPerfil
     es_admin: bool
+    email_verificado: bool
 
 
 class RegistroInput(BaseModel):
@@ -52,6 +59,19 @@ class LoginInput(BaseModel):
 
 class CambioContrasenaInput(BaseModel):
     actual: str
+    nueva: str
+
+
+class OlvideInput(BaseModel):
+    email: str
+
+
+class TokenInput(BaseModel):
+    token: str = Field(max_length=100)
+
+
+class RecuperarInput(BaseModel):
+    token: str = Field(max_length=100)
     nueva: str
 
 

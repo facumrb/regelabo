@@ -9,6 +9,8 @@ export interface Usuario {
   nombre: string
   tipo_perfil: TipoPerfil
   es_admin: boolean
+  /** RN15: sin verificar puede entrar, pero no pedir simulaciones */
+  email_verificado: boolean
 }
 
 export interface DatosRegistro {
@@ -30,6 +32,18 @@ export const authApi = {
     await apiClient.post('/auth/contrasena', { actual, nueva })
   },
   yo: async () => (await apiClient.get<Usuario>('/auth/yo')).data,
+  // Decisión 030: verificación del email y recuperación de la contraseña
+  verificarEmail: async (token: string) => {
+    await apiClient.post('/auth/verificar', { token })
+  },
+  reenviarVerificacion: async () => {
+    await apiClient.post('/auth/reenviar-verificacion')
+  },
+  olvide: async (email: string) =>
+    (await apiClient.post<{ mensaje: string }>('/auth/olvide', { email })).data.mensaje,
+  recuperar: async (token: string, nueva: string) => {
+    await apiClient.post('/auth/recuperar', { token, nueva })
+  },
 }
 
 /** El mensaje en español que manda el backend ({detail: {codigo, mensaje}}), o uno genérico. */

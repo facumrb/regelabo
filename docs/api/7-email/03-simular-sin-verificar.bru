@@ -1,0 +1,26 @@
+meta {
+  name: 3. Simular sin verificar da 403
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/simulaciones
+  body: json
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token_mail}}
+}
+
+body:json {
+  {
+    "carrier_freq": 3000
+  }
+}
+
+tests {
+  test("responde 403", function () { expect(res.getStatus()).to.equal(403); });
+  test("código email_no_verificado", function () { expect(res.getBody().detail.codigo).to.equal("email_no_verificado"); });
+}

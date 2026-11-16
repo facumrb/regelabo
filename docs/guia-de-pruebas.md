@@ -133,6 +133,19 @@ Con sesión iniciada, botón **Mis casos** en el navbar (`/casos`).
 | Q | **Borrar** un caso y confirmar | Vuelve a la lista sin ese caso. Panel: `DELETE /casos/<id>` → **204**. En la base sigue la fila, con `borrado_en` cargado. Si volvés a su dirección (atrás en el navegador): "Caso no encontrado". |
 | R | **RN4**: copiá la dirección de un caso, cerrá sesión, entrá con **otro usuario** y pegala | "Caso no encontrado" → **404** `caso_no_encontrado`, igual que con un id inventado. El caso tampoco aparece en su lista. |
 
+### Email: verificación y recuperación (decisión 030)
+
+Sin `SMTP_HOST` en el `.env`, los mails no se envían: aparecen en la terminal del backend con el enlace adentro. Copiar el enlace al navegador.
+
+| # | Qué hacer | Qué deberías ver |
+|---|---|---|
+| E1 | Registrarse e iniciar sesión | En la terminal del backend, "Mail sin enviar…" con un enlace `/verificar?token=…`. En la app, un aviso amarillo arriba: "Confirmá tu email para poder pedir simulaciones". |
+| E2 | Sin verificar, pedir una simulación | "Confirmá tu email para pedir simulaciones…" → **403** `email_no_verificado`. Casos, historial y audiograma andan igual. |
+| E3 | En el aviso, **Reenviar el mail** | "Te mandamos uno nuevo". El enlace anterior deja de servir. |
+| E4 | Abrir el enlace del último mail | "Tu email quedó confirmado"; el aviso desaparece y ya se puede simular. Abrirlo otra vez: "El enlace venció o ya se usó" → **400**. |
+| E5 | Cerrar sesión, **¿Olvidaste tu contraseña?** con un email registrado y con uno inventado | El mismo mensaje en los dos casos; solo el registrado recibe el mail (`/recuperar?token=…`). |
+| E6 | Abrir el enlace, poner una contraseña corta y después una válida | La corta da error y el enlace sigue sirviendo; con la válida, "Contraseña cambiada". La contraseña vieja ya no entra y la nueva sí. Si había otra sesión abierta, se cerró. |
+
 ## 4. Probar sin interfaz
 
 **Swagger** (`/api/docs`): *Try it out* en `POST /auth/registro`, luego `POST /auth/login` y después `GET /auth/yo`. Swagger es del mismo origen, así que la cookie se guarda y se envía sola.
@@ -248,5 +261,6 @@ No hay tests automáticos del frontend: sus páginas se verifican con la tabla d
 ## 9. Lo que todavía no está
 
 - Los perfiles `Custom_*` del audiograma son compartidos entre usuarios (decisión 019): se resuelve en el módulo de audiogramas.
-- No hay límite general de 120 pedidos por minuto por usuario (solo el de login y registro).
+- No hay límite general de 120 pedidos por minuto por usuario (solo el de login, registro y los de email).
+- El email no se puede cambiar (y por eso no hay que volver a verificarlo).
 - Un admin todavía no tiene pantallas propias: solo se distingue por la insignia.

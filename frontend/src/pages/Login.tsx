@@ -34,7 +34,7 @@ export default function Login() {
   return (
     <Centrada titulo="Iniciar sesión" bajada="Entrá para ver tus casos y simulaciones."
       pie={<>¿No tenés cuenta? <Link to="/registro" className="text-acento font-medium hover:underline">Registrate</Link></>}>
-      {desdeRegistro && <Aviso tipo="ok">Cuenta creada. Ya podés iniciar sesión.</Aviso>}
+      {desdeRegistro && <Aviso tipo="ok">Cuenta creada. Ya podés iniciar sesión. Te mandamos un mail para confirmar tu email: lo necesitás para simular.</Aviso>}
       {/* noValidate: el navegador no valida nada, así todo llega al servidor y se pueden verificar sus reglas */}
       <form onSubmit={enviar} noValidate className="space-y-4">
         <Campo etiqueta="Email">
@@ -50,6 +50,9 @@ export default function Login() {
           {enviando ? 'Ingresando…' : 'Iniciar sesión'}
         </button>
       </form>
+      <p className="text-sm text-center">
+        <Link to="/olvide" className="text-acento font-medium hover:underline">¿Olvidaste tu contraseña?</Link>
+      </p>
     </Centrada>
   )
 }

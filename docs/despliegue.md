@@ -13,6 +13,7 @@ Para tener el sistema online sin servidor (presentación, corrección, pruebas).
    ```bash
    printf 'DOMINIO=:80\nPOSTGRES_PASSWORD=%s\nWORKERS=2\n' "$(openssl rand -hex 24)" > .env
    ```
+   Para los mails (decisión 030), agregar al `.env` las líneas de **Mails** (más abajo), con `URL_PUBLICA` igual a la dirección `https://...app.github.dev` del paso 5. Sin ellas, los mails solo quedan en el log (`docker compose -f compose.prod.yaml logs api`).
 4. Construir y arrancar (la primera vez tarda varios minutos):
    ```bash
    docker compose -f compose.prod.yaml build
@@ -47,6 +48,16 @@ Para tener el sistema online sin servidor (presentación, corrección, pruebas).
    sudo docker compose -f compose.prod.yaml exec api python -m backend.comandos.crear_admin
    ```
 4. Copiar el `.env` que generó `instalar.sh` a Bitwarden.
+
+### Mails (verificación y recuperación, decisión 030)
+Agregar al `.env` de la VM (y a Bitwarden) y reiniciar con `sudo docker compose -f compose.prod.yaml up -d`:
+```
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USUARIO=<gmail del proyecto>
+SMTP_CONTRASENA=<contraseña de aplicación>
+```
+La contraseña de aplicación se crea en la cuenta de Google del proyecto: *Seguridad* → activar la verificación en 2 pasos → *Contraseñas de aplicaciones* → crear una llamada "regelabo". `URL_PUBLICA` (la dirección que va en los enlaces) toma `https://<DOMINIO>` sola; solo hace falta definirla en el Codespace. Probar con "¿Olvidaste tu contraseña?" usando un email real registrado; si no llega, el error está en `sudo docker compose -f compose.prod.yaml logs api`.
 
 ### Conectar el Drive para los backups
 La VM no tiene navegador, así que el permiso se da desde una PC que tenga `rclone` instalado:

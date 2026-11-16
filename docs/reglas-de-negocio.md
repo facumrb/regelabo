@@ -20,6 +20,8 @@ Reglas acordadas para el TPI. Cada una se implementa en `backend/controller/` y 
 | **RN12** | *(propuesta, decisión 027)* Un tipo de usuario profesional (investigador o fonoaudiólogo) queda pendiente hasta que un admin lo aprueba; mientras tanto el usuario cuenta como estudiante para RN5a, RN5b y RN11. | — |
 | **RN13** | *(propuesta, decisión 028)* Cualquier usuario con sesión puede dejar un comentario de hasta 2000 caracteres (no vacío). Solo un admin puede verlos y marcarlos como leídos o archivados; el autor no recibe estado ni respuesta. | 400 si el texto es inválido; 403 si un no-admin intenta verlos |
 | **RN14** | *(propuesta, decisión 028)* El dato `institucion_o_matricula` es obligatorio para fonoaudiólogo (matrícula) e investigador (institución), y opcional para estudiante. Es declarado: el sistema no lo verifica. Tras un rechazo (RN12), el usuario puede volver a pedir el tipo profesional una sola vez por rechazo. | 400 si falta; 409 si pide de nuevo sin rechazo previo |
+| **RN15** | *(decisión 030)* Al registrarse se envía un mail de verificación (vence a las 24 h). Sin verificar el email, el usuario puede iniciar sesión pero no pedir simulaciones. | 403 `email_no_verificado` |
+| **RN16** | *(decisión 030)* Quien olvida su contraseña pide un enlace por mail (vence en 1 h, un solo uso). La respuesta no revela si el email existe. La contraseña nueva desbloquea la cuenta y cierra todas sus sesiones. | 400 `enlace_invalido` si venció o ya se usó |
 
 ## Límites de seguridad (no son reglas de negocio)
 

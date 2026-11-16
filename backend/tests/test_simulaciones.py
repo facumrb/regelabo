@@ -52,6 +52,7 @@ def motor_falso(monkeypatch):
 def _conectado(email, registro_valido, tipo="estudiante"):
     cliente = TestClient(crear_app())
     cliente.post("/api/auth/registro", json={**registro_valido, "email": email, "tipo_perfil": tipo})
+    _sql("UPDATE usuario SET email_verificado_en = now() WHERE email = :e", e=email)  # RN15
     cliente.post("/api/auth/login", json={"email": email, "password": registro_valido["password"]})
     return cliente
 

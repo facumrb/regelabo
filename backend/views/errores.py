@@ -11,9 +11,12 @@ ESTADOS = {
     "no_autenticado": 401,
     "credenciales_invalidas": 401,
     "sin_permiso": 403,
+    "email_no_verificado": 403,
     "usuario_no_encontrado": 404,
     "caso_no_encontrado": 404,  # también para casos ajenos (RN4): no revela que existen
     "email_ya_registrado": 409,
+    "email_ya_verificado": 409,
+    "mail_no_enviado": 503,
     "cuenta_bloqueada": 429,
     "cupo_agotado": 429,
     "limite_por_hora": 429,

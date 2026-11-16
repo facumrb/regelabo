@@ -50,6 +50,7 @@ class Usuario(ConIdYFecha, Base):
     aviso_aceptado_en: Mapped[datetime]  # RN9: aceptación del aviso de uso no profesional
     intentos_fallidos: Mapped[int] = mapped_column(default=0)
     bloqueado_hasta: Mapped[Optional[datetime]]
+    email_verificado_en: Mapped[Optional[datetime]]  # RN15: sin verificar no puede simular
 
 
 class Sesion(ConIdYFecha, Base):
@@ -58,6 +59,17 @@ class Sesion(ConIdYFecha, Base):
     usuario_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("usuario.id", ondelete="CASCADE"), index=True)
     token_hash: Mapped[str] = mapped_column(String(64), unique=True)  # SHA-256 del token de la cookie
     expira_en: Mapped[datetime] = mapped_column(index=True)
+
+
+class EnlaceEmail(ConIdYFecha, Base):
+    """Enlace de un solo uso enviado por mail (decisión 030). Se borra al usarlo."""
+
+    __tablename__ = "enlace_email"
+
+    usuario_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("usuario.id", ondelete="CASCADE"), index=True)
+    tipo: Mapped[str] = mapped_column(_valores_fijos("tipo_enlace", "verificacion", "recuperacion"))
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)  # SHA-256 del token del enlace
+    expira_en: Mapped[datetime]
 
 
 class Caso(ConIdYFecha, Base):

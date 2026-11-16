@@ -1,0 +1,26 @@
+meta {
+  name: 5. Verificar con un enlace inventado
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/auth/verificar
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "token": "no-existe"
+  }
+}
+
+tests {
+  test("responde 400", function () { expect(res.getStatus()).to.equal(400); });
+  test("código enlace_invalido", function () { expect(res.getBody().detail.codigo).to.equal("enlace_invalido"); });
+}
+
+docs {
+  Para probar el enlace bueno: copiar el token del mail en la consola del backend y mandarlo acá (responde 204).
+}

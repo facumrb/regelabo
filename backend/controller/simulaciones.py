@@ -73,6 +73,9 @@ def calcular_huella(parametros: ParametrosSimulacion, polos) -> str:
 
 
 def crear(usuario: Usuario, datos: SimulacionInput) -> Simulacion:
+    if not usuario.email_verificado:  # RN15
+        raise ErrorDeNegocio("email_no_verificado", "Confirmá tu email para pedir simulaciones: "
+                                                    "te mandamos un enlace al registrarte.")
     parametros = ParametrosSimulacion(**datos.model_dump(exclude={"caso_id"}))
     validar_parametros(parametros)
     polos = perfiles.cargar_polos(parametros.poles_profile)

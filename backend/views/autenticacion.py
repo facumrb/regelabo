@@ -8,8 +8,8 @@ from fastapi import APIRouter, Depends, Request, Response, status
 
 from backend.configuracion import COOKIE_SECURE, SESION_HORAS
 from backend.controller import autenticacion
-from backend.controller.modelos import (CambioContrasenaInput, LoginInput, RegistroInput, Usuario,
-                                        UsuarioPublico)
+from backend.controller.modelos import (CambioContrasenaInput, LoginInput, OlvideInput, RecuperarInput,
+                                        RegistroInput, TokenInput, Usuario, UsuarioPublico)
 from backend.views.dependencias import COOKIE_SESION, token_de_sesion, usuario_actual
 from backend.views.limites import limiter
 
@@ -52,3 +52,30 @@ def cambiar_contrasena(request: Request, datos: CambioContrasenaInput,
 @router.get("/yo", response_model=UsuarioPublico)
 def yo(usuario: Usuario = Depends(usuario_actual)) -> Usuario:
     return usuario
+
+
+# ---- Verificación del email y recuperación de la contraseña (decisión 030) ----
+
+@router.post("/verificar", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit(LIMITE_INTENTOS)
+def verificar(request: Request, datos: TokenInput) -> None:
+    autenticacion.verificar_email(datos.token)
+
+
+@router.post("/reenviar-verificacion", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit(LIMITE_INTENTOS)
+def reenviar_verificacion(request: Request, usuario: Usuario = Depends(usuario_actual)) -> None:
+    autenticacion.reenviar_verificacion(usuario)
+
+
+@router.post("/olvide", status_code=status.HTTP_202_ACCEPTED)
+@limiter.limit(LIMITE_INTENTOS)
+def olvide(request: Request, datos: OlvideInput) -> dict:
+    autenticacion.pedir_recuperacion(datos.email)
+    return {"mensaje": "Si el email tiene una cuenta, te llega un enlace para elegir una contraseña nueva."}
+
+
+@router.post("/recuperar", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit(LIMITE_INTENTOS)
+def recuperar(request: Request, datos: RecuperarInput) -> None:
+    autenticacion.recuperar_contrasena(datos.token, datos.nueva)
