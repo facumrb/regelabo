@@ -51,6 +51,8 @@ class Usuario(ConIdYFecha, Base):
     intentos_fallidos: Mapped[int] = mapped_column(default=0)
     bloqueado_hasta: Mapped[Optional[datetime]]
     email_verificado_en: Mapped[Optional[datetime]]  # RN15: sin verificar no puede simular
+    # Pedido de restablecimiento pendiente para el admin (decisión 028); se borra al cambiar la contraseña
+    restablecimiento_pedido_en: Mapped[Optional[datetime]]
 
 
 class Sesion(ConIdYFecha, Base):
@@ -192,3 +194,15 @@ class Comparacion(ConIdYFecha, Base):
         ForeignKey("arquetipo.id", ondelete="SET NULL")
     )
     hipotesis: Mapped[Optional[str]] = mapped_column(Text)  # hipótesis de estudio, nunca diagnóstico
+
+
+class Comentario(ConIdYFecha, Base):
+    """Comentario o sugerencia de un usuario (RN13). Solo lo ven los admin."""
+
+    __tablename__ = "comentario"
+
+    usuario_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("usuario.id", ondelete="CASCADE"), index=True)
+    texto: Mapped[str] = mapped_column(Text)
+    estado: Mapped[str] = mapped_column(
+        _valores_fijos("estado_comentario", "nuevo", "leido", "archivado"), default="nuevo"
+    )

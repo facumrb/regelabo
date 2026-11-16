@@ -41,6 +41,9 @@ export const authApi = {
   },
   olvide: async (email: string) =>
     (await apiClient.post<{ mensaje: string }>('/auth/olvide', { email })).data.mensaje,
+  /** El mail de recuperación no llegó: deja el pedido en el panel de admin (decisión 028). */
+  avisarAlAdmin: async (email: string) =>
+    (await apiClient.post<{ mensaje: string }>('/auth/olvide/avisar-admin', { email })).data.mensaje,
   recuperar: async (token: string, nueva: string) => {
     await apiClient.post('/auth/recuperar', { token, nueva })
   },

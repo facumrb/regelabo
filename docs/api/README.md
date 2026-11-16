@@ -24,6 +24,7 @@ pnpm dlx @usebruno/cli run 4-casos -r --env desarrollo
 pnpm dlx @usebruno/cli run 5-cuenta -r --env desarrollo
 pnpm dlx @usebruno/cli run 6-simulaciones -r --env desarrollo
 pnpm dlx @usebruno/cli run 7-email -r --env desarrollo
+pnpm dlx @usebruno/cli run 8-admin -r --env desarrollo
 ```
 
 Opciones útiles: `--env vite` para el otro entorno, `--env-var base_url=http://localhost:8010/api` para apuntar a otro backend, `--reporter-html resultado.html` para guardar un informe.
@@ -39,6 +40,7 @@ Opciones útiles: `--env vite` para el otro entorno, `--env-var base_url=http://
 | `4-casos` | El módulo de ejemplo. Crea su propia dueña y un segundo usuario (no depende de las otras carpetas): crear → listar (paginación por cursor) → ver → editar (PUT reemplaza todo) → **RN4**: el otro usuario recibe 404 al ver o borrar el caso y no lo ve en su lista → borrar (lógico) → ver el borrado (404) → sexo inválido y límite fuera de rango (422) → sin sesión (401). |
 | `6-simulaciones` | Pedir una simulación (202), listar, ver, RN3 (nivel fuera de rango, sin fibras, perfil inexistente, nombre inválido), RN4 (otro usuario recibe 404 y no la ve en su lista), sin sesión (401) y sus estados internos (200, o 404 si todavía no terminó). Con un worker corriendo (`npm run dev`) la simulación se ejecuta de verdad (~80 s). Los cupos, la caché y el worker los prueba pytest. |
 | `7-email` | Verificación y recuperación (decisión 030). Crea su propio usuario: registro (`email_verificado: false`) → login → simular sin verificar (403 `email_no_verificado`) → reenviar (204) → verificar y recuperar con un enlace inventado (400 `enlace_invalido`) → "olvidé" con y sin cuenta (202, **misma respuesta**). Los enlaces buenos salen en la consola del backend: se prueban a mano (pestaña *Docs*). |
+| `8-admin` | Comentarios (RN13) y panel de admin (decisión 028). Crea su propio usuario: comentar (204, sin cuerpo) → texto en blanco (422) → comentarios, pendientes y usuarios del panel sin ser admin (403 `sin_permiso`) → sin sesión (401). Lo que hace el admin (comentarios, usuarios, contraseña temporal, verificar el email) lo prueba pytest, porque Bruno no puede crear un admin. |
 | `5-cuenta` | Cambio de contraseña. Crea su propio usuario: actual incorrecta, nueva corta y nueva repetida (400) → cambio (204) → la sesión actual sigue → login con la vieja (401) y con la nueva (200) → sin sesión (401). Que se cierren las **otras** sesiones lo prueba pytest. |
 
 Cada request verifica el estado HTTP, el `codigo` del error y, donde corresponde, la cookie. Los errores de formato (422) conservan el formato de FastAPI: `detail` es una lista.

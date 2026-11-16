@@ -23,6 +23,8 @@ import VerificarEmail from './pages/email/VerificarEmail'
 import OlvideContrasena from './pages/email/OlvideContrasena'
 import RecuperarContrasena from './pages/email/RecuperarContrasena'
 import AvisoEmailSinVerificar from './components/AvisoEmailSinVerificar'
+import Comentarios from './pages/Comentarios'
+import Administracion from './pages/admin/Administracion'
 import { useSesion } from './context/SesionContext'
 import { useSimulacionesEnCurso } from './context/SimulacionesEnCurso'
 import { api } from './services/api'
@@ -279,6 +281,8 @@ export default function App() {
           <Route path="/casos" element={<RequiereSesion><MisCasos /></RequiereSesion>} />
           <Route path="/casos/nuevo" element={<RequiereSesion><NuevoCaso /></RequiereSesion>} />
           <Route path="/casos/:id" element={<RequiereSesion><FichaCaso /></RequiereSesion>} />
+          <Route path="/comentarios" element={<RequiereSesion><Comentarios /></RequiereSesion>} />
+          <Route path="/admin" element={<RequiereSesion admin><Administracion /></RequiereSesion>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

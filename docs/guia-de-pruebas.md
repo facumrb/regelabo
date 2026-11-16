@@ -146,6 +146,25 @@ Sin `SMTP_HOST` en el `.env`, los mails no se envían: aparecen en la terminal d
 | E5 | Cerrar sesión, **¿Olvidaste tu contraseña?** con un email registrado y con uno inventado | El mismo mensaje en los dos casos; solo el registrado recibe el mail (`/recuperar?token=…`). |
 | E6 | Abrir el enlace, poner una contraseña corta y después una válida | La corta da error y el enlace sigue sirviendo; con la válida, "Contraseña cambiada". La contraseña vieja ya no entra y la nueva sí. Si había otra sesión abierta, se cerró. |
 
+### Comentarios y panel de admin (decisión 028)
+
+Para el panel hace falta un admin: `uv run python -m backend.comandos.crear_admin`.
+
+| # | Qué hacer | Qué deberías ver |
+|---|---|---|
+| C1 | Con un usuario común, menú de usuario → **Dejar un comentario**, enviar uno | "¡Gracias!" y nada más. En el menú no aparece **Administración**; entrar a mano a `/admin` lleva al inicio. |
+| C2 | Enviar un comentario solo con espacios | El botón queda deshabilitado. |
+| C3 | Enviar 6 comentarios seguidos en menos de un minuto | El sexto da "Demasiados pedidos…" → **429**. |
+| C4 | Entrar con el admin | Número rojo sobre el avatar y junto a **Administración** con los comentarios nuevos. |
+| C5 | En **Administración**, marcar uno como leído y archivar otro | El leído cambia de etiqueta; el archivado desaparece (se ve con el filtro *Archivado*). Al navegar, el número baja. |
+| C6 | Filtrar por *Fonoaudiólogo* | Solo los comentarios de fonoaudiólogos. |
+| U1 | En **Administración**, pestaña **Usuarios**; buscar parte de un email | Solo los que coinciden, con la cantidad de casos y simulaciones. |
+| U2 | Con un usuario sin verificar, **Verificar email** | Desaparece "Email sin verificar"; ese usuario ya puede simular sin abrir el mail. |
+| U3 | Bloquear una cuenta (10 contraseñas mal) y en el panel **Desbloquear** | "Bloqueada hasta…" desaparece y el usuario entra con su contraseña. |
+| U4 | Con un usuario común, cerrar sesión, pedir **¿Olvidaste tu contraseña?** y tocar **¿No te llegó el mail? Avisar a un administrador** (sin SMTP en el `.env`, el pedido se crea solo con el primer paso); entrar con el admin | El número del menú suma 1. En **Usuarios**, la cuenta aparece arriba en *Pedidos de restablecimiento*, con el recuadro amarillo y el botón **Contraseña temporal** (en las cuentas sin pedido, ese botón no aparece). |
+| U4b | **Contraseña temporal** → aceptar → **Enviar por mail** | Se abre el programa de correo con el mail escrito al email del usuario. La cuenta sale de los pedidos. La contraseña vieja ya no entra, la del mail sí, y las sesiones abiertas de ese usuario se cerraron. |
+| U5 | Buscar otro admin | Sin botones: "Las cuentas de admin se manejan por comando." |
+
 ## 4. Probar sin interfaz
 
 **Swagger** (`/api/docs`): *Try it out* en `POST /auth/registro`, luego `POST /auth/login` y después `GET /auth/yo`. Swagger es del mismo origen, así que la cookie se guarda y se envía sola.
@@ -257,6 +276,10 @@ No hay tests automáticos del frontend: sus páginas se verifican con la tabla d
 | Versión del modelo (invalida la caché) y semilla | `VERSION_MODELO` y `SEMILLA` en `backend/services/motor.py` |
 | Cada cuánto se consulta el estado de una simulación | `INTERVALO_CONSULTA_MS` en `frontend/src/services/simulaciones.ts` |
 | Pantallas de casos | `frontend/src/pages/casos/` |
+| Largo máximo de un comentario (RN13) | `ComentarioInput` en `backend/controller/modelos.py` y `LARGO_MAXIMO` en `frontend/src/services/comentarios.ts` |
+| Límite de comentarios por minuto | `backend/views/comentarios.py` |
+| Pantallas de comentarios y del panel | `frontend/src/pages/Comentarios.tsx` y `frontend/src/pages/admin/` |
+| Acciones del panel sobre usuarios (desbloquear, temporal, verificar) | `backend/controller/usuarios.py` |
 
 ## 9. Lo que todavía no está
 

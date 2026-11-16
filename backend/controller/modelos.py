@@ -3,10 +3,10 @@ Objetos de negocio (Pydantic): usuarios, simulación y audiogramas.
 """
 
 from datetime import datetime
-from typing import Dict, List, Literal, Optional
+from typing import Annotated, Dict, List, Literal, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, computed_field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints, computed_field
 
 TipoPerfil = Literal["estudiante", "investigador", "fonoaudiologo"]
 
@@ -26,6 +26,7 @@ class Usuario(BaseModel):
     intentos_fallidos: int
     bloqueado_hasta: Optional[datetime]
     email_verificado_en: Optional[datetime] = None
+    restablecimiento_pedido_en: Optional[datetime] = None
 
     @computed_field  # sale en model_dump: así llega a UsuarioPublico
     @property
@@ -299,3 +300,69 @@ class PaginaDeSimulaciones(BaseModel):
     simulaciones: List[Simulacion]
     siguiente: Optional[UUID] = Field(description="Pasarlo como `despues_de` para pedir la página siguiente; "
                                                   "null si no hay más")
+
+
+EstadoComentario = Literal["nuevo", "leido", "archivado"]
+
+
+class ComentarioInput(BaseModel):
+    """RN13: texto libre, no vacío (sin contar espacios) y de hasta 2000 caracteres."""
+
+    texto: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)]
+
+
+class Comentario(BaseModel):
+    """Un comentario tal como lo ve el admin, con los datos de quien lo escribió."""
+
+    id: UUID
+    texto: str
+    estado: EstadoComentario
+    creado_en: datetime
+    autor_nombre: str
+    autor_email: str
+    autor_tipo: TipoPerfil
+
+
+class PaginaDeComentarios(BaseModel):
+    comentarios: List[Comentario]
+    siguiente: Optional[UUID] = Field(description="Pasarlo como `despues_de` para pedir la página siguiente; "
+                                                  "null si no hay más")
+
+
+class CambioEstadoComentario(BaseModel):
+    estado: EstadoComentario
+
+
+class Pendientes(BaseModel):
+    """Lo que el admin tiene para revisar: alimenta el contador del menú."""
+
+    comentarios_nuevos: int
+    restablecimientos: int
+
+
+class UsuarioAdmin(BaseModel):
+    """Un usuario como lo ve el panel de admin: estado de la cuenta y totales, sin contenido (RN4)."""
+
+    id: UUID
+    email: str
+    nombre: str
+    tipo_perfil: TipoPerfil
+    es_admin: bool
+    creado_en: datetime
+    bloqueado_hasta: Optional[datetime]
+    email_verificado: bool
+    restablecimiento_pedido_en: Optional[datetime]
+    casos: int
+    simulaciones: int
+
+
+class PaginaDeUsuarios(BaseModel):
+    usuarios: List[UsuarioAdmin]
+    siguiente: Optional[UUID] = Field(description="Pasarlo como `despues_de` para pedir la página siguiente; "
+                                                  "null si no hay más")
+
+
+class ContrasenaTemporal(BaseModel):
+    """Se muestra una sola vez al admin, que se la pasa al usuario (decisión 028)."""
+
+    contrasena_temporal: str

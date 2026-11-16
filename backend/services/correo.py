@@ -12,6 +12,11 @@ from backend.configuracion import SMTP_CONTRASENA, SMTP_HOST, SMTP_PORT, SMTP_US
 logger = logging.getLogger(__name__)
 
 
+def configurado() -> bool:
+    """Si hay SMTP: sin él, los mails solo quedan en el log y no le llegan a nadie."""
+    return bool(SMTP_HOST)
+
+
 def enviar(destinatario: str, asunto: str, texto: str) -> None:
     if not SMTP_HOST:
         logger.warning("Mail sin enviar (falta SMTP_HOST) para %s: %s\n%s", destinatario, asunto, texto)

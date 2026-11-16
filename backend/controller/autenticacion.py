@@ -130,12 +130,24 @@ def verificar_email(token: str) -> None:
 
 
 def pedir_recuperacion(email: str) -> None:
-    """RN16: no dice si el email existe; solo le llega el mail a quien tiene cuenta."""
+    """RN16: no dice si el email existe; solo le llega el mail a quien tiene cuenta. Sin SMTP el mail
+    no sale, así que el pedido va directo al admin; con SMTP, solo si el usuario avisa (decisión 028)."""
     with transaccion() as tx:
         usuario = usuarios.buscar_por_email(tx, email.strip().lower())
         token = _nuevo_enlace(tx, usuario.id, "recuperacion") if usuario else ""
+        if usuario and not correo.configurado():
+            usuarios.pedir_restablecimiento(tx, usuario.id, _ahora())
     if usuario:
         _en_segundo_plano(_mail_recuperacion, usuario.email, token)
+
+
+def avisar_al_admin(email: str) -> None:
+    """El mail de recuperación no llegó: deja el pedido en el panel de admin (decisión 028).
+    Como RN16, no dice si el email existe."""
+    with transaccion() as tx:
+        usuario = usuarios.buscar_por_email(tx, email.strip().lower())
+        if usuario:
+            usuarios.pedir_restablecimiento(tx, usuario.id, _ahora())
 
 
 def recuperar_contrasena(token: str, nueva: str) -> None:

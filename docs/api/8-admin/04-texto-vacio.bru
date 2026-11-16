@@ -1,0 +1,22 @@
+meta {
+  name: 4. Texto en blanco da 422 (RN13)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/comentarios
+  body: json
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token_comentario}}
+}
+
+body:json {
+  { "texto": "   " }
+}
+tests {
+  test("responde 422", function () { expect(res.getStatus()).to.equal(422); });
+}

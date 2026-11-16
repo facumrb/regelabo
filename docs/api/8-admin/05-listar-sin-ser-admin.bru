@@ -1,0 +1,20 @@
+meta {
+  name: 5. Listar comentarios sin ser admin da 403
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url}}/admin/comentarios
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token_comentario}}
+}
+
+tests {
+  test("responde 403", function () { expect(res.getStatus()).to.equal(403); });
+  test("código sin_permiso", function () { expect(res.getBody().detail.codigo).to.equal("sin_permiso"); });
+}

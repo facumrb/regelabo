@@ -75,6 +75,14 @@ def olvide(request: Request, datos: OlvideInput) -> dict:
     return {"mensaje": "Si el email tiene una cuenta, te llega un enlace para elegir una contraseña nueva."}
 
 
+@router.post("/olvide/avisar-admin", status_code=status.HTTP_202_ACCEPTED)
+@limiter.limit(LIMITE_INTENTOS)
+def avisar_al_admin(request: Request, datos: OlvideInput) -> dict:
+    autenticacion.avisar_al_admin(datos.email)
+    return {"mensaje": "Si el email tiene una cuenta, un administrador va a ver tu pedido y te va a escribir "
+                       "a ese email."}
+
+
 @router.post("/recuperar", status_code=status.HTTP_204_NO_CONTENT)
 @limiter.limit(LIMITE_INTENTOS)
 def recuperar(request: Request, datos: RecuperarInput) -> None:

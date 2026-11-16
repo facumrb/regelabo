@@ -30,7 +30,7 @@ Cada archivo documenta una decisión: el contexto, lo que se eligió, las altern
 | [025](025-comparar-simulaciones.md) | Comparar simulaciones entre sí (propuesta) |
 | [026](026-etiquetas-clinicas-de-los-perfiles.md) | Etiquetas clínicas y catálogo de 9 perfiles |
 | [027](027-prioridad-en-la-cola.md) | Prioridad en la cola de simulaciones (propuesta) |
-| [028](028-panel-de-administracion.md) | Panel de administración (propuesta) |
+| [028](028-panel-de-administracion.md) | Panel de administración (etapas 1 y 3 implementadas: comentarios y usuarios) |
 | [029](029-despliegue.md) | Despliegue en producción (reemplaza la 011 y la 003 en producción) |
 | [030](030-verificacion-y-recuperacion-por-email.md) | Verificación del email y recuperación de la contraseña |
 

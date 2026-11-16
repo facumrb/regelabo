@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { Aviso, Campo, Centrada } from '../../components/ui'
-import { botonPrimario, entrada } from '../../components/estilos'
+import { botonPrimario, botonSecundario, entrada } from '../../components/estilos'
 import { authApi, mensajeDeError } from '../../services/auth'
 
 /** RN16: pide el mail para elegir una contraseña nueva. */
@@ -10,6 +10,19 @@ export default function OlvideContrasena() {
   const [respuesta, setRespuesta] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
+  const [avisoAdmin, setAvisoAdmin] = useState<string | null>(null)
+
+  const avisar = async () => {
+    setError(null)
+    setEnviando(true)
+    try {
+      setAvisoAdmin(await authApi.avisarAlAdmin(email))
+    } catch (e) {
+      setError(mensajeDeError(e))
+    } finally {
+      setEnviando(false)
+    }
+  }
 
   const enviar = async (evento: FormEvent) => {
     evento.preventDefault()
@@ -28,7 +41,19 @@ export default function OlvideContrasena() {
     <Centrada titulo="Recuperar contraseña" bajada="Te mandamos un enlace para elegir una contraseña nueva."
       pie={<Link to="/login" className="text-acento font-medium hover:underline">Volver a iniciar sesión</Link>}>
       {respuesta ? (
-        <Aviso tipo="ok">{respuesta} Revisá también la carpeta de spam. El enlace vence en 1 hora.</Aviso>
+        <div className="space-y-4">
+          <Aviso tipo="ok">{respuesta} Revisá también la carpeta de spam. El enlace vence en 1 hora.</Aviso>
+          {avisoAdmin ? (
+            <Aviso tipo="ok">{avisoAdmin}</Aviso>
+          ) : (
+            <>
+              {error && <Aviso tipo="error">{error}</Aviso>}
+              <button type="button" onClick={avisar} disabled={enviando} className={`${botonSecundario} w-full`}>
+                {enviando ? 'Avisando…' : '¿No te llegó el mail? Avisar a un administrador'}
+              </button>
+            </>
+          )}
+        </div>
       ) : (
         <form onSubmit={enviar} noValidate className="space-y-4">
           <Campo etiqueta="Email">

@@ -18,3 +18,9 @@ def demasiados_pedidos(request: Request, exc: RateLimitExceeded) -> JSONResponse
         content={"detail": {"codigo": "demasiados_pedidos",
                             "mensaje": "Demasiados pedidos. Esperá un momento y reintentá."}},
     )
+
+
+def por_sesion(request: Request) -> str:
+    """Clave para límites por usuario: el token de la cookie (sin sesión, la IP)."""
+    # shortcut: cuenta por sesión, no por usuario; con varias sesiones abiertas el tope se multiplica
+    return request.cookies.get("sesion") or get_remote_address(request)

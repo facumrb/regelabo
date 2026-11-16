@@ -24,6 +24,9 @@ ESTADOS = {
     "simulacion_no_encontrada": 404,
     "estados_internos_no_disponibles": 404,
     "perfil_no_encontrado": 404,
+    "comentario_no_encontrado": 404,
+    "usuario_es_admin": 403,
+    "sin_pedido_de_restablecimiento": 409,
 }
 ESTADO_POR_DEFECTO = 400
 
