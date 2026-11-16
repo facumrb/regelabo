@@ -4,11 +4,13 @@ Endpoints de carga y análisis de audiogramas.
 
 import logging
 from typing import Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 
 from backend.controller.audiogramas import AudiogramService
-from backend.controller.modelos import AudiogramInput, AudiogramResponse
+from backend.controller.errores import ErrorDeNegocio
+from backend.controller.modelos import AudiogramInput, AudiogramResponse, Usuario
 from backend.views.dependencias import usuario_actual
 
 logger = logging.getLogger(__name__)
@@ -18,7 +20,9 @@ router = APIRouter(tags=["Simulación Biológica"], dependencies=[Depends(usuari
 @router.post("/audiogram/upload", response_model=AudiogramResponse, status_code=status.HTTP_200_OK)
 async def upload_audiogram(
     file: UploadFile = File(...),
-    patient_name: Optional[str] = Form("Paciente")
+    patient_name: Optional[str] = Form("Paciente"),
+    caso_id: Optional[UUID] = Form(None),
+    usuario: Usuario = Depends(usuario_actual),
 ) -> AudiogramResponse:
     """
     Recibe un archivo de audiograma (CSV/TXT) vía FilePond,
@@ -28,7 +32,10 @@ async def upload_audiogram(
         content_bytes = await file.read()
         content_str = content_bytes.decode("utf-8", errors="replace")
         points = AudiogramService.parse_file_content(content_str)
-        return AudiogramService.analyze_and_map(patient_name=patient_name or "Paciente", points=points)
+        return AudiogramService.analyze_and_map(patient_name=patient_name or "Paciente", points=points,
+                                                usuario=usuario, caso_id=caso_id, origen="archivo")
+    except ErrorDeNegocio:
+        raise  # caso ajeno o inexistente: lo traduce el manejador común (404)
     except ValueError as ve:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
     except Exception as e:
@@ -40,15 +47,20 @@ async def upload_audiogram(
 
 
 @router.post("/audiogram/manual", response_model=AudiogramResponse, status_code=status.HTTP_200_OK)
-def manual_audiogram(input_data: AudiogramInput) -> AudiogramResponse:
+def manual_audiogram(input_data: AudiogramInput,
+                     usuario: Usuario = Depends(usuario_actual)) -> AudiogramResponse:
     """
     Recibe los puntos del audiograma directamente en formato JSON (para carga interactiva).
     """
     try:
         return AudiogramService.analyze_and_map(
             patient_name=input_data.patient_name or "Paciente",
-            points=input_data.points
+            points=input_data.points,
+            usuario=usuario,
+            caso_id=input_data.caso_id,
         )
+    except ErrorDeNegocio:
+        raise  # caso ajeno o inexistente: lo traduce el manejador común (404)
     except ValueError as ve:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
     except Exception as e:

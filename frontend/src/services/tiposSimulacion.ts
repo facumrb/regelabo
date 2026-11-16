@@ -70,6 +70,21 @@ export interface ResultadoAudiograma {
   clinical_classification: string
   notes: string
   perfil: PerfilAuditivo
+  /** Si se guardó en un caso (decisión 032) */
+  audiograma_id: string | null
+}
+
+/** Un audiograma guardado en un caso (decisión 032); refleja AudiogramaGuardado del backend. */
+export interface AudiogramaGuardado {
+  id: string
+  creado_en: string
+  origen: 'manual' | 'archivo'
+  pta_db: number
+  gravedad: 'normal' | 'leve' | 'moderada' | 'severa'
+  patron: 'plano' | 'caida_en_agudos'
+  /** Perfil de polos generado: el que va en poles_profile */
+  perfil: string
+  puntos: PuntoAudiograma[]
 }
 
 export interface EstadoServidor {

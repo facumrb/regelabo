@@ -34,5 +34,6 @@ Cada archivo documenta una decisión: el contexto, lo que se eligió, las altern
 | [029](029-despliegue.md) | Despliegue en producción (reemplaza la 011 y la 003 en producción) |
 | [030](030-verificacion-y-recuperacion-por-email.md) | Verificación del email y recuperación de la contraseña |
 | [031](031-cambio-obligatorio-de-contrasena-temporal.md) | Cambio obligatorio después de una contraseña temporal |
+| [032](032-audiogramas-en-el-caso.md) | Audiogramas guardados en el caso |
 
 Las reglas de negocio están en [`../reglas-de-negocio.md`](../reglas-de-negocio.md).

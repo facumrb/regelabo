@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { FilePond, type FilePondProps } from 'react-filepond'
 import type { FilePondFile } from 'filepond'
 import 'filepond/dist/filepond.min.css'
@@ -6,6 +7,7 @@ import Plot from 'react-plotly.js'
 import type { Data } from 'plotly.js'
 import { api } from '../services/api'
 import { mensajeDeError } from '../services/auth'
+import { casosApi, type Caso } from '../services/casos'
 import CurvasPerfil from './CurvasPerfil'
 import { avisoError, botonPrimario, entrada, etiqueta, panel } from './estilos'
 import { layoutBase, titulo, useColoresGrafico } from './graficos'
@@ -13,12 +15,21 @@ import { Deslizador, Encabezado, Pestanas } from './ui'
 import type { PerfilAuditivo, PuntoAudiograma, ResultadoAudiograma } from '../services/tiposSimulacion'
 
 interface Props {
-  onSelectProfile: (perfil: PerfilAuditivo) => void
+  /** `casoId`: el caso donde quedó guardado, para que Simular lo tenga elegido */
+  onSelectProfile: (perfil: PerfilAuditivo, casoId: string | null) => void
 }
 
 export default function AudiogramManager({ onSelectProfile }: Props) {
   const [activeTab, setActiveTab] = useState<'interactive' | 'filepond'>('interactive')
   const [patientName, setPatientName] = useState('Mi perfil')
+  // Caso donde guardarlo (decisión 032): desde la ficha llega como ?caso=<id>; sin caso no se guarda
+  const [parametros] = useSearchParams()
+  const [casoId, setCasoId] = useState(parametros.get('caso') ?? '')
+  const [casos, setCasos] = useState<Caso[]>([])
+  useEffect(() => {
+    // shortcut: ofrece solo los 100 casos más nuevos, como Simular
+    casosApi.listar(null, 100).then((p) => setCasos(p.casos)).catch(() => setCasos([]))
+  }, [])
   const [files, setFiles] = useState<FilePondFile[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [analysisResult, setAnalysisResult] = useState<ResultadoAudiograma | null>(null)
@@ -101,7 +112,7 @@ export default function AudiogramManager({ onSelectProfile }: Props) {
     setIsProcessing(true)
     setError(null)
     try {
-      const res = await api.submitManualAudiogram(patientName, points)
+      const res = await api.submitManualAudiogram(patientName, points, casoId || undefined)
       setAnalysisResult(res)
     } catch (err) {
       setError(mensajeDeError(err))
@@ -118,7 +129,7 @@ export default function AudiogramManager({ onSelectProfile }: Props) {
     try {
       // FilePond tipa el archivo como ActualFileObject; al subir desde el navegador siempre es un File
       const fileItem = files[0].file as File
-      const res = await api.uploadAudiogram(fileItem, patientName)
+      const res = await api.uploadAudiogram(fileItem, patientName, casoId || undefined)
       setAnalysisResult(res)
       setPoints(res.points)
     } catch (err) {
@@ -175,12 +186,27 @@ export default function AudiogramManager({ onSelectProfile }: Props) {
       {error && <div role="alert" className={`px-4 py-3 rounded-xl border text-sm ${avisoError}`}>{error}</div>}
 
       <div className={`${panel} p-5 md:p-7 space-y-6`}>
-        {/* Nombre del perfil (decisión 008: sin datos personales) */}
-        <div className="sm:max-w-sm">
-          <label htmlFor="nombre-perfil" className="block text-sm text-tenue mb-1.5">Nombre del perfil</label>
-          <input id="nombre-perfil" type="text" value={patientName} onChange={(e) => setPatientName(e.target.value)}
-            placeholder="Ej: Trauma 4 kHz – caso 12" aria-describedby="nombre-perfil-ayuda" className={entrada} />
-          <p id="nombre-perfil-ayuda" className="text-sm text-tenue mt-1">No uses nombres reales de pacientes.</p>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="caso-audiograma" className="block text-sm text-tenue mb-1.5">Caso</label>
+            <select id="caso-audiograma" value={casoId} onChange={(e) => setCasoId(e.target.value)} className={entrada}
+              aria-describedby="caso-audiograma-ayuda">
+              <option value="">Sin caso (no se guarda)</option>
+              {casos.map((c) => <option key={c.id} value={c.id}>{c.alias}</option>)}
+            </select>
+            <p id="caso-audiograma-ayuda" className="text-sm text-tenue mt-1">
+              {casoId ? 'Queda guardado en la ficha del caso; el perfil toma su alias.' : 'Elegí un caso para guardarlo en su ficha.'}
+            </p>
+          </div>
+          {/* Nombre del perfil (decisión 008: sin datos personales); con un caso, se usa su alias */}
+          {!casoId && (
+            <div>
+              <label htmlFor="nombre-perfil" className="block text-sm text-tenue mb-1.5">Nombre del perfil</label>
+              <input id="nombre-perfil" type="text" value={patientName} onChange={(e) => setPatientName(e.target.value)}
+                placeholder="Ej: Trauma 4 kHz – caso 12" aria-describedby="nombre-perfil-ayuda" className={entrada} />
+              <p id="nombre-perfil-ayuda" className="text-sm text-tenue mt-1">No uses nombres reales de pacientes.</p>
+            </div>
+          )}
         </div>
 
         <Pestanas nombre="Forma de carga" valor={activeTab} onCambio={setActiveTab}
@@ -258,7 +284,10 @@ export default function AudiogramManager({ onSelectProfile }: Props) {
           </div>
           <p className="text-sm text-tinta">{analysisResult.notes}</p>
           <CurvasPerfil perfil={analysisResult.perfil} alto={220} conAviso />
-          <button type="button" onClick={() => onSelectProfile(analysisResult.perfil)}
+          {analysisResult.audiograma_id && (
+            <p className="text-sm text-tenue">Quedó guardado en la ficha del caso.</p>
+          )}
+          <button type="button" onClick={() => onSelectProfile(analysisResult.perfil, analysisResult.audiograma_id ? casoId : null)}
             className={`${botonPrimario} w-full`}>
             Usar este perfil y simular →
           </button>

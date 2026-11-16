@@ -134,7 +134,8 @@ export default function App() {
   useEffect(() => {
     const estado = location.state as EstadoNuevaSimulacion | null
     if (location.pathname !== '/simular' || !estado) return
-    setParams(estado.parametros ?? PARAMETROS_INICIALES)
+    // Desde un audiograma del caso llega solo el perfil: el resto, los parámetros iniciales
+    setParams(estado.parametros ?? { ...PARAMETROS_INICIALES, ...(estado.perfil && { poles_profile: estado.perfil.nombre }) })
     setCasoId(estado.casoId ?? '')
     // Personalizados y perfiles fuera del catálogo (decisión 026) no están en el selector: se suman
     if (estado.perfil) setPerfilPersonalizado(estado.perfil)
@@ -142,9 +143,10 @@ export default function App() {
   }, [location.key])
 
   // 4. Usar el perfil generado desde un audiograma: lleva directo a la simulación con el perfil elegido
-  const handleSelectProfileFromAudiogram = (perfil: PerfilAuditivo) => {
+  const handleSelectProfileFromAudiogram = (perfil: PerfilAuditivo, caso: string | null) => {
     setPerfilPersonalizado(perfil)
     setParams(prev => ({ ...prev, poles_profile: perfil.nombre }))
+    if (caso) setCasoId(caso)
     navigate('/simular')
     setSuccessToast(`Perfil "${perfil.etiqueta}" listo para simular.`)
     setTimeout(() => setSuccessToast(null), 5000)

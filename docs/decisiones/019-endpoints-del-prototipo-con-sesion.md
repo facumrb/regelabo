@@ -16,5 +16,5 @@
 - **Proteger también `/health`:** la barra no podría mostrar el estado del servidor antes de iniciar sesión.
 
 ## Consecuencias
-- **Siguen pendientes, para el módulo de audiogramas:** los perfiles `Custom_<nombre>` se guardan en una carpeta compartida con el nombre del paciente. Dos usuarios con el mismo nombre se pisan el perfil, y `/profiles` muestra a cada uno los de los demás (contra RN4). La solución es ligar cada perfil a un audiograma de un caso.
+- **Resuelto (2026-11-16):** que se pisen y que se vean entre usuarios, por las decisiones 022 y 026; guardar el audiograma en su caso, por la [032](032-audiogramas-en-el-caso.md). **Texto original:** los perfiles `Custom_<nombre>` se guardan en una carpeta compartida con el nombre del paciente. Dos usuarios con el mismo nombre se pisan el perfil, y `/profiles` muestra a cada uno los de los demás (contra RN4). La solución es ligar cada perfil a un audiograma de un caso.
 - Hasta el paso 5, cualquier usuario registrado puede lanzar simulaciones en paralelo.

@@ -3,13 +3,13 @@ Endpoints de casos de estudio. Todos requieren sesión; el controller se encarga
 cada usuario vea solo los suyos.
 """
 
-from typing import Optional
+from typing import List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
 
-from backend.controller import casos
-from backend.controller.modelos import Caso, CasoInput, PaginaDeCasos, Usuario
+from backend.controller import audiogramas, casos
+from backend.controller.modelos import AudiogramaGuardado, Caso, CasoInput, PaginaDeCasos, Usuario
 from backend.views.dependencias import usuario_actual
 
 router = APIRouter(prefix="/casos", tags=["Casos"])
@@ -39,3 +39,10 @@ def editar(caso_id: UUID, datos: CasoInput, usuario: Usuario = Depends(usuario_a
 @router.delete("/{caso_id}", status_code=status.HTTP_204_NO_CONTENT)
 def borrar(caso_id: UUID, usuario: Usuario = Depends(usuario_actual)) -> None:
     casos.borrar(usuario, caso_id)
+
+
+@router.get("/{caso_id}/audiogramas", response_model=List[AudiogramaGuardado])
+def audiogramas_del_caso(caso_id: UUID,
+                         usuario: Usuario = Depends(usuario_actual)) -> List[AudiogramaGuardado]:
+    """Los audiogramas guardados en el caso, del más nuevo al más viejo (decisión 032)."""
+    return audiogramas.listar_del_caso(usuario, caso_id)

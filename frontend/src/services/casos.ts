@@ -1,4 +1,5 @@
 import { apiClient } from './api'
+import type { AudiogramaGuardado } from './tiposSimulacion'
 
 export type Sexo = 'femenino' | 'masculino' | 'otro'
 
@@ -39,4 +40,6 @@ export const casosApi = {
   borrar: async (id: string) => {
     await apiClient.delete(`/casos/${id}`)
   },
+  /** Del más nuevo al más viejo (decisión 032) */
+  audiogramas: async (id: string) => (await apiClient.get<AudiogramaGuardado[]>(`/casos/${id}/audiogramas`)).data,
 }

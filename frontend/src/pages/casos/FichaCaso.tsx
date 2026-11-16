@@ -5,6 +5,7 @@ import { botonPrimario, botonSecundario } from '../../components/estilos'
 import { mensajeDeError } from '../../services/auth'
 import { casosApi, resumenDelCaso, type Caso } from '../../services/casos'
 import FormularioCaso from './FormularioCaso'
+import AudiogramasDelCaso from './AudiogramasDelCaso'
 
 /** Ver, editar y borrar un caso. Un caso ajeno o borrado llega como 404 y se muestra igual que uno inexistente. */
 export default function FichaCaso() {
@@ -71,6 +72,7 @@ export default function FichaCaso() {
         </div>
       </div>
     </Tarjeta>
+    <AudiogramasDelCaso casoId={caso.id} />
     </div>
   )
 }

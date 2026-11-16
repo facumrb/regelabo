@@ -72,7 +72,7 @@ El [Plan de Mitigación de Cuellos de Botella](specs/Plan%20de%20Mitigación%20d
 - **Latencias y amplitudes de las ondas I, III y V**: definir con fonoaudiología las ventanas de búsqueda y el criterio de amplitud (decisión 020). Las necesita la comparación con arquetipos.
 - **Revisión del panel de estados internos por fonoaudiología** (nomenclatura y legibilidad de las 7 figuras): pendiente por falta de disponibilidad; no bloquea el merge (decisión 023). Suma las etiquetas clínicas de los perfiles y el recorte del catálogo (decisión 026).
 - **Superponer simulaciones** (decisión 025): primera versión hecha el 2026-11-16 en `feat/superponer` (de 2 a 4, sin guardar). Exporta a CSV e imprime o guarda PDF; guardar con nombre se descartó. Falta asignarla a un caso de uso del TPI. Distinta de la comparación con arquetipos.
-- **Perfiles `Custom_*` compartidos entre usuarios** (se pisan por nombre y `/profiles` los muestra a todos): se resuelve en el módulo de audiogramas, ligándolos a un caso (decisión 019).
+- **Audiogramas en el caso** (decisión 032, 2026-11-16): se guardan y se ven en la ficha. Quedan para el módulo de audiogramas la validación completa de RN1, borrar audiogramas y el perfil propio con `OHC_ind`.
 
 ---
 

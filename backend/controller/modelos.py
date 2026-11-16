@@ -255,6 +255,8 @@ class AudiogramInput(BaseModel):
     """Estructura de entrada manual para un audiograma."""
     patient_name: Optional[str] = Field(default="Paciente", description="Identificador o nombre del paciente")
     points: List[AudiogramPoint] = Field(description="Lista de puntos audiométricos")
+    caso_id: Optional[UUID] = Field(
+        default=None, description="Caso propio donde guardarlo (decisión 032); el perfil toma su alias")
 
 
 class PerfilAuditivo(BaseModel):
@@ -281,6 +283,7 @@ class AudiogramResponse(BaseModel):
     clinical_classification: str = Field(description="Clasificación del audiograma según RN2 (orientativa)")
     notes: str = Field(description="Cómo se generó el perfil")
     perfil: PerfilAuditivo
+    audiograma_id: Optional[UUID] = Field(default=None, description="Si se guardó en un caso (decisión 032)")
 
 
 EstadoSimulacion = Literal["en_cola", "ejecutando", "completada", "error"]
@@ -399,3 +402,16 @@ class EstadoCola(BaseModel):
     worker_detenido: Optional[bool] = Field(
         description="Deducido: hay simulaciones esperando y ninguna ejecutándose. null si la cola está vacía")
     en_curso: List[SimulacionEnCurso]
+
+
+class AudiogramaGuardado(BaseModel):
+    """Un audiograma guardado en un caso (decisión 032), con la clasificación de RN2."""
+
+    id: UUID
+    creado_en: datetime
+    origen: Literal["manual", "archivo"]
+    pta_db: float
+    gravedad: Literal["normal", "leve", "moderada", "severa"]
+    patron: Literal["plano", "caida_en_agudos"]
+    perfil: str = Field(description="Perfil de polos generado: el que va en poles_profile")
+    puntos: List[AudiogramPoint]

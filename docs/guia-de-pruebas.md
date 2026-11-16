@@ -147,6 +147,16 @@ Sin `SMTP_HOST` en el `.env`, los mails no se envían: aparecen en la terminal d
 | E5 | Cerrar sesión, **¿Olvidaste tu contraseña?** con un email registrado y con uno inventado | El mismo mensaje en los dos casos; solo el registrado recibe el mail (`/recuperar?token=…`). |
 | E6 | Abrir el enlace, poner una contraseña corta y después una válida | La corta da error y el enlace sigue sirviendo; con la válida, "Contraseña cambiada". La contraseña vieja ya no entra y la nueva sí. Si había otra sesión abierta, se cerró. |
 
+### Audiogramas en el caso (decisión 032)
+
+| # | Qué hacer | Qué deberías ver |
+|---|---|---|
+| A1 | En la ficha de un caso, **Cargar audiograma** | Abre la pantalla de audiograma con ese caso elegido y sin el campo "Nombre del perfil". |
+| A2 | Generar el perfil | "Quedó guardado en la ficha del caso". **Usar este perfil y simular** abre Simular con el caso y el perfil elegidos. |
+| A3 | Volver a la ficha | El audiograma aparece con grado, patrón, PTA, fecha y su curva. Cargar otro lo suma arriba. |
+| A4 | **Simular con este** | Simular con el caso y ese perfil elegidos. |
+| A5 | En la pantalla de audiograma, elegir "Sin caso (no se guarda)" | Funciona como antes y la ficha no cambia. |
+
 ### Superponer simulaciones (decisión 025)
 
 | # | Qué hacer | Qué deberías ver |
