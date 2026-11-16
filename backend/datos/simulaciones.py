@@ -203,3 +203,9 @@ def en_curso_para_admin(tx: Session) -> List[SimulacionEnCurso]:
                 .order_by(SimulacionFila.id))
     return [SimulacionEnCurso(id=f.id, usuario_email=email, estado=f.estado, creado_en=f.creado_en,
                               iniciada_en=f.iniciada_en) for f, email in tx.execute(consulta)]
+
+
+def estados_propios(tx: Session, simulacion_ids: List[UUID], usuario_id: UUID) -> dict:
+    """{id: estado} de las que son del usuario (las ajenas no aparecen, RN4). Sin cargar resultados."""
+    return dict(tx.execute(select(SimulacionFila.id, SimulacionFila.estado).where(
+        SimulacionFila.id.in_(simulacion_ids), SimulacionFila.usuario_id == usuario_id)).all())

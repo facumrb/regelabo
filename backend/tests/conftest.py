@@ -48,7 +48,8 @@ def tablas_vacias(base_de_test):
     with engine.begin() as conexion:
         conexion.execute(text(
             "TRUNCATE usuario, sesion, caso, audiograma, punto_audiograma, resultado_simulacion, "
-            "simulacion, arquetipo, registro_abr, comparacion, comentario CASCADE"))
+            "simulacion, arquetipo, registro_abr, comparacion, comentario, comparativa, "
+            "comparativa_simulacion CASCADE"))
 
 
 @pytest.fixture(autouse=True)

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Aviso, Encabezado, EstadoChip, Tabla } from '../../components/ui'
+import { Aviso, Encabezado, EstadoChip, Pestanas, Tabla } from '../../components/ui'
 import { botonPrimario, botonSecundario, entrada, vacio } from '../../components/estilos'
 import { mensajeDeError } from '../../services/auth'
 import { casosApi, type Caso } from '../../services/casos'
@@ -10,6 +10,7 @@ import {
 import EtiquetaPerfil from '../../components/EtiquetaPerfil'
 import type { Simulacion } from '../../services/tiposSimulacion'
 import { enlaceSuperponer, MAXIMO, MINIMO } from './Superponer'
+import ListaComparativas from './ListaComparativas'
 
 /** Todas las simulaciones del usuario, de la más nueva a la más vieja, de a 20 (igual que Mis casos). */
 export default function Historial() {
@@ -21,7 +22,8 @@ export default function Historial() {
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
   // "Superponer con…" desde el detalle llega como ?superponer=<id>, ya marcada (decisión 025)
-  const [parametros] = useSearchParams()
+  const [parametros, setParametros] = useSearchParams()
+  const pestana = parametros.get('ver') === 'comparativas' ? 'comparativas' : 'simulaciones'
   const [elegidas, setElegidas] = useState<string[]>(() => parametros.get('superponer')?.split(',').slice(0, MAXIMO) ?? [])
   const alternar = (id: string) =>
     setElegidas((actual) => (actual.includes(id) ? actual.filter((x) => x !== id) : [...actual, id]))
@@ -56,6 +58,10 @@ export default function Historial() {
       <Encabezado titulo="Historial de simulaciones" bajada="Todas tus simulaciones, de la más nueva a la más vieja.">
         <Link to="/simular" className={botonPrimario}>Nueva simulación</Link>
       </Encabezado>
+      <Pestanas nombre="Qué ver" valor={pestana}
+        opciones={[['simulaciones', 'Simulaciones'], ['comparativas', 'Comparativas']]}
+        onCambio={(v) => setParametros(v === 'comparativas' ? { ver: v } : {}, { replace: true })} />
+      {pestana === 'comparativas' ? <ListaComparativas /> : <>
       <label className="block sm:max-w-xs">
         <span className="block text-sm text-tenue mb-1.5">Caso</span>
         <select className={entrada} value={casoId} onChange={(e) => setCasoId(e.target.value)}>
@@ -124,6 +130,7 @@ export default function Historial() {
           </button>
         </div>
       )}
+      </>}
     </div>
   )
 }

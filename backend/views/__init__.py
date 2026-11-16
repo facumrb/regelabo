@@ -10,7 +10,8 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from slowapi.errors import RateLimitExceeded
 
 from backend.controller.errores import ErrorDeNegocio
-from backend.views import admin, audiogramas, autenticacion, casos, comentarios, simulacion, simulaciones
+from backend.views import (admin, audiogramas, autenticacion, casos, comentarios, comparativas, simulacion,
+                           simulaciones)
 from backend.views.dependencias import requiere_admin
 from backend.views.errores import manejar_error_de_negocio
 from backend.views.limites import demasiados_pedidos, limite_general, limiter
@@ -47,6 +48,7 @@ def crear_app() -> FastAPI:
     app.include_router(simulaciones.router, prefix="/api")
     app.include_router(audiogramas.router, prefix="/api")
     app.include_router(comentarios.router, prefix="/api")
+    app.include_router(comparativas.router, prefix="/api")
     app.include_router(admin.router, prefix="/api")
 
     @app.get("/api/")

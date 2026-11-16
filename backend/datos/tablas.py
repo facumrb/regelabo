@@ -208,3 +208,25 @@ class Comentario(ConIdYFecha, Base):
     estado: Mapped[str] = mapped_column(
         _valores_fijos("estado_comentario", "nuevo", "leido", "archivado"), default="nuevo"
     )
+
+
+class Comparativa(ConIdYFecha, Base):
+    """Superposición de 2 a 4 simulaciones guardada con título (decisión 025)."""
+
+    __tablename__ = "comparativa"
+
+    usuario_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("usuario.id"), index=True)
+    caso_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("caso.id"), index=True)
+    titulo: Mapped[str] = mapped_column(String(100))
+    notas: Mapped[Optional[str]] = mapped_column(Text)
+    borrado_en: Mapped[Optional[datetime]]  # borrado lógico, como los casos
+
+
+class ComparativaSimulacion(Base):
+    """Simulaciones de una comparativa, en el orden en que se muestran (S1, S2…)."""
+
+    __tablename__ = "comparativa_simulacion"
+
+    comparativa_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("comparativa.id"), primary_key=True)
+    simulacion_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("simulacion.id"), primary_key=True)
+    orden: Mapped[int]

@@ -1,0 +1,20 @@
+meta {
+  name: 3. Listar (vacía)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/comparativas
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: sesion={{token_comp}}
+}
+
+tests {
+  test("responde 200", function () { expect(res.getStatus()).to.equal(200); });
+  test("sin comparativas", function () { expect(res.getBody().comparativas).to.have.length(0); });
+}

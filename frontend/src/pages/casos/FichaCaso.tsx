@@ -6,6 +6,8 @@ import { mensajeDeError } from '../../services/auth'
 import { casosApi, resumenDelCaso, type Caso } from '../../services/casos'
 import FormularioCaso from './FormularioCaso'
 import AudiogramasDelCaso from './AudiogramasDelCaso'
+import ListaComparativas from '../simulaciones/ListaComparativas'
+import { etiqueta } from '../../components/estilos'
 
 /** Ver, editar y borrar un caso. Un caso ajeno o borrado llega como 404 y se muestra igual que uno inexistente. */
 export default function FichaCaso() {
@@ -73,6 +75,10 @@ export default function FichaCaso() {
       </div>
     </Tarjeta>
     <AudiogramasDelCaso casoId={caso.id} />
+    <section aria-labelledby="titulo-comparativas" className="max-w-3xl mx-auto space-y-3">
+      <h2 id="titulo-comparativas" className={etiqueta}>Comparativas</h2>
+      <ListaComparativas casoId={caso.id} />
+    </section>
     </div>
   )
 }

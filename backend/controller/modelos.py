@@ -415,3 +415,27 @@ class AudiogramaGuardado(BaseModel):
     patron: Literal["plano", "caida_en_agudos"]
     perfil: str = Field(description="Perfil de polos generado: el que va en poles_profile")
     puntos: List[AudiogramPoint]
+
+
+class ComparativaDatos(BaseModel):
+    """Lo que se edita de una comparativa (decisión 025): título, notas y caso opcional."""
+
+    titulo: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
+    notas: Optional[str] = Field(default=None, max_length=2000)
+    caso_id: Optional[UUID] = None
+
+
+class ComparativaInput(ComparativaDatos):
+    simulacion_ids: List[UUID] = Field(min_length=2, max_length=4,
+                                       description="De 2 a 4 simulaciones propias y terminadas, en orden")
+
+
+class Comparativa(ComparativaInput):
+    id: UUID
+    creado_en: datetime
+
+
+class PaginaDeComparativas(BaseModel):
+    comparativas: List[Comparativa]
+    siguiente: Optional[UUID] = Field(description="Pasarlo como `despues_de` para pedir la página siguiente; "
+                                                  "null si no hay más")

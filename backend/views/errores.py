@@ -30,6 +30,7 @@ ESTADOS = {
     "sin_pedido_de_restablecimiento": 409,
     "debe_cambiar_contrasena": 403,
     "sin_contrasena_temporal": 409,
+    "comparativa_no_encontrada": 404,
 }
 ESTADO_POR_DEFECTO = 400
 

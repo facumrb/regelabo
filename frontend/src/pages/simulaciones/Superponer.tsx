@@ -1,20 +1,22 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import type { Data } from 'plotly.js'
 import Grafico from '../../components/Grafico'
 import EtiquetaPerfil from '../../components/EtiquetaPerfil'
 import { layoutBase, TRAZOS, useColoresGrafico } from '../../components/graficos'
 import { Aviso, Encabezado, Volver } from '../../components/ui'
-import { botonSecundario, panel } from '../../components/estilos'
+import { botonPrimario, botonSecundario, panel } from '../../components/estilos'
 import { imprimirEnClaro } from '../../context/tema'
 import { mensajeDeError } from '../../services/auth'
 import { formatearFecha, simulacionesApi } from '../../services/simulaciones'
 import type { OndasABR, Simulacion } from '../../services/tiposSimulacion'
+import { comparativasApi, type Comparativa } from '../../services/comparativas'
+import FormularioComparativa from './FormularioComparativa'
 
 export const MINIMO = 2
 export const MAXIMO = 4
 
-/** Dirección de la pantalla: la superposición no se guarda, vive en la URL (decisión 025). */
+/** Dirección de la pantalla sin guardar; una comparativa guardada se abre con ?comparativa=<id> (decisión 025). */
 export const enlaceSuperponer = (ids: string[]) => `/superponer?ids=${ids.join(',')}`
 
 type Onda = 'efr_wave' | 'w1' | 'w3' | 'w5'
@@ -54,10 +56,17 @@ function descargarCsv(simulaciones: Simulacion[]) {
   setTimeout(() => URL.revokeObjectURL(enlace.href), 1000) // revocarlo enseguida puede cortar la descarga
 }
 
-/** Superponer de 2 a 4 simulaciones propias y terminadas (decisión 025). Solo frontend: RN4 la cumple el backend. */
+/**
+ * Superponer de 2 a 4 simulaciones propias y terminadas (decisión 025), sin guardar (?ids=) o una
+ * comparativa guardada (?comparativa=), que se puede editar o borrar. RN4 la cumple el backend.
+ */
 export default function Superponer() {
-  const [parametros] = useSearchParams()
-  const ids = [...new Set((parametros.get('ids') ?? '').split(',').filter(Boolean))]
+  const navigate = useNavigate()
+  const [parametros, setParametros] = useSearchParams()
+  const comparativaId = parametros.get('comparativa')
+  const [comparativa, setComparativa] = useState<Comparativa | null>(null)
+  const [formulario, setFormulario] = useState<'guardar' | 'editar' | null>(null)
+  const ids = comparativa?.simulacion_ids ?? [...new Set((parametros.get('ids') ?? '').split(',').filter(Boolean))]
   const clave = ids.join(',')
   const [simulaciones, setSimulaciones] = useState<Simulacion[] | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -65,7 +74,18 @@ export default function Superponer() {
   const c = useColoresGrafico()
 
   useEffect(() => {
+    if (!comparativaId) {
+      setComparativa(null)
+      return
+    }
+    if (comparativa?.id === comparativaId) return // recién guardada: ya se tiene
+    setError(null)
+    comparativasApi.ver(comparativaId).then(setComparativa).catch((e) => setError(mensajeDeError(e)))
+  }, [comparativaId])
+
+  useEffect(() => {
     setSimulaciones(null)
+    if (comparativaId && !comparativa) return // todavía se carga la comparativa
     setError(null)
     if (ids.length < MINIMO || ids.length > MAXIMO) {
       setError(`Elegí entre ${MINIMO} y ${MAXIMO} simulaciones desde el historial.`)
@@ -85,11 +105,51 @@ export default function Superponer() {
     return () => { activo = false }
   }, [clave])
 
+  const guardar = async (datos: Parameters<typeof comparativasApi.crear>[0]) => {
+    const nueva = await comparativasApi.crear(datos, ids)
+    setComparativa(nueva)
+    setFormulario(null)
+    setParametros({ comparativa: nueva.id }, { replace: true })
+  }
+
+  const editar = async (datos: Parameters<typeof comparativasApi.editar>[1]) => {
+    setComparativa(await comparativasApi.editar(comparativa!.id, datos))
+    setFormulario(null)
+  }
+
+  const borrar = async () => {
+    if (!comparativa || !window.confirm(`¿Borrar la comparativa "${comparativa.titulo}"? Las simulaciones no se borran.`)) return
+    try {
+      await comparativasApi.borrar(comparativa.id)
+      navigate('/simulaciones?ver=comparativas', { replace: true })
+    } catch (e) {
+      setError(mensajeDeError(e))
+    }
+  }
+
   const encabezado = (
     <>
       <div className="print:hidden"><Volver a="/simulaciones" texto="Volver" /></div>
-      <Encabezado titulo="Superponer simulaciones"
-        bajada="Las curvas de cada simulación en un mismo gráfico, para ver qué cambia entre ellas.">
+      <Encabezado titulo={comparativa?.titulo ?? 'Superponer simulaciones'}
+        bajada={comparativa ? (comparativa.notas ?? 'Comparativa guardada.')
+          : 'Las curvas de cada simulación en un mismo gráfico, para ver qué cambia entre ellas.'}>
+        {simulaciones && !formulario && (
+          comparativa ? (
+            <>
+              <button type="button" onClick={() => setFormulario('editar')} className={`${botonSecundario} print:hidden`}>
+                Editar
+              </button>
+              <button type="button" onClick={borrar}
+                className={`${botonSecundario} print:hidden hover:!border-rose-400 hover:!text-rose-700 dark:hover:!text-rose-300`}>
+                Borrar
+              </button>
+            </>
+          ) : (
+            <button type="button" onClick={() => setFormulario('guardar')} className={`${botonPrimario} print:hidden`}>
+              Guardar comparativa
+            </button>
+          )
+        )}
         {simulaciones && (
           <>
             <button type="button" onClick={() => descargarCsv(simulaciones)} className={`${botonSecundario} print:hidden`}>
@@ -101,6 +161,14 @@ export default function Superponer() {
           </>
         )}
       </Encabezado>
+      {formulario === 'guardar' && (
+        <FormularioComparativa inicial={{ titulo: '', notas: null, caso_id: null }} textoBoton="Guardar"
+          alGuardar={guardar} alCancelar={() => setFormulario(null)} />
+      )}
+      {formulario === 'editar' && comparativa && (
+        <FormularioComparativa inicial={comparativa} textoBoton="Guardar cambios"
+          alGuardar={editar} alCancelar={() => setFormulario(null)} />
+      )}
     </>
   )
 

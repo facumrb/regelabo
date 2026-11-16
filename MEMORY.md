@@ -44,8 +44,8 @@ Memoria del proyecto entre sesiones, para cualquier agente o persona del equipo.
 - `feat/email` ([030](docs/decisiones/030-verificacion-y-recuperacion-por-email.md), pusheada): verificación (sin verificar no simula) y recuperación por enlace. SMTP: en local, Gmail personal de Valentino en el `.env`; falta el del proyecto (la contraseña de aplicación la tiene que crear quien tiene la llave de acceso).
 - `feat/panel-admin` (sin pushear): panel [028](docs/decisiones/028-panel-de-administracion.md) con comentarios (RN13), usuarios (desbloquear, verificar email, contraseña temporal solo con pedido, por `mailto:`), pestaña Cola y contador cada 60 s; [031](docs/decisiones/031-cambio-obligatorio-de-contrasena-temporal.md) cambio obligatorio tras la temporal.
 - `feat/superponer` (sin pushear): [025](docs/decisiones/025-comparar-simulaciones.md), de 2 a 4 simulaciones, CSV e impresión.
-- `feat/pendientes` (sin pushear): límite general 120/min por sesión (ajuste en la 009), varias simulaciones a la vez desde Simular (cambio en la 024), [032](docs/decisiones/032-audiogramas-en-el-caso.md) audiogramas guardados en el caso.
-- **Base local:** faltan 3 migraciones (`c4a1e2d9f310`, `d2b7f0a4c8e1`, `e5c3a9b1d7f2`); hasta `uv run alembic upgrade head` el backend falla al tocar usuarios. Nada de esto se probó en el navegador; pytest 186 en verde.
+- `feat/pendientes` (sin pushear): límite general 120/min por sesión (ajuste en la 009), varias simulaciones a la vez desde Simular (cambio en la 024), [032](docs/decisiones/032-audiogramas-en-el-caso.md) audiogramas guardados en el caso, comparativas guardadas (cambio en la 025, tablas `comparativa` y `comparativa_simulacion`).
+- **Base local:** faltan 4 migraciones (`c4a1e2d9f310`, `d2b7f0a4c8e1`, `e5c3a9b1d7f2`, `f7a2c4e6b9d1`); hasta `uv run alembic upgrade head` el backend falla al tocar usuarios. Nada de esto se probó en el navegador; pytest 196 en verde.
 
 ## Próximos pasos
 - Para la entrega: Bruno `6-simulaciones` falla en 03 (usuario sin verificar), paso 6 (CI + `CONTRIBUTING.md`), paso 7 (documentación final), paso 8 (issues y tag `semana-01`; antes conectar GitHub a la sesión).

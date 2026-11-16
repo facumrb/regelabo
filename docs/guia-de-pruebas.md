@@ -168,6 +168,9 @@ Sin `SMTP_HOST` en el `.env`, los mails no se envían: aparecen en la terminal d
 | S5 | En el detalle de una terminada, **Superponer con…** | Abre el historial con esa ya marcada. |
 | S7 | **Descargar CSV** y abrirlo en una planilla | Una fila por simulación (S1, S2…) con perfil, estímulo, fibras, EFR y fecha; los acentos se ven bien. |
 | S8 | En tema oscuro, **Imprimir o guardar PDF** | La vista previa sale en claro, sin la barra ni los botones; al cerrar el diálogo la página vuelve a oscuro. |
+| S9 | En una superposición, **Guardar comparativa** con título, notas y un caso | La dirección pasa a `?comparativa=…`, el título y las notas reemplazan al encabezado y aparecen **Editar** y **Borrar**. |
+| S10 | **Historial → Comparativas** y la ficha del caso | La guardada aparece en las dos (en la ficha, solo las de ese caso). Al abrirla se ven las mismas curvas. |
+| S11 | **Editar** el título y **Borrar** | El título cambia; al borrar vuelve a *Comparativas* y ya no figura. Las simulaciones siguen en el historial. |
 | S6 | Cambiar a mano un id de la dirección por uno inventado o de otro usuario | "La simulación no existe." (RN4). |
 
 ### Comentarios y panel de admin (decisión 028)

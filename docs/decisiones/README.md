@@ -27,7 +27,7 @@ Cada archivo documenta una decisión: el contexto, lo que se eligió, las altern
 | [022](022-perfiles-auditivos.md) | Perfiles auditivos: forma real del audiograma y techo del modelo |
 | [023](023-estados-internos.md) | Estados internos del modelo: siete figuras de estados internos |
 | [024](024-rediseno-de-la-interfaz.md) | Rediseño de la interfaz: paleta turquesa (antes vino), tema claro/oscuro y mobile first |
-| [025](025-comparar-simulaciones.md) | Superponer simulaciones (de 2 a 4, sin backend) |
+| [025](025-comparar-simulaciones.md) | Superponer simulaciones y comparativas guardadas |
 | [026](026-etiquetas-clinicas-de-los-perfiles.md) | Etiquetas clínicas y catálogo de 9 perfiles |
 | [027](027-prioridad-en-la-cola.md) | Prioridad en la cola de simulaciones (propuesta) |
 | [028](028-panel-de-administracion.md) | Panel de administración (etapas 1 y 3 implementadas: comentarios y usuarios) |
