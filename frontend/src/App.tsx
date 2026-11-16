@@ -26,6 +26,7 @@ import AvisoEmailSinVerificar from './components/AvisoEmailSinVerificar'
 import Comentarios from './pages/Comentarios'
 import Administracion from './pages/admin/Administracion'
 import ElegirContrasena from './pages/ElegirContrasena'
+import Superponer from './pages/simulaciones/Superponer'
 import { useSesion } from './context/SesionContext'
 import { useSimulacionesEnCurso } from './context/SimulacionesEnCurso'
 import { api } from './services/api'
@@ -283,6 +284,7 @@ export default function App() {
           <Route path="/cuenta" element={<RequiereSesion><MiCuenta /></RequiereSesion>} />
           <Route path="/simulaciones" element={<RequiereSesion><Historial /></RequiereSesion>} />
           <Route path="/simulaciones/:id" element={<RequiereSesion><DetalleSimulacion /></RequiereSesion>} />
+          <Route path="/superponer" element={<RequiereSesion><Superponer /></RequiereSesion>} />
           <Route path="/casos" element={<RequiereSesion><MisCasos /></RequiereSesion>} />
           <Route path="/casos/nuevo" element={<RequiereSesion><NuevoCaso /></RequiereSesion>} />
           <Route path="/casos/:id" element={<RequiereSesion><FichaCaso /></RequiereSesion>} />

@@ -146,6 +146,17 @@ Sin `SMTP_HOST` en el `.env`, los mails no se envían: aparecen en la terminal d
 | E5 | Cerrar sesión, **¿Olvidaste tu contraseña?** con un email registrado y con uno inventado | El mismo mensaje en los dos casos; solo el registrado recibe el mail (`/recuperar?token=…`). |
 | E6 | Abrir el enlace, poner una contraseña corta y después una válida | La corta da error y el enlace sigue sirviendo; con la válida, "Contraseña cambiada". La contraseña vieja ya no entra y la nueva sí. Si había otra sesión abierta, se cerró. |
 
+### Superponer simulaciones (decisión 025)
+
+| # | Qué hacer | Qué deberías ver |
+|---|---|---|
+| S1 | En **Historial**, marcar la casilla de una simulación terminada | Abajo aparece "1 de 4 elegidas · elegí al menos 2", con **Superponer** deshabilitado. Las que no terminaron tienen la casilla deshabilitada. |
+| S2 | Marcar 4 | Las demás casillas se deshabilitan. Tocar la fila (no la casilla) sigue abriendo el detalle. |
+| S3 | Elegir 2 con distintas fibras y tocar **Superponer** | `/superponer?ids=…`: tabla con S1 y S2, lo que difiere en color (las fibras y el EFR); el FFT y la onda elegida con una curva por simulación, del mismo color que en la tabla. |
+| S4 | Cambiar la onda (EFR total, I, III, V) | Cambia solo el gráfico temporal. |
+| S5 | En el detalle de una terminada, **Superponer con…** | Abre el historial con esa ya marcada. |
+| S6 | Cambiar a mano un id de la dirección por uno inventado o de otro usuario | "La simulación no existe." (RN4). |
+
 ### Comentarios y panel de admin (decisión 028)
 
 Para el panel hace falta un admin: `uv run python -m backend.comandos.crear_admin`.

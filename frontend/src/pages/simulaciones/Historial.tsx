@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Aviso, Encabezado, EstadoChip, Tabla } from '../../components/ui'
 import { botonPrimario, botonSecundario, entrada, vacio } from '../../components/estilos'
 import { mensajeDeError } from '../../services/auth'
@@ -9,6 +9,7 @@ import {
 } from '../../services/simulaciones'
 import EtiquetaPerfil from '../../components/EtiquetaPerfil'
 import type { Simulacion } from '../../services/tiposSimulacion'
+import { enlaceSuperponer, MAXIMO, MINIMO } from './Superponer'
 
 /** Todas las simulaciones del usuario, de la más nueva a la más vieja, de a 20 (igual que Mis casos). */
 export default function Historial() {
@@ -18,6 +19,12 @@ export default function Historial() {
   const [casoId, setCasoId] = useState('') // '' = todos
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const navigate = useNavigate()
+  // "Superponer con…" desde el detalle llega como ?superponer=<id>, ya marcada (decisión 025)
+  const [parametros] = useSearchParams()
+  const [elegidas, setElegidas] = useState<string[]>(() => parametros.get('superponer')?.split(',').slice(0, MAXIMO) ?? [])
+  const alternar = (id: string) =>
+    setElegidas((actual) => (actual.includes(id) ? actual.filter((x) => x !== id) : [...actual, id]))
 
   // despuesDe = null pide la primera página; con un id, agrega la siguiente al final
   const cargar = async (despuesDe: string | null, filtro: string) => {
@@ -78,7 +85,36 @@ export default function Historial() {
             { titulo: 'Fibras', mono: true, celda: (s) => `nH ${s.parametros.nH} / nM ${s.parametros.nM} / nL ${s.parametros.nL}` },
             { titulo: 'Estado', celda: (s) => <EstadoChip estado={s.estado} /> },
             { titulo: 'Pedida', celda: (s) => <>{formatearFecha(s.creado_en)}{s.reutilizada && <span className="block text-xs text-tenue">Resultado reutilizado</span>}</> },
+            { titulo: 'Superponer', celda: (s) => {
+              const marcada = elegidas.includes(s.id)
+              const deshabilitada = s.estado !== 'completada' || (!marcada && elegidas.length >= MAXIMO)
+              return (
+                // la fila entera lleva al detalle: la casilla no tiene que disparar eso
+                <label onClick={(e) => e.stopPropagation()}
+                  className={`inline-flex items-center gap-2 min-h-[44px] ${deshabilitada ? 'opacity-50' : 'cursor-pointer'}`}>
+                  <input type="checkbox" className="w-5 h-5 accent-[var(--acento)]" checked={marcada} disabled={deshabilitada}
+                    onChange={() => alternar(s.id)} />
+                  <span className="text-xs text-tenue">{s.estado === 'completada' ? 'Elegir' : 'Sin terminar'}</span>
+                </label>
+              )
+            } },
           ]} />
+      )}
+
+      {elegidas.length > 0 && (
+        <div role="status"
+          className={`sticky bottom-[calc(64px+env(safe-area-inset-bottom))] md:bottom-4 z-10 flex flex-wrap items-center gap-3 px-4 py-3 rounded-xl border border-acento bg-panel shadow-lg`}>
+          <span className="text-sm text-tinta">
+            {elegidas.length} de {MAXIMO} elegidas{elegidas.length < MINIMO && ` · elegí al menos ${MINIMO}`}
+          </span>
+          <button type="button" onClick={() => setElegidas([])} className="ml-auto text-sm text-tenue hover:text-tinta min-h-[44px] px-2">
+            Limpiar
+          </button>
+          <button type="button" disabled={elegidas.length < MINIMO} onClick={() => navigate(enlaceSuperponer(elegidas))}
+            className={botonPrimario}>
+            Superponer
+          </button>
+        </div>
       )}
 
       {siguiente && (

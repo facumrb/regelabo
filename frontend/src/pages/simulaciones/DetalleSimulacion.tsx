@@ -90,6 +90,9 @@ export default function DetalleSimulacion() {
       <nav aria-label="Qué hacer ahora" className="flex flex-wrap items-center gap-2">
         <Link to="/simular" state={conEstosParametros} className={botonPrimario}>Simular nuevamente con estos parámetros</Link>
         <Link to="/simular" state={{} satisfies EstadoNuevaSimulacion} className={botonSecundario}>Nueva simulación</Link>
+        {simulacion.estado === 'completada' && (
+          <Link to={`/simulaciones?superponer=${simulacion.id}`} className={botonSecundario}>Superponer con…</Link>
+        )}
         <Link to="/simulaciones" className={botonTexto}>Ver historial</Link>
         <Link to="/" className={botonTexto}>Volver al inicio</Link>
       </nav>
