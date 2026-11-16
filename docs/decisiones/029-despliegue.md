@@ -36,6 +36,11 @@ Reemplaza la [011](011-infraestructura.md) (hosting y dominio) y, en lo que hace
 - DuckDNS se mantiene (Azure da un nombre propio, pero DuckDNS permite mudarse cambiando solo la IP).
 - El crédito (US$100) alcanza para ~2,5–3 meses de VM, disco e IP.
 
+## Ajuste del 2026-11-13 (tarde): provisorio en GitHub Codespaces
+- Azure for Students rechazó la cuenta de un integrante (no puede reintentar hasta diciembre) y nadie tiene tarjeta física para Oracle. Hugging Face Spaces exige plan PRO para Docker desde julio de 2026, y Render/Koyeb gratis (512 MB) no alcanzan para una simulación.
+- **Mientras tanto, el sistema corre en GitHub Codespaces** con los mismos `Dockerfile` y `compose.prod.yaml` (`DOMINIO=:80`, `WORKERS=1`, puerto 80 público): ver `docs/despliegue.md`. No queda online siempre: se apaga tras 4 h sin el editor abierto y tiene ~60–90 h por mes. Sin backups.
+- Destino definitivo, en orden: Azure for Students de otro integrante, VM de la cátedra o un VPS pago. Todos usan `instalar.sh` y el procedimiento de mudanza.
+
 ## Alternativas descartadas
 | Alternativa | Por qué no |
 |---|---|

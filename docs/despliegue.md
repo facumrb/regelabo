@@ -33,3 +33,49 @@ Para tener el sistema online sin servidor (presentación, corrección, pruebas).
 ### Límites conocidos
 - Todas las visitas llegan desde el proxy de GitHub: el límite de 5 logins/registros por minuto (009) puede ser compartido entre todos. Si molesta en la presentación, avisar antes de entrar todos juntos.
 - Sin backups: es provisorio. Lo que se cargue acá no se muda al servidor definitivo.
+
+## Servidor definitivo (VM Ubuntu: Azure, Oracle, VPS o la de la cátedra)
+
+### Instalar
+1. Crear la VM (Ubuntu 24.04) y abrir los puertos 22, 80 y 443 en el firewall del proveedor (*Network Security Group* en Azure, *Security List* en Oracle).
+2. En DuckDNS, apuntar `regelabo.duckdns.org` a la IP pública de la VM.
+3. Por SSH, en la VM:
+   ```bash
+   git clone https://github.com/facumrb/regelabo.git
+   cd regelabo
+   ./deploy/instalar.sh regelabo.duckdns.org
+   sudo docker compose -f compose.prod.yaml exec api python -m backend.comandos.crear_admin
+   ```
+4. Copiar el `.env` que generó `instalar.sh` a Bitwarden.
+
+### Conectar el Drive para los backups
+La VM no tiene navegador, así que el permiso se da desde una PC que tenga `rclone` instalado:
+1. En la VM: `rclone config` → `n` (nuevo) → nombre `drive` → tipo `drive` → *client_id* y *client_secret* vacíos → *scope* `1` (acceso completo) → Enter en lo demás hasta *Use web browser to automatically authenticate?* → **`n`**.
+2. rclone muestra un comando `rclone authorize "drive" "..."`. Correrlo en la PC: abre el navegador, entrar con la **cuenta de Google del proyecto** y aceptar.
+3. La PC imprime un token (un bloque `{...}`): pegarlo en la VM y terminar con Enter / `y`.
+4. Probar: `./deploy/backup.sh` tiene que terminar con `subido a drive:regelabo-backups`.
+
+Los backups quedan en `backups/` (en la VM) y en la carpeta `regelabo-backups` del Drive: los últimos 7 en cada lado. El log del cron está en `backups/backup.log`.
+
+### Actualizar
+```bash
+cd regelabo && ./deploy/actualizar.sh
+```
+Hace un backup, `git pull`, construye, migra y reinicia. Si algo sale mal después de migrar, restaurar el dump que acaba de hacer (ver abajo).
+
+### Restaurar un backup
+```bash
+COMPOSE="sudo docker compose -f compose.prod.yaml"
+rclone copy drive:regelabo-backups/<archivo>.dump backups/     # si no está ya en backups/
+$COMPOSE stop api worker
+$COMPOSE exec -T db pg_restore -U regelabo -d regelabo --clean --if-exists < backups/<archivo>.dump
+$COMPOSE up -d
+```
+
+### Mudarse a otra VM (objetivo: menos de 1 hora)
+1. En la VM vieja, si sigue viva: `./deploy/backup.sh` y copiar los perfiles generados por audiogramas: `sudo docker compose -f compose.prod.yaml cp api:/app/backend/services/verhulst/data/Poles ./polos`. Bajar esa carpeta con `scp`.
+2. VM nueva: pasos de **Instalar** (sin `crear_admin`: el admin viene en el backup) y **Conectar el Drive**.
+3. **Restaurar** el último backup.
+4. Si se trajo `polos/`: `sudo docker compose -f compose.prod.yaml cp ./polos/. api:/app/backend/services/verhulst/data/Poles`. Sin esa carpeta, los casos con audiograma cargado hay que volver a subirles el audiograma.
+5. Cambiar la IP en DuckDNS. El certificado HTTPS lo saca Caddy solo cuando el dominio ya apunta a la VM nueva.
+6. Comprobar `/api/health` y entrar con el admin. Recién ahí apagar la VM vieja.
