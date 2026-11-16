@@ -12,12 +12,13 @@ from sqlalchemy.dialects.postgresql import insert  # ON CONFLICT: solo PostgreSQ
 from sqlalchemy.orm import Session
 
 from backend.controller.modelos import (
-    ABRWavesData, EstadosInternos, HarmonicPeak, ParametrosSimulacion, SimulationResponse, Simulacion,
-    SpectrumData,
+    ABRWavesData, EstadosInternos, HarmonicPeak, ParametrosSimulacion, SimulacionEnCurso, SimulationResponse,
+    Simulacion, SpectrumData,
 )
 from backend.datos.tablas import EstadosInternos as EstadosInternosFila
 from backend.datos.tablas import ResultadoSimulacion as ResultadoFila
 from backend.datos.tablas import Simulacion as SimulacionFila
+from backend.datos.tablas import Usuario as UsuarioFila
 
 
 def _parametros(fila: SimulacionFila) -> ParametrosSimulacion:
@@ -173,3 +174,32 @@ def interrumpir_vencidas(tx: Session, iniciadas_antes_de: datetime, mensaje: str
         .values(estado="error", mensaje_error=mensaje, finalizada_en=ahora)
     )
     return resultado.rowcount
+
+
+def resumen_de_la_cola(tx: Session, desde: datetime) -> dict:
+    """Totales para el panel de admin: lo que hay ahora en la cola y lo terminado desde `desde`."""
+    s = SimulacionFila
+    recientes = s.finalizada_en >= desde
+    ejecutada = (s.estado == "completada") & s.iniciada_en.is_not(None)
+    fila = tx.execute(select(
+        func.count().filter(s.estado == "en_cola").label("en_cola"),
+        func.count().filter(s.estado == "ejecutando").label("ejecutando"),
+        func.count().filter(ejecutada & recientes).label("completadas"),
+        func.count().filter((s.estado == "completada") & s.iniciada_en.is_(None) & recientes)
+        .label("desde_cache"),
+        func.count().filter((s.estado == "error") & recientes).label("errores"),
+        func.avg(func.extract("epoch", s.finalizada_en - s.iniciada_en)).filter(ejecutada & recientes)
+        .label("duracion_promedio_s"),
+        func.min(s.creado_en).filter(s.estado == "en_cola").label("primera_en_cola"),
+    )).one()
+    return fila._asdict()
+
+
+def en_curso_para_admin(tx: Session) -> List[SimulacionEnCurso]:
+    """En cola o ejecutando, de la más vieja a la más nueva (el orden en que las toma el worker)."""
+    consulta = (select(SimulacionFila, UsuarioFila.email)
+                .join(UsuarioFila, SimulacionFila.usuario_id == UsuarioFila.id)
+                .where(SimulacionFila.estado.in_(["en_cola", "ejecutando"]))
+                .order_by(SimulacionFila.id))
+    return [SimulacionEnCurso(id=f.id, usuario_email=email, estado=f.estado, creado_en=f.creado_en,
+                              iniciada_en=f.iniciada_en) for f, email in tx.execute(consulta)]

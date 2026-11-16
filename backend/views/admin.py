@@ -7,8 +7,8 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
 
-from backend.controller import comentarios, usuarios
-from backend.controller.modelos import (CambioEstadoComentario, Comentario, ContrasenaTemporal,
+from backend.controller import comentarios, simulaciones, usuarios
+from backend.controller.modelos import (CambioEstadoComentario, Comentario, ContrasenaTemporal, EstadoCola,
                                         EstadoComentario, PaginaDeComentarios, PaginaDeUsuarios, Pendientes,
                                         TipoPerfil, UsuarioAdmin)
 from backend.views.dependencias import requiere_admin
@@ -56,3 +56,8 @@ def verificar_email(usuario_id: UUID) -> UsuarioAdmin:
 @router.post("/usuarios/{usuario_id}/resetear-contrasena", response_model=ContrasenaTemporal)
 def resetear_contrasena(usuario_id: UUID) -> ContrasenaTemporal:
     return usuarios.resetear_contrasena(usuario_id)
+
+
+@router.get("/cola", response_model=EstadoCola)
+def estado_de_la_cola() -> EstadoCola:
+    return simulaciones.estado_de_la_cola()

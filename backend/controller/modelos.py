@@ -366,3 +366,28 @@ class ContrasenaTemporal(BaseModel):
     """Se muestra una sola vez al admin, que se la pasa al usuario (decisión 028)."""
 
     contrasena_temporal: str
+
+
+class SimulacionEnCurso(BaseModel):
+    """Una simulación en cola o ejecutando, para el panel: quién y desde cuándo, sin parámetros (RN4)."""
+
+    id: UUID
+    usuario_email: str
+    estado: Literal["en_cola", "ejecutando"]
+    creado_en: datetime
+    iniciada_en: Optional[datetime]
+
+
+class EstadoCola(BaseModel):
+    """Estado de la cola para el panel de admin (decisión 028). Los totales de 24 h cuentan por fin."""
+
+    en_cola: int
+    ejecutando: int
+    tope_cola: int
+    completadas_24h: int = Field(description="Ejecutadas por el worker")
+    desde_cache_24h: int = Field(description="Resueltas al instante con un resultado ya calculado (RN10)")
+    errores_24h: int
+    duracion_promedio_s: Optional[float] = Field(description="De las ejecutadas en 24 h; null si no hubo")
+    worker_detenido: Optional[bool] = Field(
+        description="Deducido: hay simulaciones esperando y ninguna ejecutándose. null si la cola está vacía")
+    en_curso: List[SimulacionEnCurso]

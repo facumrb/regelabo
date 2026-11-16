@@ -39,6 +39,12 @@ Completa la [009](009-roles-cupos-y-limites.md) (rol admin) y la [027](027-prior
 - **Lista:** búsqueda por parte del email o del nombre y filtro por tipo, paginada por cursor. Muestra alta, cantidad de casos (sin los borrados) y de simulaciones, si el email está verificado y si la cuenta está bloqueada. El contador del menú suma comentarios nuevos y pedidos de restablecimiento; las cuentas bloqueadas no suman (el bloqueo se va solo a los 15 minutos).
 - **Endpoints:** `GET /api/admin/usuarios` (con `con_pedido=true`, solo los pedidos) y `POST /api/admin/usuarios/{id}/desbloquear`, `/verificar-email` y `/resetear-contrasena`.
 
+## Ajuste del 2026-11-16: estado de la cola (solo lectura)
+- Pestaña **Cola** (`GET /api/admin/cola`): en cola (con el tope), ejecutando, ejecutadas y resueltas desde la caché (RN10) en las últimas 24 h, errores y duración promedio. Debajo, las simulaciones en cola o ejecutando en el orden en que las toma el worker, con el email del usuario y los tiempos, sin parámetros ni resultados (RN4).
+- **Worker detenido, deducido:** si la simulación más vieja espera hace más de 2 minutos y no hay ninguna ejecutándose, el panel lo avisa. Con la cola vacía no se puede saber y lo dice. Se descartó un latido del worker (tabla nueva, cambio en `worker.py` y reinicio) por ser más de lo necesario para un aviso.
+- Se actualiza cada 10 segundos con la pestaña a la vista. No suma al contador del menú: es informativa, no algo que atender.
+- Sigue fuera del panel **cancelar** simulaciones (ver *Fuera del panel por ahora*).
+
 ## Alternativas descartadas
 - **App de administración aparte:** duplica sesión, despliegue y estilos sin ganar nada.
 - **Sugerencias con estados visibles para el autor** (pendiente/aceptada/rechazada con respuesta): da a entender que siempre habrá devolución, y el equipo no puede garantizarla.

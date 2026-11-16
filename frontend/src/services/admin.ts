@@ -34,3 +34,29 @@ export const usuariosAdminApi = {
     (await apiClient.post<{ contrasena_temporal: string }>(`/admin/usuarios/${id}/resetear-contrasena`)).data
       .contrasena_temporal,
 }
+
+// Reflejan EstadoCola y SimulacionEnCurso de backend/controller/modelos.py
+export interface SimulacionEnCurso {
+  id: string
+  usuario_email: string
+  estado: 'en_cola' | 'ejecutando'
+  creado_en: string
+  iniciada_en: string | null
+}
+
+export interface EstadoCola {
+  en_cola: number
+  ejecutando: number
+  tope_cola: number
+  completadas_24h: number
+  desde_cache_24h: number
+  errores_24h: number
+  duracion_promedio_s: number | null
+  /** Deducido: hay simulaciones esperando y ninguna ejecutándose. null si la cola está vacía. */
+  worker_detenido: boolean | null
+  en_curso: SimulacionEnCurso[]
+}
+
+export const colaApi = {
+  estado: async () => (await apiClient.get<EstadoCola>('/admin/cola')).data,
+}
