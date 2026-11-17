@@ -210,7 +210,7 @@ export default function App() {
   )
 
   return (
-    <div className={`min-h-screen flex flex-col ${usuario ? 'pb-[calc(56px+env(safe-area-inset-bottom))] md:pb-0' : ''}`}>
+    <div className={`min-h-screen flex flex-col ${usuario ? 'pb-[calc(56px+env(safe-area-inset-bottom))] lg:pb-0' : ''}`}>
       {/* Para teclado y lectores de pantalla: evita recorrer toda la barra en cada página */}
       <a href="#contenido" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:rounded-lg focus:bg-panel focus:text-tinta focus:border focus:border-acento">
         Saltar al contenido
@@ -254,7 +254,11 @@ export default function App() {
       </main>
 
       <footer className="border-t border-linea py-6 px-4 text-center text-sm text-tenue">
-        Laboratorio Virtual Auditivo — Implementación basada en el modelo coclear no-lineal y de tronco encefálico de{' '}
+        {/* En el celular, una línea: el texto completo ocupaba 3–4 sobre la barra de pestañas */}
+        <span className="hidden sm:inline">
+          Laboratorio Virtual Auditivo — Implementación basada en el modelo coclear no-lineal y de tronco encefálico de{' '}
+        </span>
+        <span className="sm:hidden">Basado en </span>
         <strong className="font-semibold text-tinta">Verhulst et al. (2018)</strong>.
       </footer>
 

@@ -50,7 +50,7 @@ function Panel() {
   return (
     <>
       <div className={abierto ? 'h-[45vh]' : 'h-10'} /> {/* para que el panel no tape el pie de página */}
-      <div className={`print:hidden fixed inset-x-0 z-50 bg-panel border-t border-linea text-xs text-tinta ${usuario ? 'bottom-[calc(56px+env(safe-area-inset-bottom))] md:bottom-0' : 'bottom-0'}`}>
+      <div className={`print:hidden fixed inset-x-0 z-50 bg-panel border-t border-linea text-xs text-tinta ${usuario ? 'bottom-[calc(56px+env(safe-area-inset-bottom))] lg:bottom-0' : 'bottom-0'}`}>
         <button onClick={() => setAbierto(!abierto)} className="w-full h-10 px-4 flex items-center justify-between">
           <span className="font-semibold">Panel de pruebas (solo desarrollo) · {pedidos.length} pedidos</span>
           <span>

@@ -72,7 +72,7 @@ export default function PlotsPanel({ result }: { result: ResultadoSimulacion | n
     )
   }
 
-  const margen = { l: 52, r: 16, t: 16, b: 90 }
+  const margen = { l: 52, r: 16, t: 40, b: 50 }
   const modos: [Ondas, string][] = [['all', 'Todas las ondas'], ['total', 'EFR Total'], ['separate', 'W1 / W3 / W5']]
 
   return (

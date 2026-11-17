@@ -42,8 +42,9 @@ export function layoutBase(c: ColoresGrafico, extra: Partial<Layout> = {}): Part
     plot_bgcolor: 'transparent',
     font: { color: c.tenue, family: 'Inter, sans-serif', size: 12 },
     hoverlabel: { bgcolor: c.panel, bordercolor: c.linea, font: { color: c.tinta } },
-    // la leyenda va debajo del título del eje X: quien la use necesita margen inferior (~90 px)
-    legend: { orientation: 'h', yanchor: 'top', y: -0.2, bgcolor: 'transparent' },
+    // la leyenda va arriba del gráfico: abajo pisaba el título del eje X en pantallas bajas.
+    // Quien la use necesita margen superior (~40 px)
+    legend: { orientation: 'h', x: 0, xanchor: 'left', yanchor: 'bottom', y: 1.02, bgcolor: 'transparent' },
     ...extra,
     xaxis: { ...eje, ...extra.xaxis },
     yaxis: { ...eje, ...extra.yaxis },

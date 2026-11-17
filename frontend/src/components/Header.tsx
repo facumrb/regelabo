@@ -188,7 +188,7 @@ const enlaceSwagger = (
   </a>
 )
 
-/** Barra superior; con sesión, en el celular las secciones pasan a una barra inferior de pestañas. */
+/** Barra superior; con sesión, en el celular y la tablet (< 1024 px) las secciones pasan a una barra inferior de pestañas. */
 export default function Header({ backendHealth, onRefreshHealth }: { backendHealth: EstadoServidor | null; onRefreshHealth: () => void }) {
   const { usuario, cargando } = useSesion()
   const { enCurso, terminadas } = useSimulacionesEnCurso()
@@ -206,14 +206,14 @@ export default function Header({ backendHealth, onRefreshHealth }: { backendHeal
 
           {usuario && (
             <nav aria-label="Secciones"
-              className="fixed md:static inset-x-0 bottom-0 z-40 grid grid-cols-4 md:flex md:gap-1 md:flex-1 bg-panel md:bg-transparent border-t border-linea md:border-0 pb-[env(safe-area-inset-bottom)] md:pb-0">
+              className="fixed lg:static inset-x-0 bottom-0 z-40 grid grid-cols-4 lg:flex lg:gap-1 lg:flex-1 bg-panel lg:bg-transparent border-t border-linea lg:border-0 pb-[env(safe-area-inset-bottom)] lg:pb-0">
               {SECCIONES.map(({ a, texto, icono }) => (
                 // NavLink marca activa también /casos/:id y /simulaciones/:id; "/" solo en la raíz
                 <NavLink key={a} to={a}
-                  className={({ isActive }) => `flex flex-col md:flex-row items-center justify-center gap-1 min-h-[56px] md:min-h-[40px] md:px-3 md:rounded-lg text-xs md:text-sm ${
-                    isActive ? 'text-acento md:text-tinta md:bg-acento-suave' : 'text-tenue hover:text-tinta'
+                  className={({ isActive }) => `flex flex-col lg:flex-row items-center justify-center gap-1 min-h-[56px] lg:min-h-[40px] lg:px-3 lg:rounded-lg text-xs lg:text-sm ${
+                    isActive ? 'text-acento lg:text-tinta lg:bg-acento-suave' : 'text-tenue hover:text-tinta'
                   }`}>
-                  <span className="relative md:hidden">
+                  <span className="relative lg:hidden">
                     <Icono nombre={icono} tamano={22} />
                     {a === '/simular' && novedades && (
                       <span className="absolute -top-0.5 -right-1 w-2.5 h-2.5 rounded-full bg-acento ring-2 ring-panel" aria-hidden="true" />

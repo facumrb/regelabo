@@ -5,8 +5,8 @@ import PerfilSimulado from '../../components/PerfilSimulado'
 import PanelEstadosInternos from '../../components/PanelEstadosInternos'
 import PlotsPanel from '../../components/PlotsPanel'
 import ResultsSummary from '../../components/ResultsSummary'
-import { Aviso, Encabezado, EstadoChip, Tarjeta, Volver } from '../../components/ui'
-import { botonPrimario, botonSecundario, botonTexto } from '../../components/estilos'
+import { Aviso, Encabezado, EstadoChip, MasAcciones, Tarjeta, Volver } from '../../components/ui'
+import { botonPrimario, botonSecundario, botonTexto, panel } from '../../components/estilos'
 import { useSimulacionesEnCurso } from '../../context/SimulacionesEnCurso'
 import { detalle, tituloDelTipo } from '../../components/perfiles'
 import { api } from '../../services/api'
@@ -22,6 +22,7 @@ export default function DetalleSimulacion() {
   const [simulacion, setSimulacion] = useState<Simulacion | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [perfil, setPerfil] = useState<PerfilAuditivo | null>(null)
+  const [verParametros, setVerParametros] = useState(false) // en el celular los parámetros van plegados
   const nombrePerfil = simulacion?.parametros.poles_profile
   const { marcarVista } = useSimulacionesEnCurso()
 
@@ -87,17 +88,43 @@ export default function DetalleSimulacion() {
           extra={simulacion.estado === 'en_cola' && simulacion.posicion ? ` (lugar ${simulacion.posicion})` : ''} />
       </Encabezado>
 
-      <nav aria-label="Qué hacer ahora" className="flex flex-wrap items-center gap-2">
-        <Link to="/simular" state={conEstosParametros} className={botonPrimario}>Simular nuevamente con estos parámetros</Link>
-        <Link to="/simular" state={{} satisfies EstadoNuevaSimulacion} className={botonSecundario}>Nueva simulación</Link>
+      {/* Todas a la vista en PC; en tablet y celular, las secundarias van en el menú ⋯ */}
+      <nav aria-label="Qué hacer ahora" className="flex items-center gap-2 lg:flex-wrap">
+        <Link to="/simular" state={conEstosParametros} className={`${botonPrimario} flex-1 sm:flex-none`}>
+          <span className="sm:hidden">Simular de nuevo</span>
+          <span className="hidden sm:inline">Simular nuevamente con estos parámetros</span>
+        </Link>
+        <Link to="/simular" state={{} satisfies EstadoNuevaSimulacion} className={`${botonSecundario} hidden lg:inline-flex`}>
+          Nueva simulación
+        </Link>
         {simulacion.estado === 'completada' && (
-          <Link to={`/simulaciones?superponer=${simulacion.id}`} className={botonSecundario}>Superponer con…</Link>
+          <Link to={`/simulaciones?superponer=${simulacion.id}`} className={`${botonSecundario} hidden sm:inline-flex`}>
+            Superponer con…
+          </Link>
         )}
-        <Link to="/simulaciones" className={botonTexto}>Ver historial</Link>
-        <Link to="/" className={botonTexto}>Volver al inicio</Link>
+        <Link to="/simulaciones" className={`${botonTexto} hidden lg:inline-flex`}>Ver historial</Link>
+        <Link to="/" className={`${botonTexto} hidden lg:inline-flex`}>Volver al inicio</Link>
+        <MasAcciones className="lg:hidden" acciones={[
+          { texto: 'Nueva simulación', a: '/simular', state: {} satisfies EstadoNuevaSimulacion },
+          ...(simulacion.estado === 'completada'
+            ? [{ texto: 'Superponer con…', a: `/simulaciones?superponer=${simulacion.id}`, soloCelular: true }]
+            : []),
+          { texto: 'Ver historial', a: '/simulaciones' },
+          { texto: 'Volver al inicio', a: '/' },
+        ]} />
       </nav>
 
-      <dl className="flex flex-wrap gap-x-8 gap-y-4 text-sm text-tenue">
+      <button type="button" onClick={() => setVerParametros(!verParametros)} aria-expanded={verParametros}
+        aria-controls="parametros-simulacion"
+        className={`md:hidden ${panel} w-full min-h-[44px] px-4 py-2.5 flex items-center justify-between gap-3 text-sm`}>
+        <b className="font-medium text-tinta">Parámetros</b>
+        <span className="font-mono text-xs text-tenue truncate">
+          {simulacion.parametros.carrier_freq} Hz · {simulacion.parametros.spl_level} dB · fm {simulacion.parametros.f_mod}
+          <span aria-hidden="true"> {verParametros ? '▲' : '▼'}</span>
+        </span>
+      </button>
+      <dl id="parametros-simulacion"
+        className={`${verParametros ? 'grid' : 'hidden'} md:grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-x-4 md:gap-x-8 gap-y-3 md:gap-y-4 text-sm text-tenue`}>
         {([
           ...(perfil
             ? [['Tipo de caso', tituloDelTipo(perfil)], ['Perfil auditivo', detalle(perfil)], ['PTA', `${perfil.pta} dB HL`]]

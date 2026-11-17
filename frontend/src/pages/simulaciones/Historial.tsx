@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Aviso, Encabezado, EstadoChip, Pestanas, Tabla } from '../../components/ui'
-import { botonPrimario, botonSecundario, entrada, vacio } from '../../components/estilos'
+import { Aviso, Encabezado, EstadoChip, Pestanas } from '../../components/ui'
+import { botonPrimario, botonSecundario, entrada, panel, vacio } from '../../components/estilos'
 import { mensajeDeError } from '../../services/auth'
 import { casosApi, type Caso } from '../../services/casos'
 import {
@@ -52,6 +52,25 @@ export default function Historial() {
   }, [casoId])
 
   const aliasDelCaso = (id: string | null) => casos.find((c) => c.id === id)?.alias
+  const caso = (s: Simulacion) => (s.caso_id ? aliasDelCaso(s.caso_id) ?? '…' : '—')
+  const estimulo = ({ parametros: p }: Simulacion) => `${p.carrier_freq} Hz @ ${p.spl_level} dB · fm ${p.f_mod} Hz`
+  const fibras = ({ parametros: p }: Simulacion) => `nH ${p.nH} / nM ${p.nM} / nL ${p.nL}`
+
+  // Casilla para superponer; la fila entera lleva al detalle, así que el clic en la casilla no sigue de largo
+  const casilla = (s: Simulacion) => {
+    const marcada = elegidas.includes(s.id)
+    const deshabilitada = s.estado !== 'completada' || (!marcada && elegidas.length >= MAXIMO)
+    return (
+      <label onClick={(e) => e.stopPropagation()}
+        className={`grid place-items-center min-w-[44px] min-h-[44px] ${deshabilitada ? 'opacity-50' : 'cursor-pointer'}`}>
+        <input type="checkbox" className="w-5 h-5 accent-[var(--acento)]" checked={marcada} disabled={deshabilitada}
+          onChange={() => alternar(s.id)} />
+        <span className="sr-only">
+          {s.estado === 'completada' ? 'Elegir para superponer' : 'Sin terminar: no se puede superponer'}
+        </span>
+      </label>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -81,35 +100,77 @@ export default function Historial() {
       )}
 
       {simulaciones.length > 0 && (
-        <Tabla nombre="Simulaciones" filas={simulaciones} clave={(s) => s.id} enlace={(s) => `/simulaciones/${s.id}`}
-          columnas={[
-            { titulo: 'Tipo de caso', celda: (s) => <EtiquetaPerfil nombre={s.parametros.poles_profile} parte="tipo" /> },
-            { titulo: 'Perfil auditivo', celda: (s) => <EtiquetaPerfil nombre={s.parametros.poles_profile} parte="perfil" /> },
-            { titulo: 'Caso', celda: (s) => (s.caso_id ? aliasDelCaso(s.caso_id) ?? '…' : '—') },
-            { titulo: 'Estímulo', mono: true,
-              celda: (s) => `${s.parametros.carrier_freq} Hz @ ${s.parametros.spl_level} dB · fm ${s.parametros.f_mod} Hz` },
-            { titulo: 'Fibras', mono: true, celda: (s) => `nH ${s.parametros.nH} / nM ${s.parametros.nM} / nL ${s.parametros.nL}` },
-            { titulo: 'Estado', celda: (s) => <EstadoChip estado={s.estado} /> },
-            { titulo: 'Pedida', celda: (s) => <>{formatearFecha(s.creado_en)}{s.reutilizada && <span className="block text-xs text-tenue">Resultado reutilizado</span>}</> },
-            { titulo: 'Superponer', celda: (s) => {
-              const marcada = elegidas.includes(s.id)
-              const deshabilitada = s.estado !== 'completada' || (!marcada && elegidas.length >= MAXIMO)
-              return (
-                // la fila entera lleva al detalle: la casilla no tiene que disparar eso
-                <label onClick={(e) => e.stopPropagation()}
-                  className={`inline-flex items-center gap-2 min-h-[44px] ${deshabilitada ? 'opacity-50' : 'cursor-pointer'}`}>
-                  <input type="checkbox" className="w-5 h-5 accent-[var(--acento)]" checked={marcada} disabled={deshabilitada}
-                    onChange={() => alternar(s.id)} />
-                  <span className="text-xs text-tenue">{s.estado === 'completada' ? 'Elegir' : 'Sin terminar'}</span>
-                </label>
-              )
-            } },
-          ]} />
+        <>
+          {/* Celular: una fila compacta por simulación, con la casilla de superponer a la izquierda */}
+          <ul className="sm:hidden space-y-2" aria-label="Simulaciones">
+            {simulaciones.map((s) => (
+              <li key={s.id} className={`${panel} grid grid-cols-[44px_1fr] items-center py-2.5 pl-1 pr-4`}>
+                {casilla(s)}
+                <Link to={`/simulaciones/${s.id}`} className="min-w-0 block">
+                  <span className="flex items-start justify-between gap-2">
+                    <b className="font-medium text-tinta truncate">
+                      <EtiquetaPerfil nombre={s.parametros.poles_profile} parte="perfil" />
+                    </b>
+                    <EstadoChip estado={s.estado} />
+                  </span>
+                  <span className="block text-sm text-tenue truncate">
+                    <EtiquetaPerfil nombre={s.parametros.poles_profile} parte="tipo" /> · {caso(s)}
+                  </span>
+                  <span className="block font-mono text-xs text-tenue">{estimulo(s)}</span>
+                  <span className="block text-xs text-tenue">
+                    <span className="font-mono">{fibras(s)}</span> · {formatearFecha(s.creado_en)}
+                    {s.reutilizada && ' · Resultado reutilizado'}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          {/* Tablet y PC: 6 columnas; el tipo va bajo el perfil y las fibras bajo el estímulo (8 no entraban) */}
+          <table className="hidden sm:table w-full border-collapse" aria-label="Simulaciones">
+            <thead>
+              <tr>
+                {['Superponer', 'Perfil auditivo', 'Caso', 'Estímulo', 'Estado', 'Pedida'].map((t, i) => (
+                  <th key={t} scope="col"
+                    className={`text-left text-xs font-medium uppercase tracking-wider text-tenue px-3 pb-3 ${i === 0 ? 'w-12' : ''}`}>
+                    {i === 0 ? <span className="sr-only">{t}</span> : t}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {simulaciones.map((s) => (
+                <tr key={s.id} onClick={() => navigate(`/simulaciones/${s.id}`)}
+                  className="cursor-pointer hover:bg-acento-suave transition [&>td]:px-3 [&>td]:py-3 [&>td]:border-t [&>td]:border-linea [&>td]:align-top text-sm text-tinta">
+                  <td className="!py-1">{casilla(s)}</td>
+                  <td>
+                    <Link to={`/simulaciones/${s.id}`} onClick={(e) => e.stopPropagation()} className="font-medium text-tinta hover:underline">
+                      <EtiquetaPerfil nombre={s.parametros.poles_profile} parte="perfil" />
+                    </Link>
+                    <span className="block text-xs text-tenue">
+                      <EtiquetaPerfil nombre={s.parametros.poles_profile} parte="tipo" />
+                    </span>
+                  </td>
+                  <td>{caso(s)}</td>
+                  <td className="font-mono">
+                    {estimulo(s)}
+                    <span className="block text-xs text-tenue">{fibras(s)}</span>
+                  </td>
+                  <td><EstadoChip estado={s.estado} /></td>
+                  <td>
+                    {formatearFecha(s.creado_en)}
+                    {s.reutilizada && <span className="block text-xs text-tenue">Resultado reutilizado</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
       )}
 
       {elegidas.length > 0 && (
         <div role="status"
-          className={`sticky bottom-[calc(64px+env(safe-area-inset-bottom))] md:bottom-4 z-10 flex flex-wrap items-center gap-3 px-4 py-3 rounded-xl border border-acento bg-panel shadow-lg`}>
+          className={`sticky bottom-[calc(64px+env(safe-area-inset-bottom))] lg:bottom-4 z-10 flex flex-wrap items-center gap-3 px-4 py-3 rounded-xl border border-acento bg-panel shadow-lg`}>
           <span className="text-sm text-tinta">
             {elegidas.length} de {MAXIMO} elegidas{elegidas.length < MINIMO && ` · elegí al menos ${MINIMO}`}
           </span>

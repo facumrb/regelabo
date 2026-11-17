@@ -46,9 +46,9 @@ export default function ResultsSummary({ result }: { result: ResultadoSimulacion
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* EFR total */}
-        <div className="md:col-span-2 p-4 md:p-5 rounded-xl bg-acento-suave">
+        <div className="col-span-2 p-4 md:p-5 rounded-xl bg-acento-suave">
           <span className="text-sm text-tenue block mb-1">Amplitud EFR Acumulada</span>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl md:text-4xl font-semibold font-mono tracking-tight text-tinta">{efr.toFixed(4)}</span>
