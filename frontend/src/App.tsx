@@ -97,13 +97,15 @@ export default function App() {
       console.warn('No se pudieron cargar los perfiles:', mensajeDeError(err))
     }
 
-    try {
-      // shortcut: el selector ofrece solo los 100 casos más nuevos; si hace falta más, paginar o buscar
-      setCasos((await casosApi.listar(null, 100)).casos)
-    } catch (err) {
-      console.warn('No se pudieron cargar los casos:', mensajeDeError(err))
-    }
   }
+
+  // Se piden al entrar a Simular, no solo al iniciar sesión: si no, falta un caso creado después
+  useEffect(() => {
+    if (!usuario || location.pathname !== '/simular') return
+    // shortcut: el selector ofrece solo los 100 casos más nuevos; si hace falta más, paginar o buscar
+    casosApi.listar(null, 100).then((p) => setCasos(p.casos))
+      .catch((err) => console.warn('No se pudieron cargar los casos:', mensajeDeError(err)))
+  }, [usuario, location.pathname])
 
   // Se repite al iniciar o cerrar sesión: los perfiles solo se piden con sesión
   useEffect(() => {

@@ -6,8 +6,9 @@ import { mensajeDeError } from '../../services/auth'
 import { casosApi, resumenDelCaso, type Caso } from '../../services/casos'
 import FormularioCaso from './FormularioCaso'
 import AudiogramasDelCaso from './AudiogramasDelCaso'
+import SimulacionesDelCaso from './SimulacionesDelCaso'
 import ListaComparativas from '../simulaciones/ListaComparativas'
-import { etiqueta } from '../../components/estilos'
+import { etiqueta, panel } from '../../components/estilos'
 
 /** Ver, editar y borrar un caso. Un caso ajeno o borrado llega como 404 y se muestra igual que uno inexistente. */
 export default function FichaCaso() {
@@ -58,27 +59,32 @@ export default function FichaCaso() {
     )
   }
 
+  // Todos los bloques del mismo ancho, en una columna (decisión 033)
   return (
-    <div className="space-y-6">
-    <Volver a="/casos" texto="Mis casos" />
-    <Tarjeta titulo={caso.alias}>
-      <p className="text-sm text-tenue">{resumenDelCaso(caso)}</p>
-      {caso.notas && <p className="text-tinta whitespace-pre-wrap">{caso.notas}</p>}
-      {error && <Aviso tipo="error">{error}</Aviso>}
-      <div className="flex flex-wrap justify-end gap-2">
-        <div className="flex gap-2">
-          <button onClick={borrar} className={`${botonSecundario} hover:!border-rose-400 hover:!text-rose-700 dark:hover:!text-rose-300`}>
-            Borrar
-          </button>
-          <button onClick={() => setEditando(true)} className={botonPrimario}>Editar</button>
+    <div className="max-w-3xl mx-auto space-y-6">
+      <Volver a="/casos" texto="Mis casos" />
+      <section className={`${panel} p-6 space-y-3`}>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h1 className="text-xl font-semibold text-tinta">{caso.alias}</h1>
+            <p className="text-sm text-tenue">{resumenDelCaso(caso)}</p>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={borrar} className={`${botonSecundario} hover:!border-rose-400 hover:!text-rose-700 dark:hover:!text-rose-300`}>
+              Borrar
+            </button>
+            <button onClick={() => setEditando(true)} className={botonPrimario}>Editar</button>
+          </div>
         </div>
-      </div>
-    </Tarjeta>
-    <AudiogramasDelCaso casoId={caso.id} />
-    <section aria-labelledby="titulo-comparativas" className="max-w-3xl mx-auto space-y-3">
-      <h2 id="titulo-comparativas" className={etiqueta}>Comparativas</h2>
-      <ListaComparativas casoId={caso.id} />
-    </section>
+        {caso.notas && <p className="text-tinta whitespace-pre-wrap">{caso.notas}</p>}
+        {error && <Aviso tipo="error">{error}</Aviso>}
+      </section>
+      <AudiogramasDelCaso casoId={caso.id} />
+      <SimulacionesDelCaso casoId={caso.id} />
+      <section aria-labelledby="titulo-comparativas" className="space-y-3">
+        <h2 id="titulo-comparativas" className={etiqueta}>Comparativas</h2>
+        <ListaComparativas casoId={caso.id} />
+      </section>
     </div>
   )
 }
