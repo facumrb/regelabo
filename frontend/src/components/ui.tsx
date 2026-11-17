@@ -1,7 +1,7 @@
-import type { ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import Icono from './Icono'
-import { avisoError, avisoOk, entrada, panel } from './estilos'
+import { avisoError, avisoOk, botonSecundario, entrada, panel } from './estilos'
 import { ETIQUETA_ESTADO, PUNTO_ESTADO } from '../services/simulaciones'
 import type { EstadoSimulacion } from '../services/tiposSimulacion'
 
@@ -188,6 +188,74 @@ export function Deslizador({ id, etiqueta, unidad, valor, min, max, paso = 1, de
         <div className="flex justify-between gap-2 mt-1 text-[11px] text-tenue">
           {marcas.map((m) => <span key={m}>{m}</span>)}
         </div>
+      )}
+    </div>
+  )
+}
+
+export interface AccionMenu {
+  texto: string
+  /** Link (con su `state` opcional) o acción */
+  a?: string
+  state?: unknown
+  alHacerClic?: () => void
+  /** Solo en el celular: desde la tablet la acción ya está a la vista como botón */
+  soloCelular?: boolean
+}
+
+/**
+ * Botón ⋯ con las acciones secundarias de una pantalla: en el celular abre una hoja desde abajo y desde
+ * la tablet un desplegable. Se cierra con Escape, al tocar afuera o al elegir.
+ */
+export function MasAcciones({ acciones, className = '' }: { acciones: AccionMenu[]; className?: string }) {
+  const [abierto, setAbierto] = useState(false)
+  const caja = useRef<HTMLDivElement>(null)
+  const boton = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (!abierto) return
+    const alClic = (e: MouseEvent) => { if (!caja.current?.contains(e.target as Node)) setAbierto(false) }
+    const alTeclear = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      setAbierto(false)
+      boton.current?.focus()
+    }
+    document.addEventListener('mousedown', alClic)
+    document.addEventListener('keydown', alTeclear)
+    return () => {
+      document.removeEventListener('mousedown', alClic)
+      document.removeEventListener('keydown', alTeclear)
+    }
+  }, [abierto])
+
+  const cerrar = () => setAbierto(false)
+  const opcion = 'flex items-center w-full min-h-[48px] sm:min-h-[44px] px-3 rounded-lg text-left text-base sm:text-sm ' +
+    'text-tinta hover:bg-acento-suave focus-visible:bg-acento-suave'
+  return (
+    <div ref={caja} className={`relative ${className}`}>
+      <button ref={boton} type="button" onClick={() => setAbierto(!abierto)} aria-haspopup="menu" aria-expanded={abierto}
+        aria-label="Más acciones" title="Más acciones" className={`${botonSecundario} w-11 px-0`}>
+        <span aria-hidden="true" className="text-lg leading-none">⋯</span>
+      </button>
+      {abierto && (
+        <>
+          <div className="sm:hidden fixed inset-0 z-50 bg-black/40" aria-hidden="true" onClick={cerrar} />
+          <div role="menu"
+            className="fixed sm:absolute inset-x-0 bottom-0 sm:inset-x-auto sm:bottom-auto sm:right-0 sm:top-[calc(100%+0.5rem)] sm:w-64 z-50 bg-panel border border-linea rounded-t-2xl sm:rounded-xl p-2 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:p-1.5 shadow-xl">
+            <div className="sm:hidden w-10 h-1 rounded-full bg-linea mx-auto mb-2" aria-hidden="true" />
+            {acciones.map(({ texto, a, state, alHacerClic, soloCelular }) => {
+              const clase = `${opcion} ${soloCelular ? 'sm:hidden' : ''}`
+              return a ? (
+                <Link key={texto} role="menuitem" to={a} state={state} className={clase} onClick={cerrar}>{texto}</Link>
+              ) : (
+                <button key={texto} type="button" role="menuitem" className={clase}
+                  onClick={() => { cerrar(); alHacerClic?.() }}>
+                  {texto}
+                </button>
+              )
+            })}
+          </div>
+        </>
       )}
     </div>
   )

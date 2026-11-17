@@ -10,6 +10,13 @@ import type { ParametrosSimulacion, PerfilAuditivo, Simulacion } from '../servic
 
 const FRECUENCIAS_RAPIDAS = [500, 1000, 2000, 4000]
 
+const girando = (
+  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+  </svg>
+)
+
 interface Props {
   profiles: PerfilAuditivo[]
   /** El perfil elegido; puede ser uno personalizado, que no está en `profiles` */
@@ -61,8 +68,8 @@ export default function SimulationControls({
   }
 
   return (
-    // Paso 1 a la izquierda y paso 2 a la derecha, de alto parecido; en el celular, uno debajo del otro
-    <div className="grid gap-6 lg:gap-8 lg:grid-cols-2 items-start">
+    // Paso 1 a la izquierda y paso 2 a la derecha (desde la tablet), de alto parecido; en el celular, uno debajo del otro
+    <div className="grid grid-cols-1 gap-6 lg:gap-8 md:grid-cols-2 items-start">
       <section className={`${panel} p-5 space-y-3.5`}>
         <h2 className={etiqueta}>1 · Caso y perfil</h2>
         <div className="grid gap-4">
@@ -161,17 +168,12 @@ export default function SimulationControls({
         </section>
 
         <button type="button" onClick={onRunSimulation} disabled={enviando}
-          className={`${botonPrimario} w-full min-h-[52px] text-base`}>
-          {enviando && (
-            <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
-          )}
+          className={`${botonPrimario} hidden md:inline-flex w-full min-h-[52px] text-base`}>
+          {enviando && girando}
           <span aria-live="polite">{enviando ? 'Pidiendo la simulación…' : 'Ejecutar Simulación Biológica'}</span>
         </button>
         {/* La caché (RN10) es por huella: no se puede anticipar cuáles salen al instante */}
-        <p className="-mt-4 text-center text-sm text-tenue">
+        <p className="md:-mt-4 text-center text-sm text-tenue">
           Tarda unos 80 s. Si esta misma combinación ya se calculó antes, el resultado aparece al instante.
         </p>
         {enCurso.length > 0 && (
@@ -197,6 +199,18 @@ export default function SimulationControls({
             </ul>
           </section>
         )}
+      </div>
+
+      {/* En el celular el formulario es largo: el botón queda fijo abajo, sobre las pestañas, con lo elegido */}
+      <div className="md:hidden sticky bottom-[calc(56px+env(safe-area-inset-bottom))] z-10 -mx-4 px-4 py-2.5 flex items-center gap-3 bg-panel border-t border-linea shadow-[0_-6px_16px_rgba(0,0,0,0.06)]">
+        <div className="min-w-0 flex-1">
+          <b className="block text-sm font-medium text-tinta truncate">{perfilActivo?.etiqueta ?? params.poles_profile}</b>
+          <span className="font-mono text-xs text-tenue">{params.carrier_freq} Hz · {params.spl_level} dB</span>
+        </div>
+        <button type="button" onClick={onRunSimulation} disabled={enviando} className={`${botonPrimario} min-h-[48px] px-6`}>
+          {enviando && girando}
+          <span aria-live="polite">{enviando ? 'Pidiendo…' : 'Simular'}</span>
+        </button>
       </div>
     </div>
   )

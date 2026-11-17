@@ -35,5 +35,7 @@ Cada archivo documenta una decisión: el contexto, lo que se eligió, las altern
 | [030](030-verificacion-y-recuperacion-por-email.md) | Verificación del email y recuperación de la contraseña |
 | [031](031-cambio-obligatorio-de-contrasena-temporal.md) | Cambio obligatorio después de una contraseña temporal |
 | [032](032-audiogramas-en-el-caso.md) | Audiogramas guardados en el caso |
+| [033](033-simulaciones-en-el-caso-y-una-columna.md) | Simulaciones en la ficha del caso y ficha en una columna |
+| [034](034-vista-mobile-y-tablet.md) | Vista para celular y tablet |
 
 Las reglas de negocio están en [`../reglas-de-negocio.md`](../reglas-de-negocio.md).

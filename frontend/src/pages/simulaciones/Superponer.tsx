@@ -4,7 +4,7 @@ import type { Data } from 'plotly.js'
 import Grafico from '../../components/Grafico'
 import EtiquetaPerfil from '../../components/EtiquetaPerfil'
 import { layoutBase, TRAZOS, useColoresGrafico } from '../../components/graficos'
-import { Aviso, Encabezado, Volver } from '../../components/ui'
+import { Aviso, Encabezado, MasAcciones, Volver } from '../../components/ui'
 import { botonPrimario, botonSecundario, panel } from '../../components/estilos'
 import { imprimirEnClaro } from '../../context/tema'
 import { mensajeDeError } from '../../services/auth'
@@ -140,7 +140,7 @@ export default function Superponer() {
                 Editar
               </button>
               <button type="button" onClick={borrar}
-                className={`${botonSecundario} print:hidden hover:!border-rose-400 hover:!text-rose-700 dark:hover:!text-rose-300`}>
+                className={`${botonSecundario} hidden sm:inline-flex print:hidden hover:!border-rose-400 hover:!text-rose-700 dark:hover:!text-rose-300`}>
                 Borrar
               </button>
             </>
@@ -152,12 +152,18 @@ export default function Superponer() {
         )}
         {simulaciones && (
           <>
-            <button type="button" onClick={() => descargarCsv(simulaciones)} className={`${botonSecundario} print:hidden`}>
+            <button type="button" onClick={() => descargarCsv(simulaciones)} className={`${botonSecundario} hidden sm:inline-flex print:hidden`}>
               Descargar CSV
             </button>
-            <button type="button" onClick={imprimirEnClaro} className={`${botonSecundario} print:hidden`}>
+            <button type="button" onClick={imprimirEnClaro} className={`${botonSecundario} hidden sm:inline-flex print:hidden`}>
               Imprimir o guardar PDF
             </button>
+            {/* En el celular, las secundarias van en el menú ⋯ */}
+            <MasAcciones className="sm:hidden !flex-none print:hidden" acciones={[
+              ...(comparativa && !formulario ? [{ texto: 'Borrar', alHacerClic: borrar }] : []),
+              { texto: 'Descargar CSV', alHacerClic: () => descargarCsv(simulaciones) },
+              { texto: 'Imprimir o guardar PDF', alHacerClic: imprimirEnClaro },
+            ]} />
           </>
         )}
       </Encabezado>
@@ -197,13 +203,47 @@ export default function Superponer() {
       hovertemplate: `${nombre(i)} · %{x:.2f} ms: %{y:.4f} µV<extra></extra>`,
     }
   })
-  const margen = { l: 52, r: 16, t: 16, b: 90 }
+  const margen = { l: 52, r: 16, t: 40, b: 50 }
+  const trazo = (i: number) => (
+    <span className="inline-block w-5 border-t-[3px]"
+      style={{ borderColor: c.series[i], borderTopStyle: i % 2 ? 'dashed' : 'solid' }} aria-hidden="true" />
+  )
 
   return (
     <div className="aparecer space-y-6">
       {encabezado}
 
-      <div className={`${panel} overflow-x-auto`}>
+      {/* Celular: un bloque por dato; si es igual en todas, una sola línea (la tabla obligaba a desplazar de costado) */}
+      <section className={`${panel} sm:hidden print:hidden px-4 py-1`} aria-label="Diferencias entre las simulaciones">
+        <div className="flex flex-wrap gap-x-4 py-2 border-b border-linea">
+          {simulaciones.map((s, i) => (
+            <Link key={s.id} to={`/simulaciones/${s.id}`} className="inline-flex items-center gap-2 min-h-[36px] font-semibold text-tinta hover:underline">
+              {trazo(i)}{nombre(i)}
+            </Link>
+          ))}
+        </div>
+        {FILAS.map((fila) => {
+          const iguales = new Set(simulaciones.map(fila.clave)).size === 1
+          const difiere = !iguales && fila.titulo !== 'Pedida'
+          return (
+            <div key={fila.titulo} className="py-2.5 border-b border-linea last:border-0">
+              <div className="text-xs text-tenue">
+                {fila.titulo}{difiere && <span className="font-semibold text-acento"> · difiere</span>}
+              </div>
+              {iguales ? (
+                <div className="text-sm text-tinta">{fila.valor(simulaciones[0])} <span className="text-tenue">(igual en todas)</span></div>
+              ) : simulaciones.map((s, i) => (
+                <div key={s.id} className="flex items-center justify-between gap-3 min-h-[28px] text-sm">
+                  <span className="inline-flex items-center gap-2 text-tenue">{trazo(i)}{nombre(i)}</span>
+                  <span className={`text-right ${difiere ? 'font-semibold text-acento' : 'text-tinta'}`}>{fila.valor(s)}</span>
+                </div>
+              ))}
+            </div>
+          )
+        })}
+      </section>
+
+      <div className={`${panel} hidden sm:block print:block overflow-x-auto`}>
         <table className="w-full text-sm" aria-label="Diferencias entre las simulaciones">
           <thead>
             <tr>
@@ -211,9 +251,7 @@ export default function Superponer() {
               {simulaciones.map((s, i) => (
                 <th key={s.id} scope="col" className="text-left px-4 py-3">
                   <Link to={`/simulaciones/${s.id}`} className="inline-flex items-center gap-2 font-semibold text-tinta hover:underline">
-                    <span className="inline-block w-5 border-t-[3px]"
-                      style={{ borderColor: c.series[i], borderTopStyle: i % 2 ? 'dashed' : 'solid' }} aria-hidden="true" />
-                    {nombre(i)}
+                    {trazo(i)}{nombre(i)}
                   </Link>
                 </th>
               ))}

@@ -17,7 +17,7 @@ const ESCALA_RESERVA = 14 / 60
 
 function layout(c: ColoresGrafico, ejeY: string, extra: Partial<Layout> = {}): Partial<Layout> {
   return layoutBase(c, {
-    margin: { l: 60, r: 60, t: 16, b: 100 },
+    margin: { l: 60, r: 60, t: 40, b: 50 },
     ...extra,
     xaxis: { title: { text: 'Tiempo (ms)' }, ...extra.xaxis },
     yaxis: { title: { text: ejeY }, ...extra.yaxis },

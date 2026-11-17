@@ -52,7 +52,7 @@ export default function AudiogramasDelCaso({ casoId }: { casoId: string }) {
   }, [casoId])
 
   return (
-    <section aria-labelledby="titulo-audiogramas" className="max-w-3xl mx-auto space-y-3">
+    <section aria-labelledby="titulo-audiogramas" className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 id="titulo-audiogramas" className={etiqueta}>Audiogramas</h2>
         <Link to={`/simular/audiograma?caso=${casoId}`} className={botonSecundario}>Cargar audiograma</Link>

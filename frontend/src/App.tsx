@@ -97,13 +97,15 @@ export default function App() {
       console.warn('No se pudieron cargar los perfiles:', mensajeDeError(err))
     }
 
-    try {
-      // shortcut: el selector ofrece solo los 100 casos más nuevos; si hace falta más, paginar o buscar
-      setCasos((await casosApi.listar(null, 100)).casos)
-    } catch (err) {
-      console.warn('No se pudieron cargar los casos:', mensajeDeError(err))
-    }
   }
+
+  // Se piden al entrar a Simular, no solo al iniciar sesión: si no, falta un caso creado después
+  useEffect(() => {
+    if (!usuario || location.pathname !== '/simular') return
+    // shortcut: el selector ofrece solo los 100 casos más nuevos; si hace falta más, paginar o buscar
+    casosApi.listar(null, 100).then((p) => setCasos(p.casos))
+      .catch((err) => console.warn('No se pudieron cargar los casos:', mensajeDeError(err)))
+  }, [usuario, location.pathname])
 
   // Se repite al iniciar o cerrar sesión: los perfiles solo se piden con sesión
   useEffect(() => {
@@ -208,7 +210,7 @@ export default function App() {
   )
 
   return (
-    <div className={`min-h-screen flex flex-col ${usuario ? 'pb-[calc(56px+env(safe-area-inset-bottom))] md:pb-0' : ''}`}>
+    <div className={`min-h-screen flex flex-col ${usuario ? 'pb-[calc(56px+env(safe-area-inset-bottom))] lg:pb-0' : ''}`}>
       {/* Para teclado y lectores de pantalla: evita recorrer toda la barra en cada página */}
       <a href="#contenido" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:rounded-lg focus:bg-panel focus:text-tinta focus:border focus:border-acento">
         Saltar al contenido
@@ -252,7 +254,11 @@ export default function App() {
       </main>
 
       <footer className="border-t border-linea py-6 px-4 text-center text-sm text-tenue">
-        Laboratorio Virtual Auditivo — Implementación basada en el modelo coclear no-lineal y de tronco encefálico de{' '}
+        {/* En el celular, una línea: el texto completo ocupaba 3–4 sobre la barra de pestañas */}
+        <span className="hidden sm:inline">
+          Laboratorio Virtual Auditivo — Implementación basada en el modelo coclear no-lineal y de tronco encefálico de{' '}
+        </span>
+        <span className="sm:hidden">Basado en </span>
         <strong className="font-semibold text-tinta">Verhulst et al. (2018)</strong>.
       </footer>
 

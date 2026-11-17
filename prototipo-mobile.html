@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prototipo mobile regelabo</title>
+<style>
+:root{--bg:#f3f8f7;--panel:#fff;--tinta:#132624;--tenue:#5f7472;--linea:#dbe8e6;--acento:#0f766e;--acento-tinta:#fff;--acento-suave:#ddf3ef;--c2:#9f1239;--c3:#5b6b69;--malo:#e11d48;--bueno:#059669;--escritorio:#e4ecea}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1716;--panel:#152120;--tinta:#e6f2f0;--tenue:#8fa5a2;--linea:#24403b;--acento:#2dd4bf;--acento-tinta:#04201c;--acento-suave:#133a35;--c2:#fb7185;--c3:#9aaba8;--malo:#fb7185;--bueno:#34d399;--escritorio:#0a1110}}
+:root[data-theme="dark"]{--bg:#0f1716;--panel:#152120;--tinta:#e6f2f0;--tenue:#8fa5a2;--linea:#24403b;--acento:#2dd4bf;--acento-tinta:#04201c;--acento-suave:#133a35;--c2:#fb7185;--c3:#9aaba8;--malo:#fb7185;--bueno:#34d399;--escritorio:#0a1110}
+*{box-sizing:border-box;margin:0}
+body{font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--escritorio);color:var(--tinta)}
+button{font:inherit;color:inherit;cursor:pointer}
+.app-top{max-width:1400px;margin:0 auto;padding:20px 16px 8px}
+h1.t{font-size:22px;font-weight:600;letter-spacing:-.01em}
+.sub{color:var(--tenue);margin-top:4px;max-width:70ch}
+.barra{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin-top:16px}
+.seg{display:inline-flex;border:1px solid var(--linea);border-radius:10px;background:var(--panel);padding:3px;flex-wrap:wrap}
+.seg button{border:0;background:none;padding:7px 12px;border-radius:7px;font-size:13px;min-height:36px}
+.seg button[aria-pressed="true"]{background:var(--acento);color:var(--acento-tinta)}
+.rot{font-size:12px;color:var(--tenue);text-transform:uppercase;letter-spacing:.06em;margin-right:6px}
+.escena{max-width:1400px;margin:0 auto;padding:12px 16px 40px;display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start;justify-content:center}
+.disp{display:flex;flex-direction:column;gap:8px;align-items:center}
+.disp-tit{font-size:13px;color:var(--tenue)}
+.disp-tit b{color:var(--tinta)}
+.marco{border:10px solid #1b2422;border-radius:34px;background:#1b2422;box-shadow:0 10px 30px rgba(0,0,0,.18);overflow:hidden}
+.marco.tab{border-radius:26px;border-width:14px}
+.pantalla{background:var(--bg);overflow-y:auto;overflow-x:auto;position:relative;scrollbar-width:thin}
+.escala{transform-origin:top left}
+.notas{max-width:1400px;margin:0 auto;padding:0 16px 60px;display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))}
+.nota{background:var(--panel);border:1px solid var(--linea);border-radius:16px;padding:16px 18px}
+.nota h3{font-size:14px;margin-bottom:8px}
+.nota ul{padding-left:18px;display:grid;gap:6px;font-size:14px}
+.nota code{font:12px ui-monospace,monospace;background:var(--acento-suave);padding:1px 5px;border-radius:4px}
+.malo{color:var(--malo)} .bueno{color:var(--bueno)}
+.opcion{border-left:3px solid var(--acento);padding:6px 10px;margin-top:8px;background:var(--acento-suave);border-radius:0 8px 8px 0;font-size:14px}
+/* ---- marcas de problemas dentro de la pantalla ---- */
+.pin{position:absolute;z-index:30;min-width:22px;height:22px;border-radius:11px;background:var(--malo);color:#fff;font:600 12px/22px system-ui;text-align:center;padding:0 6px;box-shadow:0 0 0 3px rgba(225,29,72,.25)}
+.pin.ok{background:var(--bueno);box-shadow:0 0 0 3px rgba(5,150,105,.25)}
+.zona-mala{outline:2px dashed var(--malo);outline-offset:2px}
+
+/* ---- mini-app (imita las clases de la app) ---- */
+.a{font-size:14px;color:var(--tinta);min-height:100%;display:flex;flex-direction:column;position:relative}
+.hd{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--linea);display:flex;align-items:center;gap:12px;padding:0 16px;height:56px}
+.logo{display:flex;align-items:center;gap:7px;font-weight:600}
+.logo i{width:18px;height:18px;border-radius:5px;background:var(--acento);display:inline-block}
+.ml{margin-left:auto;display:flex;align-items:center;gap:8px}
+.av{width:32px;height:32px;border-radius:50%;background:var(--acento);color:var(--acento-tinta);display:grid;place-items:center;font-weight:600;font-size:13px}
+.chip-u{display:flex;align-items:center;gap:6px;border:1px solid var(--linea);border-radius:999px;padding:3px 10px 3px 3px;min-height:40px;white-space:nowrap}
+.ind{display:flex;align-items:center;gap:6px;border:1px solid var(--linea);border-radius:8px;padding:0 10px;height:40px;font-size:12px;white-space:nowrap;background:var(--panel)}
+.punto{width:8px;height:8px;border-radius:50%;background:var(--acento);display:inline-block}
+.navtop{display:flex;gap:2px}
+.navtop a{padding:9px 11px;border-radius:8px;color:var(--tenue);white-space:nowrap;font-size:14px}
+.navtop a.on{background:var(--acento-suave);color:var(--tinta)}
+.tabs{position:sticky;bottom:0;z-index:20;display:grid;grid-template-columns:repeat(4,1fr);background:var(--panel);border-top:1px solid var(--linea);margin-top:auto}
+.tabs a{display:flex;flex-direction:column;align-items:center;gap:3px;justify-content:center;min-height:56px;font-size:11px;color:var(--tenue)}
+.tabs a.on{color:var(--acento)}
+.tabs .ic{width:22px;height:22px;border-radius:6px;border:2px solid currentColor;opacity:.85}
+.mn{padding:20px 16px;display:flex;flex-direction:column;gap:20px;flex:1}
+.mn.tab{padding:28px 32px}
+.h1{font-size:24px;font-weight:600;letter-spacing:-.01em;line-height:1.2}
+.baj{color:var(--tenue);margin-top:4px}
+.pn{background:var(--panel);border:1px solid var(--linea);border-radius:16px}
+.p5{padding:18px}
+.et{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--tenue)}
+.lab{display:block;font-size:13px;color:var(--tenue);margin-bottom:5px}
+.in{width:100%;min-height:44px;border:1px solid var(--linea);border-radius:8px;background:var(--panel);padding:10px 12px;display:flex;align-items:center;justify-content:space-between;color:var(--tinta)}
+.in:after{content:"▾";color:var(--tenue)}
+.in.sin:after{content:""}
+.bp,.bs,.bt{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 16px;border-radius:8px;font-size:14px;font-weight:500;border:1px solid transparent;white-space:nowrap}
+.bp{background:var(--acento);color:var(--acento-tinta);border-color:var(--acento)}
+.bs{background:var(--panel);border-color:var(--linea)}
+.bt{color:var(--tenue)}
+.w100{width:100%}
+.pill{min-height:36px;padding:0 12px;border-radius:999px;border:1px solid var(--linea);font-size:12px;font-weight:500;display:inline-flex;align-items:center;background:var(--panel)}
+.pill.on{background:var(--acento);color:var(--acento-tinta);border-color:var(--acento)}
+.fila{display:flex;flex-wrap:wrap;gap:8px}
+.g{display:grid;gap:14px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mono{font-family:ui-monospace,monospace}
+.ten{color:var(--tenue)}
+.sm{font-size:12px}
+.ft{border-top:1px solid var(--linea);padding:18px 16px;text-align:center;font-size:13px;color:var(--tenue)}
+.graf{border-radius:10px;background:linear-gradient(var(--panel),var(--panel));position:relative}
+.graf svg{width:100%;height:100%;display:block}
+.est{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.est:before{content:"";width:8px;height:8px;border-radius:50%;background:var(--bueno)}
+.est.cola:before{background:#d97706}
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--tenue);text-align:left;padding:0 8px 10px;font-weight:600}
+table.t td{border-top:1px solid var(--linea);padding:12px 8px;vertical-align:top}
+.card-h{border-top:1px solid var(--linea);padding:14px 0;display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
+.card-h .k{display:block;font-size:11px;color:var(--tenue)}
+.fab{position:sticky;bottom:64px;z-index:15;margin:0 -16px;padding:10px 16px;background:var(--panel);border-top:1px solid var(--linea);display:flex;align-items:center;gap:10px;box-shadow:0 -6px 16px rgba(0,0,0,.06)}
+.hoja{position:absolute;inset:auto 0 0 0;z-index:40;background:var(--panel);border-radius:18px 18px 0 0;border-top:1px solid var(--linea);padding:10px 16px 20px;box-shadow:0 -10px 30px rgba(0,0,0,.2)}
+.hoja .agarre{width:40px;height:4px;border-radius:2px;background:var(--linea);margin:0 auto 12px}
+.hoja .op{display:flex;align-items:center;min-height:48px;border-bottom:1px solid var(--linea);font-size:15px}
+.velo{position:absolute;inset:0;background:rgba(0,0,0,.35);z-index:35}
+.sw{display:inline-block;width:18px;border-top:3px solid;vertical-align:middle;margin-right:6px}
+</style>
+</head>
+<body>
+<div class="app-top">
+  <h1 class="t">Prototipo mobile de regelabo</h1>
+  <p class="sub">Cada pantalla se muestra en teléfono (390 px) y tablet vertical (820 px). <b>Actual</b> reproduce cómo se ve hoy según las clases de Tailwind del código; <b>Propuesta</b>, el cambio sugerido. Los puntos <span class="malo">rojos</span> marcan lo que se rompe y los <span class="bueno">verdes</span>, el arreglo. Las notas de abajo dicen en qué archivo está cada cosa y qué opciones hay.</p>
+  <div class="barra">
+    <div><span class="rot">Pantalla</span><div class="seg" id="selPantalla"></div></div>
+    <div><span class="rot">Versión</span><div class="seg" id="selVersion"></div></div>
+    <div><span class="rot">Tema</span><div class="seg" id="selTema"></div></div>
+  </div>
+</div>
+<div class="escena" id="escena"></div>
+<div class="notas" id="notas"></div>
+
+<script>
+const S = { pantalla: 'nav', version: 'ambas', tema: 'auto' }
+try { Object.assign(S, JSON.parse(localStorage.getItem('proto-mobile') || '{}')) } catch (e) {}
+
+const PANTALLAS = [
+  ['nav', 'Barra y navegación'],
+  ['simular', 'Simular'],
+  ['resultado', 'Resultado'],
+  ['historial', 'Historial'],
+  ['superponer', 'Superponer'],
+]
+const VERSIONES = [['actual', 'Actual'], ['propuesta', 'Propuesta'], ['ambas', 'Lado a lado']]
+const TEMAS = [['auto', 'Sistema'], ['light', 'Claro'], ['dark', 'Oscuro']]
+const DISP = { tel: { w: 390, h: 780, nombre: 'Teléfono', escala: 0.82 }, tab: { w: 820, h: 1060, nombre: 'Tablet vertical', escala: 0.62 } }
+
+// ---------- piezas comunes ----------
+const pin = (n, top, left, ok) => `<span class="pin${ok ? ' ok' : ''}" style="top:${top}px;left:${left}px">${n}</span>`
+function onda(semilla = 1, colores = ['var(--acento)']) {
+  const lineas = colores.map((c, k) => {
+    let d = ''
+    for (let x = 0; x <= 300; x += 3) {
+      const t = x / 300
+      const y = 50 - Math.exp(-((t - .18) ** 2) / .002) * (32 - k * 6) * Math.sin(x * .25 * semilla) - Math.sin(x * .09 + k) * 6 * (1 - t)
+      d += (x ? 'L' : 'M') + x + ' ' + y.toFixed(1)
+    }
+    return `<path d="${d}" fill="none" stroke="${c}" stroke-width="1.6" ${k ? 'stroke-dasharray="5 3"' : ''}/>`
+  }).join('')
+  return `<svg viewBox="0 0 300 100" preserveAspectRatio="none"><g stroke="var(--linea)" stroke-width=".6">${[20, 40, 60, 80].map(y => `<line x1="0" x2="300" y1="${y}" y2="${y}"/>`).join('')}</g>${lineas}</svg>`
+}
+function espectro() {
+  let b = ''
+  for (let i = 1; i < 60; i++) { const h = i % 8 === 0 ? 70 - i : Math.random() * 8 + 2; b += `<line x1="${i * 5}" x2="${i * 5}" y1="100" y2="${100 - h}" stroke="var(--acento)" stroke-width="1.4"/>` }
+  return `<svg viewBox="0 0 300 100" preserveAspectRatio="none">${b}</svg>`
+}
+const tabsInf = (on, punto) => `<nav class="tabs">${[['/', 'Inicio'], ['/simular', 'Simular'], ['/casos', 'Casos'], ['/simulaciones', 'Historial']].map(([a, t]) =>
+  `<a class="${a === on ? 'on' : ''}"><span class="ic" style="position:relative">${a === '/simular' && punto ? '<span class="punto" style="position:absolute;top:-4px;right:-5px"></span>' : ''}</span>${t}</a>`).join('')}</nav>`
+const navTop = (on) => `<nav class="navtop">${[['/', 'Inicio'], ['/simular', 'Simular'], ['/casos', 'Casos'], ['/simulaciones', 'Historial']].map(([a, t]) => `<a class="${a === on ? 'on' : ''}">${t}</a>`).join('')}</nav>`
+
+// Cabecera según dispositivo y versión. Actual en tablet (768–1023 px) = nav arriba (md:), sin barra inferior.
+function cabecera(d, v, on, titulo) {
+  if (d === 'tel') {
+    if (v === 'propuesta' && titulo) return `<header class="hd"><span style="font-size:20px">‹</span><b style="font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${titulo}</b><div class="ml"><span class="av">V</span></div></header>`
+    return `<header class="hd"><span class="logo"><i></i>regelabo</span><div class="ml"><span class="ind"><span class="punto"></span>1 en curso</span><span class="chip-u"><span class="av">V</span>▾</span></div></header>`
+  }
+  if (v === 'actual') return `<header class="hd" style="height:64px;padding:0 32px;gap:28px"><span class="logo"><i></i>regelabo</span>${navTop(on)}<div class="ml"><span class="ind"><span class="punto"></span>1 simulación en curso</span><span class="ind" style="width:40px;justify-content:center;padding:0"><span class="punto" style="background:var(--bueno)"></span></span><span class="chip-u"><span class="av">V</span>Valentino ▾</span></div></header>`
+  return `<header class="hd" style="height:60px;padding:0 32px"><span class="logo"><i></i>regelabo</span><div class="ml"><span class="ind"><span class="punto"></span>1 en curso</span><span class="chip-u"><span class="av">V</span>▾</span></div></header>`
+}
+// En tablet: actual = sin barra inferior; propuesta = barra inferior hasta lg (1024)
+const pie = (d, v, on, punto) => (d === 'tel' || v === 'propuesta') ? tabsInf(on, punto) : ''
+const footer = (d, v) => v === 'actual' || d === 'tab'
+  ? `<footer class="ft">Laboratorio Virtual Auditivo — Implementación basada en el modelo coclear no-lineal y de tronco encefálico de <b>Verhulst et al. (2018)</b>.</footer>`
+  : `<footer class="ft sm">Basado en Verhulst et al. (2018)</footer>`
+
+// ---------- pantallas ----------
+const P = {}
+
+P.nav = (d, v) => {
+  const tel = d === 'tel'
+  const cuerpo = `<main class="mn ${tel ? '' : 'tab'}">
+    <div><div class="h1">Hola, Valentino</div><p class="baj">Simulá cómo responde la cóclea a partir de un audiograma.</p></div>
+    <div class="${tel ? 'g' : 'g2'}">
+      <a class="pn p5" style="background:var(--acento);color:var(--acento-tinta);border-color:var(--acento);${tel ? '' : 'grid-column:span 2'}"><b>Nueva simulación</b><div class="sm" style="opacity:.85">Elegí un caso y un perfil y corré el modelo.</div></a>
+      ${['Cargar audiograma', 'Mis casos', 'Historial'].map(t => `<a class="pn p5"><b>${t}</b><div class="sm ten">Acceso directo</div></a>`).join('')}
+    </div>
+    <section class="g" style="gap:8px"><span class="et">Continuá donde dejaste</span>
+      <div class="pn p5" style="display:flex;${tel ? 'flex-direction:column;gap:10px' : 'justify-content:space-between;align-items:center'}"><div><b>Hipoacusia leve · plana</b><div class="sm ten">1000 Hz · 70 dB SPL · 17/11 10:42</div></div><div class="fila" style="align-items:center;gap:16px"><span class="est">Completada</span><span class="bs">Ver resultado</span></div></div>
+    </section>
+  </main>`
+  let marcas = ''
+  if (v === 'actual') {
+    marcas = tel ? pin(1, 470, 300) + pin(2, 14, 150) : pin(3, 20, 300) + pin(4, 20, 640)
+  } else {
+    marcas = tel ? pin(1, 690, 300, 1) : pin(3, 20, 300, 1) + pin(4, 1000, 400, 1)
+  }
+  return `<div class="a">${cabecera(d, v, '/')}${cuerpo}${footer(d, v)}${pie(d, v, '/', true)}${marcas}</div>`
+}
+
+P.simular = (d, v) => {
+  const tel = d === 'tel'
+  const paso1 = `<section class="pn p5 g"><span class="et">1 · Caso y perfil</span>
+      <label><span class="lab">Caso (opcional)</span><span class="in">Caso 12 — adulto</span></label>
+      <label><span class="lab">Tipo de caso</span><span class="in">Hipoacusia neurosensorial</span></label>
+      <label><span class="lab">Perfil auditivo</span><span style="display:grid;grid-template-columns:1fr auto;gap:8px"><span class="in">Leve · plana</span><span class="bs">+ Audiograma</span></span></label>
+      <div><span class="sm" style="font-weight:500">Vista previa del audiograma</span><div class="graf" style="height:${tel ? 150 : 200}px;margin-top:6px">${onda(.4)}</div></div>
+    </section>`
+  const paso2 = `<section class="pn p5 g"><span class="et">2 · Estímulo</span>
+      <label><span class="lab">Frecuencia portadora (Hz)</span><span class="in sin">1000</span></label>
+      <div class="fila">${['500', '1000', '2000', '4000'].map(f => `<span class="pill ${f === '1000' ? 'on' : ''}">${f} Hz</span>`).join('')}</div>
+      <label><span class="lab">Nivel (dB SPL)</span><span class="in sin">70</span></label>
+      <div style="border-top:1px solid var(--linea);padding-top:10px;display:flex;justify-content:space-between;min-height:44px;align-items:center"><b class="sm">Configuración avanzada</b><span class="ten sm">▼ Configurar</span></div>
+    </section>`
+  const boton = `<span class="bp w100" style="min-height:52px;font-size:15px">Simular</span><p class="sm ten" style="text-align:center">Tarda unos 80 segundos.</p>`
+  const titulo = `<div style="display:flex;justify-content:space-between;gap:10px"><div><div class="h1">Nueva simulación</div><p class="baj">Configuración del estímulo acústico y perfil coclear</p></div><span class="mono sm ten" style="border:1px solid var(--linea);border-radius:4px;padding:3px 7px;height:fit-content;white-space:nowrap">RAM Stimulus</span></div>`
+  let cuerpo
+  if (v === 'actual' || tel) {
+    // Hoy: dos columnas solo desde lg (1024). En tablet, una sola columna muy ancha.
+    cuerpo = `${titulo}${paso1}${paso2}${v === 'propuesta' && tel ? '' : boton}`
+  } else {
+    cuerpo = `${titulo}<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">${paso1}<div class="g" style="gap:20px">${paso2}${boton}</div></div>`
+  }
+  const barraAccion = v === 'propuesta' && tel
+    ? `<div class="fab"><div style="flex:1;min-width:0"><b class="sm" style="display:block">Leve · plana</b><span class="sm ten mono">1000 Hz · 70 dB</span></div><span class="bp" style="min-height:48px;padding:0 26px">Simular</span></div>` : ''
+  const marcas = v === 'actual'
+    ? (tel ? pin(5, 1050, 300) + pin(6, 215, 20) : pin(7, 140, 760))
+    : (tel ? pin(5, 640, 140, 1) : pin(7, 140, 760, 1))
+  return `<div class="a">${cabecera(d, v, '/simular')}<main class="mn ${tel ? '' : 'tab'}">${cuerpo}${barraAccion}</main>${footer(d, v)}${pie(d, v, '/simular')}${marcas}</div>`
+}
+
+P.resultado = (d, v) => {
+  const tel = d === 'tel'
+  const actual = v === 'actual'
+  const encab = `<div><div class="h1">Hipoacusia leve · plana</div><p class="baj">Simulación completada · 17/11 10:42</p></div>`
+  const acciones = actual
+    ? `<nav class="fila"><span class="bp">Simular nuevamente con estos parámetros</span><span class="bs">Nueva simulación</span><span class="bs">Superponer con…</span><span class="bt">Ver historial</span><span class="bt">Volver al inicio</span></nav>`
+    : `<nav style="display:flex;gap:8px"><span class="bp" style="flex:1">${tel ? 'Simular de nuevo' : 'Simular nuevamente con estos parámetros'}</span>${tel ? '' : '<span class="bs">Superponer con…</span>'}<span class="bs" style="width:44px;padding:0" aria-label="Más acciones">⋯</span></nav>`
+  const datos = [['Tipo de caso', 'Hipoacusia neurosensorial'], ['Perfil auditivo', 'Leve · plana'], ['PTA', '32 dB HL'], ['Frecuencia', '1000 Hz'], ['Nivel', '70 dB SPL'], ['Modulación', '120 Hz'], ['Fibras', 'nH 13 · nM 3 · nL 3'], ['Pedida', '17/11 10:42'], ['Iniciada', '17/11 10:42'], ['Terminó', '17/11 10:44']]
+  const dl = actual
+    ? `<dl class="fila sm ten" style="gap:14px 30px">${datos.map(([k, x]) => `<div><dt>${k}</dt><dd style="color:var(--tinta);font-weight:500">${x}</dd></div>`).join('')}</dl>`
+    : `<details class="pn" ${tel ? '' : 'open'} style="padding:12px 16px"><summary class="sm" style="min-height:32px;display:flex;align-items:center;justify-content:space-between;list-style:none;cursor:pointer"><b>Parámetros</b><span class="ten mono">1000 Hz · 70 dB · fm 120</span></summary>
+        <dl style="display:grid;grid-template-columns:${tel ? '1fr 1fr' : 'repeat(4,1fr)'};gap:10px 14px;margin-top:10px" class="sm ten">${datos.map(([k, x]) => `<div><dt>${k}</dt><dd style="color:var(--tinta);font-weight:500">${x}</dd></div>`).join('')}</dl></details>`
+  const efr = `<section class="pn p5 g"><div style="display:flex;${tel ? 'flex-direction:column;gap:8px' : 'justify-content:space-between;align-items:center'}"><div><span class="et">Biomarcador cuantitativo</span><div style="font-weight:600;font-size:17px">Envelope Following Response (EFR)</div></div><div class="fila" style="align-items:center"><span class="est">Normal</span><span class="bs">JSON</span></div></div>
+      <div style="display:grid;grid-template-columns:${tel ? (actual ? '1fr' : '1fr 1fr') : (actual ? '2fr 1fr 1fr' : '1fr 1fr')};gap:10px">
+        <div style="background:var(--acento-suave);border-radius:12px;padding:14px;${!actual ? 'grid-column:span 2' : ''}"><span class="sm ten">Amplitud EFR acumulada</span><div class="mono" style="font-size:${tel ? 28 : 32}px;font-weight:600">0.3142 <span class="sm ten">µV</span></div></div>
+        <div style="border:1px solid var(--linea);border-radius:12px;padding:14px"><span class="sm ten">Tiempo de cálculo</span><div class="mono" style="font-size:20px;font-weight:600">81.4 <span class="sm ten">seg</span></div></div>
+        <div style="border:1px solid var(--linea);border-radius:12px;padding:14px;min-width:0"><span class="sm ten">Condición simulada</span><div class="mono sm" style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Custom_Trauma_4kHz_caso12</div></div>
+      </div></section>`
+  const altoGraf = actual ? 384 : (tel ? 240 : 320)
+  const graf = (tit, svg) => `<div class="pn" style="padding:${tel ? 12 : 20}px"><b>${tit}</b><div class="graf ${actual && tel ? 'zona-mala' : ''}" style="height:${altoGraf}px;margin-top:8px;position:relative">
+      ${!actual ? `<div class="fila sm" style="position:absolute;top:4px;left:8px;gap:10px"><span><span class="sw" style="border-color:var(--acento)"></span>EFR</span><span><span class="sw" style="border-color:var(--c2)"></span>ABR I</span></div>` : ''}
+      ${svg}
+      ${actual ? `<div class="sm" style="position:absolute;bottom:-4px;left:0;right:0;display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><span><span class="sw" style="border-color:var(--acento)"></span>EFR</span><span><span class="sw" style="border-color:var(--c2)"></span>ABR onda I</span><span><span class="sw" style="border-color:var(--c3)"></span>ABR onda III</span><span><span class="sw" style="border-color:var(--c3)"></span>ABR onda V</span></div>` : ''}
+    </div>
+    <div class="fila sm" style="align-items:center;margin-top:8px">${actual ? `<span class="ten" style="margin-right:auto">Arrastrá sobre el gráfico para ampliar una zona.</span><span class="bt">Restablecer vista</span><span class="bt">Descargar PNG</span>` : `<span class="ten" style="margin-right:auto">${tel ? 'Tocá para ver valores.' : 'Arrastrá para ampliar.'}</span>${tel ? '<span class="bs">⤢ Pantalla completa</span>' : '<span class="bt">Restablecer</span>'}<span class="bt">PNG</span>`}</div></div>`
+  const cuerpo = `${encab}${acciones}${dl}${efr}${graf('Espectro FFT del EFR', espectro())}${graf('Respuesta en el dominio temporal', onda(1.2, ['var(--acento)', 'var(--c2)']))}`
+  const hoja = !actual && tel ? `<div class="velo"></div><div class="hoja"><div class="agarre"></div>${['Nueva simulación', 'Superponer con…', 'Ver historial', 'Volver al inicio'].map(t => `<div class="op">${t}</div>`).join('')}</div>` : ''
+  const marcas = actual
+    ? (tel ? pin(8, 150, 340) + pin(9, 330, 330) + pin(10, 1100, 330) : pin(8, 160, 760) + pin(11, 470, 760) + pin(10, 870, 760))
+    : (tel ? pin(8, 150, 340, 1) + pin(10, 840, 330, 1) : pin(8, 160, 760, 1) + pin(11, 470, 760, 1) + pin(10, 870, 760, 1))
+  return `<div class="a">${cabecera(d, v, '/simulaciones', 'Resultado')}<main class="mn ${tel ? '' : 'tab'}">${cuerpo}</main>${footer(d, v)}${pie(d, v, '/simulaciones')}${marcas}${hoja}</div>`
+}
+
+const SIMS = [
+  ['Hipoacusia neurosensorial', 'Leve · plana', 'Caso 12', '1000 Hz @ 70 dB · fm 120 Hz', 'nH 13 / nM 3 / nL 3', 'Completada', '17/11 10:42'],
+  ['Normoyente', 'Referencia', '—', '4000 Hz @ 60 dB · fm 120 Hz', 'nH 13 / nM 3 / nL 3', 'Completada', '16/11 18:03'],
+  ['Sinaptopatía', 'Moderada · pendiente', 'Caso 7', '2000 Hz @ 80 dB · fm 98 Hz', 'nH 10 / nM 2 / nL 1', 'En cola', '16/11 17:55'],
+]
+P.historial = (d, v) => {
+  const tel = d === 'tel'
+  const actual = v === 'actual'
+  const encab = `<div style="display:flex;${tel ? 'flex-direction:column;gap:12px' : 'justify-content:space-between;align-items:flex-end'}"><div><div class="h1">Historial</div><p class="baj">Tus simulaciones, de la más nueva a la más vieja.</p></div><span class="bp">Nueva simulación</span></div>
+    <label style="${tel ? '' : 'max-width:320px'}"><span class="lab">Caso</span><span class="in">Todos los casos</span></label>`
+  const tit = ['Tipo de caso', 'Perfil auditivo', 'Caso', 'Estímulo', 'Fibras', 'Estado', 'Pedida', 'Superponer']
+  let lista
+  if (actual && tel) {
+    lista = `<div class="zona-mala">${SIMS.map(s => `<div class="card-h"><b style="grid-column:span 2">${s[0]}</b>${tit.slice(1).map((t, i) => `<div><span class="k">${t}</span>${i === 6 ? `<label style="display:inline-flex;gap:6px;align-items:center;min-height:44px"><input type="checkbox"> <span class="sm ten">Elegir</span></label>` : i === 4 ? `<span class="est ${s[5] === 'En cola' ? 'cola' : ''}">${s[5]}</span>` : `<span class="${i === 2 || i === 3 ? 'mono sm' : ''}">${s[i + 1]}</span>`}</div>`).join('')}</div>`).join('')}</div>`
+  } else if (actual) {
+    lista = `<div class="zona-mala" style="overflow:hidden"><table class="t"><thead><tr>${tit.map(t => `<th>${t}</th>`).join('')}</tr></thead><tbody>${SIMS.map(s => `<tr><td><b>${s[0]}</b></td><td>${s[1]}</td><td>${s[2]}</td><td class="mono">${s[3]}</td><td class="mono">${s[4]}</td><td><span class="est ${s[5] === 'En cola' ? 'cola' : ''}">${s[5]}</span></td><td>${s[6]}</td><td><input type="checkbox"> <span class="sm ten">Elegir</span></td></tr>`).join('')}</tbody></table></div>`
+  } else if (tel) {
+    lista = `<ul style="list-style:none;padding:0;display:grid;gap:8px">${SIMS.map(s => `<li class="pn" style="display:grid;grid-template-columns:44px 1fr;align-items:center;padding:10px 14px 10px 4px"><label style="display:grid;place-items:center;min-height:44px"><input type="checkbox" style="width:20px;height:20px" ${s[5] !== 'Completada' ? 'disabled' : ''}></label><div style="min-width:0"><div style="display:flex;justify-content:space-between;gap:8px"><b style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s[1]}</b><span class="est sm ${s[5] === 'En cola' ? 'cola' : ''}">${s[5]}</span></div><div class="sm ten">${s[0]} · ${s[2]}</div><div class="sm ten mono">${s[3].replace(' · fm 120 Hz', '').replace(' · fm 98 Hz', '')} · ${s[6]}</div></div></li>`).join('')}</ul>`
+  } else {
+    lista = `<table class="t"><thead><tr><th style="width:40px"></th><th>Perfil</th><th>Caso</th><th>Estímulo</th><th>Estado</th><th>Pedida</th></tr></thead><tbody>${SIMS.map(s => `<tr><td><input type="checkbox" style="width:18px;height:18px"></td><td><b>${s[1]}</b><div class="sm ten">${s[0]}</div></td><td>${s[2]}</td><td class="mono sm">${s[3].split(' · ')[0]}<div class="ten">fm ${s[3].split('fm ')[1]} · ${s[4].replace(/ \/ /g, '·')}</div></td><td><span class="est ${s[5] === 'En cola' ? 'cola' : ''}">${s[5]}</span></td><td>${s[6]}</td></tr>`).join('')}</tbody></table>`
+  }
+  const barraComp = `<div class="pn" style="position:sticky;bottom:${tel || !actual ? 64 : 16}px;z-index:15;display:flex;align-items:center;gap:10px;padding:10px 14px;border-color:var(--acento);box-shadow:0 6px 18px rgba(0,0,0,.12)"><span class="sm">2 elegidas</span><span class="bt" style="margin-left:auto;padding:0 6px">Quitar</span><span class="bp">Superponer</span></div>`
+  const marcas = actual ? (tel ? pin(12, 250, 330) : pin(13, 260, 760)) : (tel ? pin(12, 250, 330, 1) : pin(13, 260, 760, 1))
+  return `<div class="a">${cabecera(d, v, '/simulaciones', 'Historial')}<main class="mn ${tel ? '' : 'tab'}">${encab}${lista}${barraComp}</main>${footer(d, v)}${pie(d, v, '/simulaciones')}${marcas}</div>`
+}
+
+P.superponer = (d, v) => {
+  const tel = d === 'tel'
+  const actual = v === 'actual'
+  const cols = ['Leve · plana', 'Normoyente', 'Moderada · pendiente']
+  const colores = ['var(--acento)', 'var(--c2)', 'var(--c3)']
+  const filas = [['Tipo de caso', 'Neurosensorial', 'Referencia', 'Sinaptopatía'], ['Frecuencia', '1000 Hz', '1000 Hz', '1000 Hz'], ['Nivel', '70 dB SPL', '70 dB SPL', '80 dB SPL'], ['Fibras', 'nH 13 · nM 3 · nL 3', 'nH 13 · nM 3 · nL 3', 'nH 10 · nM 2 · nL 1'], ['EFR', '0.3142 µV', '0.4410 µV', '0.1203 µV']]
+  const acciones = actual
+    ? `<div class="fila"><span class="bp">Guardar comparativa</span><span class="bs">Descargar CSV</span><span class="bs">Imprimir</span></div>`
+    : `<div style="display:flex;gap:8px"><span class="bp" style="flex:1">Guardar comparativa</span><span class="bs" style="width:44px;padding:0">⋯</span></div>`
+  let tabla
+  if (actual || !tel) {
+    tabla = `<div class="pn ${actual && tel ? 'zona-mala' : ''}" style="overflow-x:auto"><table class="t" style="min-width:${tel ? 560 : 0}px"><thead><tr><th style="padding:12px 14px">Dato</th>${cols.map((c, i) => `<th style="padding:12px 14px;text-transform:none;letter-spacing:0;color:var(--tinta);font-size:13px"><span class="sw" style="border-color:${colores[i]}"></span>${c}</th>`).join('')}</tr></thead><tbody>${filas.map(f => { const dif = new Set(f.slice(1)).size > 1; return `<tr><td class="ten" style="white-space:nowrap;padding:12px 14px">${f[0]}</td>${f.slice(1).map(x => `<td style="padding:12px 14px;${dif ? 'color:var(--acento);font-weight:600' : ''}">${x}</td>`).join('')}</tr>` }).join('')}</tbody></table></div>`
+  } else {
+    // Propuesta teléfono: una tarjeta por dato; los iguales se resumen en una línea
+    tabla = `<div class="pn" style="padding:6px 14px">${filas.map(f => {
+      const dif = new Set(f.slice(1)).size > 1
+      return `<div style="border-bottom:1px solid var(--linea);padding:10px 0"><div class="sm ten">${f[0]}${dif ? ' · <span style="color:var(--acento);font-weight:600">difiere</span>' : ''}</div>${dif ? f.slice(1).map((x, i) => `<div style="display:flex;justify-content:space-between;gap:8px;min-height:24px;align-items:center"><span class="sm"><span class="sw" style="border-color:${colores[i]}"></span>${cols[i]}</span><b class="sm">${x}</b></div>`).join('') : `<b class="sm">${f[1]}</b> <span class="sm ten">(en las tres)</span>`}</div>`
+    }).join('')}</div>`
+  }
+  const graf = `<div class="pn" style="padding:${tel ? 12 : 20}px"><b>Ondas superpuestas</b><div class="fila" style="margin:8px 0">${['EFR', 'Onda I', 'Onda III', 'Onda V'].map((o, i) => `<span class="pill ${i ? '' : 'on'}">${o}</span>`).join('')}</div><div class="graf" style="height:${actual ? 384 : tel ? 240 : 320}px">${onda(1, colores)}</div></div>`
+  const marcas = actual ? (tel ? pin(14, 300, 330) : '') : (tel ? pin(14, 300, 330, 1) : '')
+  return `<div class="a">${cabecera(d, v, '/simulaciones', 'Superponer')}<main class="mn ${tel ? '' : 'tab'}"><span class="bs" style="width:fit-content">‹ Volver</span><div><div class="h1">Superponer simulaciones</div><p class="baj">3 simulaciones elegidas</p></div>${acciones}${tabla}${graf}</main>${footer(d, v)}${pie(d, v, '/simulaciones')}${marcas}</div>`
+}
+
+// ---------- notas por pantalla ----------
+const NOTAS = {
+  nav: `
+  <div class="nota"><h3>Qué se rompe</h3><ul>
+    <li><b class="malo">1</b> Teléfono: el pie largo ("Laboratorio Virtual Auditivo — Implementación basada…") ocupa 3–4 líneas justo encima de la barra de pestañas. <code>App.tsx</code> footer.</li>
+    <li><b class="malo">2</b> Teléfono: el indicador "1 en curso" y el menú compiten con el logo en 390 px; con admin se suma el chip del servidor y no entra. <code>Header.tsx:229</code></li>
+    <li><b class="malo">3</b> Tablet (768–1023 px): las secciones pasan arriba (<code>md:</code>) junto con el indicador, el chip del servidor y el nombre: la barra se aprieta y se corta.</li>
+    <li><b class="malo">4</b> En tablet se pierde la barra inferior aunque se usa con el pulgar igual que el teléfono.</li>
+  </ul></div>
+  <div class="nota"><h3>Propuesta y opciones</h3>
+    <div class="opcion"><b>A (recomendada)</b>: barra inferior de pestañas hasta <code>lg</code> (1024 px) en vez de <code>md</code>. Cambio chico: reemplazar <code>md:</code> por <code>lg:</code> en el <code>&lt;nav&gt;</code> del Header y en el <code>pb-</code> de <code>App.tsx</code>.</div>
+    <div class="opcion"><b>B</b>: dejar las secciones arriba en tablet pero solo con íconos (texto desde <code>lg</code>).</div>
+    <div class="opcion"><b>Pie</b>: en el teléfono, una línea corta "Basado en Verhulst et al. (2018)"; el texto completo queda en tablet y PC. (Es un cambio de texto: confirmar, por la regla de no sacar textos.)</div>
+  </div>`,
+  simular: `
+  <div class="nota"><h3>Qué se rompe</h3><ul>
+    <li><b class="malo">5</b> Teléfono: el botón <b>Simular</b> queda al final de un formulario largo (paso 1 + vista previa + paso 2 + avanzada): hay que bajar ~2 pantallas para encontrarlo. <code>SimulationControls.tsx:528</code></li>
+    <li><b class="malo">6</b> "RAM Stimulus" al lado del título le roba ancho y el título se parte en dos líneas.</li>
+    <li><b class="malo">7</b> Tablet: las dos columnas empiezan en <code>lg</code>, así que a 820 px es una sola columna de 750 px con campos muy estirados. <code>SimulationControls.tsx:65</code></li>
+  </ul></div>
+  <div class="nota"><h3>Propuesta y opciones</h3>
+    <div class="opcion"><b>Teléfono</b>: barra fija abajo (sobre las pestañas) con el resumen "Leve · plana / 1000 Hz · 70 dB" y el botón Simular siempre a la vista.</div>
+    <div class="opcion"><b>Tablet</b>: dos columnas desde <code>md</code> (<code>md:grid-cols-2</code>), con el botón en la columna derecha.</div>
+    <div class="opcion"><b>Alternativa</b> a la barra fija: dejar el botón abajo y sumar un "Simular" chico en la cabecera. Más simple, menos visible.</div>
+  </div>`,
+  resultado: `
+  <div class="nota"><h3>Qué se rompe</h3><ul>
+    <li><b class="malo">8</b> Cinco acciones sueltas; "Simular nuevamente con estos parámetros" ocupa todo el ancho y el resto se reparte en 2–3 filas. <code>DetalleSimulacion.tsx:90</code></li>
+    <li><b class="malo">9</b> Teléfono: 10 datos en <code>flex-wrap</code> forman un bloque desordenado de ~6 filas antes de llegar al resultado. <code>DetalleSimulacion.tsx:100</code></li>
+    <li><b class="malo">10</b> Gráficos de alto fijo <code>h-96</code> (384 px) con la leyenda abajo (<code>y: -0.2</code>) que pisa el eje; el zoom por arrastre de Plotly atrapa el dedo y no deja hacer scroll de la página. <code>Grafico.tsx:22</code>, <code>graficos.ts:46</code></li>
+    <li><b class="malo">11</b> Tablet: las tarjetas del EFR en <code>md:grid-cols-4</code> quedan angostas y el nombre del perfil se corta. <code>ResultsSummary.tsx:49</code></li>
+  </ul></div>
+  <div class="nota"><h3>Propuesta y opciones</h3>
+    <div class="opcion"><b>Acciones</b>: una principal ("Simular de nuevo" en teléfono) + botón ⋯ que abre una hoja inferior con el resto. En tablet, principal + "Superponer" + ⋯.</div>
+    <div class="opcion"><b>Parámetros</b>: plegados en "Parámetros · 1000 Hz · 70 dB · fm 120" en el teléfono, en grilla de 2 (teléfono) o 4 columnas (tablet).</div>
+    <div class="opcion"><b>Gráficos</b>: alto 240 px (teléfono) / 320 px (tablet), leyenda arriba, y en táctil <code>dragmode: false</code> + botón "Pantalla completa" (horizontal). <b>Opción B</b>: dejar el zoom pero con <code>dragmode: 'pan'</code> y <code>scrollZoom: false</code>.</div>
+    <div class="opcion"><b>EFR</b>: grilla de 2 columnas en tablet y teléfono (el número grande ocupa la fila).</div>
+  </div>`,
+  historial: `
+  <div class="nota"><h3>Qué se rompe</h3><ul>
+    <li><b class="malo">12</b> Teléfono: cada simulación es una tarjeta de 8 datos con rótulo (≈ 280 px de alto): entran 2 por pantalla y la casilla de superponer queda perdida al final. <code>ui.tsx:536</code> (<code>Tabla</code>)</li>
+    <li><b class="malo">13</b> Tablet: desde <code>sm</code> (640 px) se muestra la tabla de 8 columnas; a 820 px los textos se parten en 2–3 líneas y "Estímulo" y "Fibras" se aprietan. <code>Historial.tsx:84</code></li>
+  </ul></div>
+  <div class="nota"><h3>Propuesta y opciones</h3>
+    <div class="opcion"><b>Teléfono</b>: fila compacta de 3 líneas (perfil + estado / tipo · caso / estímulo · fecha) con la casilla a la izquierda. ~4–5 por pantalla.</div>
+    <div class="opcion"><b>Tablet</b>: tabla de 6 columnas: casilla primero, "Tipo" va debajo del perfil y "Fibras" debajo del estímulo.</div>
+    <div class="opcion"><b>Dónde se hace</b>: <b>A</b> cambiar el componente <code>Tabla</code> (afecta también Mis casos) o <b>B</b> una lista propia del Historial. Recomiendo B: no toca Casos.</div>
+  </div>`,
+  superponer: `
+  <div class="nota"><h3>Qué se rompe</h3><ul>
+    <li><b class="malo">14</b> Teléfono: la tabla de diferencias tiene scroll horizontal (Dato + hasta 3 columnas); la columna "Dato" se va con el scroll y se pierde a qué fila corresponde cada valor. <code>Superponer.tsx:206</code></li>
+    <li>Las tres acciones (Guardar, CSV, Imprimir) se apilan en dos filas.</li>
+    <li>Tablet: se ve bien; solo bajar el alto de los gráficos como en Resultado.</li>
+  </ul></div>
+  <div class="nota"><h3>Propuesta y opciones</h3>
+    <div class="opcion"><b>A (recomendada)</b>: en el teléfono, un bloque por dato; si los valores son iguales, una sola línea "(en las tres)"; si difieren, uno por simulación con su trazo de color.</div>
+    <div class="opcion"><b>B</b>: mantener la tabla con la primera columna fija (<code>sticky left-0</code>). Cambio más chico, pero sigue con scroll lateral.</div>
+    <div class="opcion"><b>Acciones</b>: Guardar + ⋯ (CSV, Imprimir) en el teléfono.</div>
+  </div>`,
+}
+
+// ---------- render ----------
+function seg(id, lista, clave) {
+  const el = document.getElementById(id)
+  el.innerHTML = lista.map(([v, t]) => `<button type="button" data-v="${v}" aria-pressed="${S[clave] === v}">${t}</button>`).join('')
+  el.onclick = (e) => { const b = e.target.closest('button'); if (!b) return; S[clave] = b.dataset.v; guardar(); render() }
+}
+function guardar() { try { localStorage.setItem('proto-mobile', JSON.stringify(S)) } catch (e) {} }
+function dispositivo(d, v) {
+  const D = DISP[d]
+  const anchoVisible = Math.min(D.w * D.escala, window.innerWidth - 52)
+  const esc = anchoVisible / D.w
+  return `<div class="disp"><div class="disp-tit"><b>${D.nombre}</b> · ${D.w} px · ${v === 'actual' ? '<span class="malo">Actual</span>' : '<span class="bueno">Propuesta</span>'}</div>
+    <div class="marco ${d}"><div style="width:${D.w * esc}px;height:${D.h * esc}px;overflow:hidden"><div class="pantalla escala" style="width:${D.w}px;height:${D.h}px;transform:scale(${esc})">${P[S.pantalla](d, v)}</div></div></div></div>`
+}
+function render() {
+  if (S.tema === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.dataset.theme = S.tema
+  seg('selPantalla', PANTALLAS, 'pantalla'); seg('selVersion', VERSIONES, 'version'); seg('selTema', TEMAS, 'tema')
+  const vs = S.version === 'ambas' ? ['actual', 'propuesta'] : [S.version]
+  document.getElementById('escena').innerHTML = ['tel', 'tab'].flatMap(d => vs.map(v => dispositivo(d, v))).join('')
+  document.getElementById('notas').innerHTML = NOTAS[S.pantalla]
+}
+render()
+let t; window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(render, 150) })
+</script>
+</body>
+</html>
